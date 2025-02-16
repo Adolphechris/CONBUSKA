@@ -1,0 +1,142 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Dashboard {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .card {
+        margin: 5px; /* Margin around the card */
+        padding-left: 5px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        background-color: #B6D0E2; /* Background color of the card */
+    }
+    .card-men {
+        border-color: #b8daff; /* Border color */
+    }
+    .card-women {
+        border-color: #f5c6cb; /* Border color */
+    }
+    .iconx {
+        font-size: 30px; /* Icon size */
+        color: white; /* Icon color */
+        position: absolute;
+        top: -10px;
+        right: 10px; /* Positioning icon in upper right corner */
+        background-color: #4682B4; /* Background color for the circle */
+        border-radius: 50%; /* Makes the background circular */
+        padding: 20px; /* Padding for the circle size */
+    }
+    .card-text {
+        color: #4682B4; /* Card text color */
+        font-weight: bold; /* Bold text */
+
+        margin-bottom: 5px; /* Space below the text */
+        text-align: left; /* Align text to the left */
+    }
+    .card-title {
+        color: light-gray; /* Card title color */
+        margin-top: 10px; /* Space above the title */
+        text-align: left; /* Align title to the left */
+    }
+    .card-body {
+        position: relative; /* To position the icon correctly */
+        padding-right: 60px; /* Ensuring space for icon */
+        text-align: left; /* Align the card body's text to the left */
+    }
+    .chart-container {
+        position: relative;
+        width: 1000px;
+        height: 500px;
+        margin: 0 auto;
+    }
+    .icon-container {
+        width: 40px;
+        height: 100%; /* Full height */
+        background-color: #B6D0E2;
+        border-radius: 5px;
+        color: #4682B4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 3.2rem;
+    }
+    .list-group-item {
+        display: flex;
+        align-items: stretch; /* Align items to stretch */
+        padding: 10px 15px;
+    }
+    .item-title {
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        width: 100%; /* Full width */
+    }
+    .item-subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 5px; /* Add space between title and subtitle */
+    }
+    .item-number {
+        font-weight: bold;
+        margin-left: auto;
+    }
+    .flex-fill {
+        flex: 1 1 auto;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="row top_tiles">
+                <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-users"></i></div>
+                        <div class="count"> {{effectif_total}} </div>
+                        <h3>Agents</h3>
+                        <p>Effectif total</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-users"></i></div>
+                        <div class="count"> {{effectif_lb}} </div>
+                        <h3>Lubumbashi</h3>
+                        <p>Effectif lubumbashi</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                     <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-users"></i></div>
+                        <div class="count"> {{effectif_kz}} </div>
+                        <h3>Kolwezi</h3>
+                        <p>Effectif kolwezi</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                     <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-users"></i></div>
+                        <div class="count"> {{effectif_km}} </div>
+                        <h3>Kalemie</h3>
+                        <p>Effectif kalemie</p>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="row">
+                
+                </div>
+        </div>
+            <div class="row">
+            </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+
+        });
+    </script>
+{% endblock content %}

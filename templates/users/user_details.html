@@ -1,0 +1,59 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Details Utilisateur {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Details utilisateur </h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h3>Details de l'utilisateur #{{ user_details.username }}</h3>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
+                                <div class="profile_img">
+                                    <div id="crop-avatar">
+                                        <!-- Current avatar -->
+                                        <img class="img-responsive avatar-view" src="{{ user_details.photo.url }}" alt="{{ user.username }}">
+                                    </div>
+                                </div>
+                                <h3>{{ user_details.username }}</h3>
+                                <ul class="list-unstyled user_data">
+                                    <li>
+                                        <i class="fa fa-user user-profile-icon"></i> {{ user_details.first_name }} {{ user_details.last_name }}
+                                    </li>
+                                    <li>
+                                        <i class="fa fa-mobile user-profile-icon"></i> {{ user_details.telephone }}
+                                    </li>
+                                    <li>
+                                        <i class="fa fa-envelope user-profile-icon"></i> {{ user_details.email }}
+                                    </li>
+                                    <li>
+                                        <i class="fa fa-briefcase user-profile-icon"></i> {{ user_details.type_profile }}
+                                    </li>
+                                </ul>
+
+                                <a class="btn btn-success" href="">
+                                    <i class="fa fa-edit m-right-xs"></i> Modifier Profil
+                                </a>
+                                <br />
+                            </div>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

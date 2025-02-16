@@ -1,0 +1,63 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Parametres societe {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Paramètres</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Paramètres société</h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <form class="form-horizontal form-label-left" action='' novalidate>
+                                {% for field in form.visible_fields  %}
+                                    {% if field.label == 'Logo' %}
+                                        <div class="form-group">
+                                            <label class="control-label col-md-3 col-sm-3 col-xs-12">
+                                            </label>
+                                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                                {% if parametres.logo %}
+                                                    <img src="{{ parametres.logo.url }}" alt="{{ parametres.sigle }}" height="100">
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="form-group">
+                                            <label class="control-label col-md-3 col-sm-3 col-xs-12">
+                                                {{ field.label }}
+                                            </label>
+                                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                                {{ field }}
+                                                {% for error in field.errors %}
+                                                    <span style="color: red;">[{{ error }}]</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                <div class="ln_solid"></div>
+                                <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                                    <a href="{% url 'parametres_update' parametres.pk %}">
+                                        <button class="btn btn-primary" type="button">
+                                            Modifier
+                                        </button>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

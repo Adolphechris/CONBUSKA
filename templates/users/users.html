@@ -1,0 +1,96 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Users {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+   <style>
+       .fa-check{
+            color: #26B99A;
+       }
+   </style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col row" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Utilisateurs</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des utilisateurs<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'user_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEL UTILISATEUR
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="Users" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> </th>
+                                            <th class="column-title"> Nom d'utilisateur</th>
+                                            <th class="column-title"> Nom complet</th>
+                                            <th class="column-title"> Telephone </th>
+                                            <th class="column-title"> Email</th>
+                                            <th class="column-title"> Type</th>
+                                            <th class="column-title"> A un mot de passe valide ?</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+										    <tr>
+                                                <td>{{ user.id }}</td>
+                                                <td>{{ user.username }}</td>
+                                                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                                <td>{{ user.telephone }}</td>
+                                                <td>{{ user.email }}</td>
+                                                <td>{{ user.type_profile }}</td>
+                                                <td>
+                                                    {% if user.has_usable_password %}
+                                                        <i class="fa fa-check"></i>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ user.id }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Détails
+                                                    </a>
+                                                    <a href="{% url 'user_update' user.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'user_set_password' user.pk %}" class="btn btn-default btn-xs">
+                                                        <i class="fa fa-password"></i>
+                                                        Réinitialiser Mot de passe
+                                                    </a>
+                                                    <a href="" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash-alt"></i>
+                                                        Supprimer
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

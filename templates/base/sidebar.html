@@ -1,0 +1,91 @@
+ {% load static %}
+    <div class="left_col scroll-view">
+        <div class="navbar nav_title" style="border: 0;">
+            <a href="" class="site_title"><i class="fa fa-spinner"></i> <span>HR CMC V.1</span></a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- menu profile quick info -->
+        {% if user.is_authenticated %}
+        <div class="profile clearfix">
+            <div class="profile_pic">
+                <img src="{{ user.photo.url }}" alt="..." class="img-circle profile_img">
+            </div>
+            <div class="profile_info">
+                <span>Bienvenue,</span>
+                <h2> {{ user.username }} </h2>
+            </div>
+        </div>
+        {% endif %}
+        <!-- /menu profile quick info -->
+
+        <br />
+
+        <!-- sidebar menu -->
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+            <div class="menu_section">
+                <!-- <h3>MENU</h3> -->
+                <ul class="nav side-menu documents">
+                    <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
+                    <li id="agents"><a href="{% url 'agents' %}"><i class="fa fa-users"></i> Agents </a></li>
+                        <li id="conges"><a><i class="fa fa-calendar"></i> Congés <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="conges_planning"><a href="{% url 'conges_planning' %}">Planning congés</a></li>
+                            <li id="paiement_conges"><a href="{% url 'historique_paiement_conge' %}">Historique paiements congés</a></li>
+                            <li id="conges_circonstance"><a href="{% url 'conges_circonstance' %}">Congés de circonstance</a></li>
+                            <li id="conges_reconstitution"><a href="{% url 'conges_reconstitution' %}">Congés de reconstitution</a></li>
+                        </ul>
+                    </li>
+                    <li id="missions"><a><i class="fa fa-envelope"></i> Missions <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="missions_liste"><a href="{% url 'missions' %}">Missions</a></li>
+                            <li id="missions_kanban"><a href="{% url 'missions_kanban' %}">Tickets</a></li>
+                        </ul>
+                    </li>
+                    <li id="meetings"><a><i class="fa fa-desktop"></i> Minutes meetings <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="reunions"><a href="{% url 'reunions' %}">Réunions</a></li>
+                            <li id="reunions_planifiees"><a href="{% url 'reunions_planifiees' %}">Réunions planifiées</a></li>
+                        </ul>
+                    </li>
+                    <li id="pointage"><a><i class="fa fa-list-ul"></i> Pointage <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="pointages_centralises"><a href="{% url 'pointages_centralises' %}">Pointages centralisés</a></li>
+                            <li id="pointages"><a href="{% url 'pointage_services' %}">Pointages</a></li>
+                            <li id="horaires"><a href="{% url 'horaire_services' %}">Horaires</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="menu_section">
+                {% if perms.parametres %}
+                    <h3>Configurations</h3>
+                    <ul class="nav side-menu">
+                        {% if perms.users %}
+                            <li id="users"><a href="{% url 'users' %}"><i class="fa fa-users"></i> Comptes utilisateurs </a></li>
+                        {% endif %}
+                        <li id="parametres"><a href="{% url 'parametres' %}"><i class="fa fa-cogs"></i> Paramètres </a></li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        <!-- /sidebar menu -->
+
+        <!-- /menu footer buttons -->
+        <div class="sidebar-footer hidden-small">
+            <a data-toggle="tooltip" data-placement="top" title="Settings">
+                <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+            </a>
+            <a data-toggle="tooltip" data-placement="top" title="FullScreen">
+                <span class="glyphicon glyphicon-fullscreen" aria-hidden="true"></span>
+            </a>
+            <a data-toggle="tooltip" data-placement="top" title="Lock">
+                <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+            </a>
+            <a data-toggle="tooltip" data-placement="top" title="Logout" href="login">
+                <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+            </a>
+        </div>
+        <!-- /menu footer buttons -->
+    </div>

@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Login {% endblock title %}
+
+{% block stylesheets %}
+  {{block.super}}
+  <!-- Animate.css -->
+  <link href="{% static 'vendors/animate.css/animate.min.css' %}" rel="stylesheet">
+  <!-- Alertify -->
+  <link href="{% static 'vendors/alertifyjs/css/alertify.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendors/alertifyjs/css/custom.alertify.css' %}" rel="stylesheet">
+{% endblock stylesheets %}
+
+{% block body_class %}login{% endblock body_class %}
+
+{% block body %}
+  <!-- jQuery -->
+  <script src="{% static 'vendors/jquery/dist/jquery.min.js' %}"></script>
+  <!-- Alertify -->
+  <script src="{% static 'vendors/alertifyjs/alertify.min.js' %}"></script>
+  <!-- Parsley -->
+  <script src="{% static 'vendors/parsleyjs/dist/parsley.min.js' %}"></script>
+  <!-- Login -->
+  <script src="{% static 'build/js/login.js' %}"></script>
+
+  <div>
+      <a class="hiddenanchor" id="signup"></a>
+      <a class="hiddenanchor" id="signin"></a>
+
+      <div class="login_wrapper">
+          <div class="animate form login_form">
+              <section class="login_content">
+                  <form data-parsley-validate method="post">
+                      <h1>Connexion</h1>
+                      {% csrf_token %}
+                      {% for field in form.visible_fields  %}
+                            <div>
+                                {{ field }}
+                            </div>
+                      {% endfor %}
+
+                      <div>
+                          <button type="submit" class="btn btn-default submit" name="login">Log in</button>
+                      </div>
+                      <div class="clearfix"></div>
+                      <div class="separator">
+                          <div class="clearfix"></div>
+                          <br/>
+                          <div>
+                              <h1><i class="fa fa-paw"></i> HR CMC V.1 </h1>
+                              <p>©2024 UDUMA Tous droits réservés.</p>
+                          </div>
+                      </div>
+                  </form>
+              </section>
+          </div>
+      </div>
+  </div>
+{% endblock body %}

@@ -1,0 +1,130 @@
+{% load static %}
+
+<html lang="en">
+  <head>
+    {% block head %}
+      {% block meta %}
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <!-- Meta, title, CSS, favicons, etc. -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      {% endblock meta %}
+
+
+      <title>HR | {% block title %}{% endblock title %}</title>
+      {{ form.media.css }}
+      {% block stylesheets %}
+        <!-- Bootstrap -->
+        <link href="{% static 'vendors/bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link href="{% static 'vendors/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
+        <!-- bootstrap-daterangepicker -->
+        <link href="{% static 'vendors/bootstrap-daterangepicker/daterangepicker.css' %}" rel="stylesheet">
+        <!-- bootstrap-datetimepicker -->
+        <link href="{% static 'vendors/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css' %}" rel="stylesheet">
+        <!-- Select2 -->
+        <link href="{% static 'vendors/select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
+        <!-- NProgress -->
+        <link href="{% static 'vendors/nprogress/nprogress.css' %}" rel="stylesheet">
+        <!-- Tagify -->
+        <link href="{% static 'css/tagify.css' %}" rel="stylesheet"/>
+        <link href="{% static 'vendors/iCheck/skins/flat/green.css' %}" rel="stylesheet"/>
+        <!-- DataTables -->
+        <link href="{% static 'css/dataTable/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/dataTable/rowGroup.dataTables.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/dataTable/buttons.dataTables.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/dataTable/select.dataTables.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/dataTable/keyTable.dataTables.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/dataTable/css/editor.bootstrap.min.css' %}" rel="stylesheet">
+        <!-- Custom Theme Style -->
+        <link href="{% static 'build/css/custom.css' %}" rel="stylesheet">
+      {% endblock stylesheets %}
+
+      <script src="{% static 'js/Chart.min.js' %}"></script>
+      <!-- jQuery -->
+      <script src="{% static 'vendors/jquery/dist/jquery.min.js' %}"></script>
+      <script src="{% static 'js/jquery.formset.js' %}"></script>
+      <!-- dataTables jquery -->
+      <script src="{% static 'js/dataTable/jquery.dataTables.min.js' %}"></script>
+      <!-- Moment JS -->
+      <script src="{% static 'vendors/moment/moment.min.js' %}"></script>
+      <!-- NProgress -->
+      <script src="{% static 'vendors/nprogress/nprogress.js' %}"></script>
+      <!-- Bootstrap -->
+      <script src="{% static 'js/bootstrap/bootstrap.min.js' %}"></script>
+      <!-- dataTables jquery -->
+      <script src="{% static 'js/dataTable/dataTables.bootstrap.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/dataTables.buttons.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/js/dataTables.editor.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/js/dataTables.keyTable.js' %}"></script>
+      <script src="{% static 'js/dataTable/js/editor.bootstrap.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/dataTables.select.js' %}"></script>
+      <script src="{% static 'js/dataTable/dataTables.responsive.js' %}"></script>
+      <script src="{% static 'js/dataTable/dataTables.rowGroup.js' %}"></script>
+      <script src="{% static 'js/dataTable/buttons.html5.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/buttons.colVis.js' %}"></script>
+      <script src="{% static 'js/dataTable/buttons.flash.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/pdfmake.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/buttons.print.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/vfs_fonts.js' %}"></script>
+      <script src="{% static 'js/dataTable/jszip.min.js' %}"></script>
+      <script src="{% static 'js/dataTable/datetime-moment.js' %}"></script>
+      <!-- Select2 -->
+      <script src="{% static 'vendors/select2/dist/js/select2.full.min.js' %}"></script>
+      <script src="{% static 'vendors/select2/dist/js/select2.min.js' %}"></script>
+      <!-- MY HELPERS -->
+      <script src="{% static 'js/helper.js' %}"></script>
+      <!-- iCheck -->
+      <script src="{% static 'vendors/iCheck/icheck.min.js' %}"></script>
+      <!-- TAGIFY -->
+      <script src="{% static 'js/tagify.min.js' %}"></script>
+      <!-- Validation jquery -->
+      <script src="{% static 'vendors/validate/jquery.validate.min.js' %}"></script>
+      <!-- FastClick -->
+      <script src="{% static 'vendors/fastclick/lib/fastclick.js' %}"></script>
+      <!-- bootstrap-daterangepicker -->
+      <script src="{% static 'vendors/bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+      <!-- bootstrap-datetimepicker -->
+      <script src="{% static 'vendors/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js' %}"></script>
+      <!-- jQuery Tags Input -->
+      <script src="{% static 'vendors/jquery.tagsinput/src/jquery.tagsinput.js' %}"></script>
+    {% endblock head %}
+  </head>
+
+  <body class="{% block body_class %} nav-md {% endblock body_class %}">
+    {% block body %}
+      <div class="container body">
+        <div class="main_container">
+          {% block sidebar %}
+            <div class="col-md-3 left_col {% block sidebar_class %} {% endblock sidebar_class %}">
+              {% include "base/sidebar.html" %}
+            </div>
+          {% endblock sidebar %}
+
+          {% block top_navigation %}
+            <div class="top_nav">
+              {% include "base/navbar.html" %}
+            </div>
+          {% endblock top_navigation %}
+
+          {% block content %}
+
+          {% endblock content %}
+
+          {% block footer %}
+            <footer>
+
+            </footer>
+          {% endblock footer %}
+        </div>
+      </div>
+
+      {% block javascripts %}
+      <!-- Custom Theme Scripts -->
+        <script src="{% static 'build/js/custom.min.js' %}"></script>
+      {% endblock javascripts %}
+
+    {% endblock body %}
+  </body>
+</html>
