@@ -1,7 +1,7 @@
  {% load static %}
     <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
-            <a href="" class="site_title"><i class="fa fa-spinner"></i> <span>HR CMC V.1</span></a>
+            <a href="" class="site_title"><i class="fa fa-spinner"></i> <span>ESM V.1</span></a>
         </div>
 
         <div class="clearfix"></div>
@@ -28,34 +28,7 @@
                 <!-- <h3>MENU</h3> -->
                 <ul class="nav side-menu documents">
                     <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
-                    <li id="agents"><a href="{% url 'agents' %}"><i class="fa fa-users"></i> Agents </a></li>
-                        <li id="conges"><a><i class="fa fa-calendar"></i> Congés <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li id="conges_planning"><a href="{% url 'conges_planning' %}">Planning congés</a></li>
-                            <li id="paiement_conges"><a href="{% url 'historique_paiement_conge' %}">Historique paiements congés</a></li>
-                            <li id="conges_circonstance"><a href="{% url 'conges_circonstance' %}">Congés de circonstance</a></li>
-                            <li id="conges_reconstitution"><a href="{% url 'conges_reconstitution' %}">Congés de reconstitution</a></li>
-                        </ul>
-                    </li>
-                    <li id="missions"><a><i class="fa fa-envelope"></i> Missions <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li id="missions_liste"><a href="{% url 'missions' %}">Missions</a></li>
-                            <li id="missions_kanban"><a href="{% url 'missions_kanban' %}">Tickets</a></li>
-                        </ul>
-                    </li>
-                    <li id="meetings"><a><i class="fa fa-desktop"></i> Minutes meetings <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li id="reunions"><a href="{% url 'reunions' %}">Réunions</a></li>
-                            <li id="reunions_planifiees"><a href="{% url 'reunions_planifiees' %}">Réunions planifiées</a></li>
-                        </ul>
-                    </li>
-                    <li id="pointage"><a><i class="fa fa-list-ul"></i> Pointage <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li id="pointages_centralises"><a href="{% url 'pointages_centralises' %}">Pointages centralisés</a></li>
-                            <li id="pointages"><a href="{% url 'pointage_services' %}">Pointages</a></li>
-                            <li id="horaires"><a href="{% url 'horaire_services' %}">Horaires</a></li>
-                        </ul>
-                    </li>
+                    <li id="fournisseurs"><a href="{% url 'fournisseurs' %}"><i class="fa fa-list-ul"></i> Fournisseurs </a></li>
                 </ul>
             </div>
             <div class="menu_section">

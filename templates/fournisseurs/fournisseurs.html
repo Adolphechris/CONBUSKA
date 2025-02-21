@@ -1,0 +1,91 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Fournisseurs {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Fournisseurs</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des fournisseurs<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'fournisseur_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEAU FOURNISSEUR
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="Fournisseurs" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Code</th>
+                                            <th class="column-title"> Photo</th>
+                                            <th class="column-title"> Nom</th>
+                                            <th class="column-title"> Tuteur</th>
+                                            <th class="column-title"> Email</th>
+                                            <th class="column-title"> Telephone </th>
+                                            <th class="column-title"> Adresse</th>
+                                            <th class="column-title"> Ville</th>
+                                            <th class="column-title"> Pays</th>
+                                            <th class="column-title"> RCCM</th>
+                                            <th class="column-title"> ID.NAT</th>
+                                            <th class="column-title"> IMPOT</th>
+                                            <th class="column-title"> TVA</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fournisseur in liste_fournisseurs %}
+										    <tr>
+                                                <td>{{ fournisseur.code }}</td>
+                                                <td>{{ fournisseur.photo }}</td>
+                                                <td>{{ fournisseur.nom }}</td>
+                                                <td>{{ fournisseur.tuteur }}</td>
+                                                <td>{{ fournisseur.email }}</td>
+                                                <td>{{ fournisseur.telephone }}</td>
+                                                <td>{{ fournisseur.adresse }}</td>
+                                                <td>{{ fournisseur.ville }}</td>
+                                                <td>{{ fournisseur.pays }}</td>
+                                                <td>{{ fournisseur.rccm }}</td>
+                                                <td>{{ fournisseur.id_nat }}</td>
+                                                <td>{{ fournisseur.impot }}</td>
+                                                <td>{{ fournisseur.tva }}</td>
+                                                <td>
+                                                    <a href="{{ fournisseur.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                    <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'fournisseur_delete' fournisseur.pk %}" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash-alt"></i>
+                                                        Supprimer
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

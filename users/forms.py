@@ -11,15 +11,20 @@ class CustomAuthForm(AuthenticationForm):
 
 
 class CustomUserCreationForm(UserCreationForm):
+    pic = forms.FileField(widget=forms.FileInput(attrs={'class': 'form-control'}))
     class Meta:
-        model = get_user_model()
-        fields = ('email', 'username',)
+        model = CustomUser
+        fields = ['email', 'username', 'photo']
+        widgets = {
+            'photo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 
 
-class CustomUserChangeForm(UserChangeForm):
+class CustomUserChangeForm(forms.ModelForm):
+    # photo = forms.FileField(widget=forms.FileInput(attrs={'class': 'form-control'}))
     class Meta:
-        model = get_user_model()
-        fields = ('email', 'username',)
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'photo', 'telephone', 'type_profile']
 
 
 class UserEditProfileForm(UserChangeForm):

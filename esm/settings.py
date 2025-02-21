@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'parametres.apps.ParametresConfig',
     'users.apps.UsersConfig',
     'users_management.apps.UsersManagementConfig',
+    # Contrib
+    'django.forms',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

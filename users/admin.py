@@ -7,11 +7,12 @@ from .models import TypeProfile
 CustomUser = get_user_model()
 
 
-class CustomUserAdmin(UserAdmin):
+# class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(admin.ModelAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = CustomUser
-    list_display = ['email', 'username', 'photo']
+    list_display = ['username', 'email', 'photo', 'telephone']
 
 
 admin.site.register(CustomUser, CustomUserAdmin)

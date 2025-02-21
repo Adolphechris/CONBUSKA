@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Fournisseur(models.Model):
@@ -29,3 +30,7 @@ class Fournisseur(models.Model):
         except IndexError:
             code = 2000
         return code
+
+    @staticmethod
+    def get_absolute_url():
+        return reverse('fournisseurs')
