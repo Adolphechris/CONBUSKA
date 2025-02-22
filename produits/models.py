@@ -5,11 +5,15 @@ from django.forms.models import model_to_dict
 
 
 class Categorie(models.Model):
-    nom = models.CharField(max_length=30, unique=True)
+    nom = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nom
+
+    @staticmethod
+    def get_absolute_url():
+        return reverse('categories')
 
 
 class Unite(models.Model):
