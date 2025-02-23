@@ -1,0 +1,71 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Unites {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Unites</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des unites<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'unite_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVELLE UNITE
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="Unites" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> No.</th>
+                                            <th class="column-title"> Nom</th>
+                                            <th class="column-title"> Description</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for unite in liste_unites %}
+										    <tr>
+                                                <td></td>
+                                                <td>{{ unite.nom }}</td>
+                                                <td>{{ unite.description }}</td>
+                                                <td>
+                                                    <a href="{{ unite.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                    <a href="{% url 'unite_update' unite.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'unite_delete' unite.pk %}" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash-alt"></i>
+                                                        Supprimer
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

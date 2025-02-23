@@ -23,6 +23,10 @@ class Unite(models.Model):
     def __str__(self):
         return self.nom
 
+    @staticmethod
+    def get_absolute_url():
+        return reverse('unites')
+
 
 class Article(models.Model):
     DEVISES = (
