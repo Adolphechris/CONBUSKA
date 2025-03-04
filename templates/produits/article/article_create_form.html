@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Article|Create {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h2>Création article</h2>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h4>Formulaire de création d'un article</h4>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <form class="form-horizontal form-label-left" enctype="multipart/form-data" action='' method="POST" novalidate>
+                                {% csrf_token %}
+                                {% for field in form.visible_fields  %}
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3 col-sm-3 col-xs-12">
+                                            {{ field.label }}
+                                        </label>
+                                        <div class="col-md-6 col-sm-6 col-xs-12">
+                                            {{ field }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <div class="ln_solid"></div>
+                                <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                                    <input type="submit" class="btn btn-info valider" value="Valider">
+                                    <a href="{% url 'articles' %}">
+                                        <button class="btn btn-danger" type="button">
+                                            Annuler
+                                        </button>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('.articles').addClass('active');
+         });
+    </script>
+
+{% endblock content %}

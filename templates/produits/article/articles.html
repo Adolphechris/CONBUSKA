@@ -1,0 +1,93 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Articles {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Articles</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des articles<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'article_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEL ARTICLE
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="Articles" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Code</th>
+                                            <th class="column-title"> Designation</th>
+                                            <th class="column-title"> Description</th>
+                                            <th class="column-title"> Code barre</th>
+                                            <th class="column-title"> Unite</th>
+                                            <th class="column-title"> Categorie</th>
+                                            <th class="column-title"> Fournisseur</th>
+                                            <th class="column-title"> Prix achat</th>
+                                            <th class="column-title"> Prix vente</th>
+                                            <th class="column-title"> Prix vente gros</th>
+                                            <th class="column-title"> Devise</th>
+                                            <th class="column-title"> Seuil</th>
+                                            <th class="column-title"> Seuil gros</th>
+                                            <th class="column-title"> Emplacement</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for article in liste_articles %}
+										    <tr>
+                                                <td>{{ article.code }}</td>
+                                                <td>{{ article.designation }}</td>
+                                                <td>{{ article.description }}</td>
+                                                <td>{{ article.code_barre }}</td>
+                                                <td>{{ article.unite }}</td>
+                                                <td>{{ article.categorie }}</td>
+                                                <td>{{ article.fournisseur }}</td>
+                                                <td>{{ article.prix_achat }}</td>
+                                                <td>{{ article.prix_vente }}</td>
+                                                <td>{{ article.prix_vente_gros }}</td>
+                                                <td>{{ article.devise }}</td>
+                                                <td>{{ article.seuil }}</td>
+                                                <td>{{ article.seuil_gros }}</td>
+                                                <td>{{ article.emplacement }}</td>
+                                                <td>
+                                                    <a href="{{ article.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                    <a href="{% url 'article_update' article.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'article_delete' article.pk %}" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash-alt"></i>
+                                                        Supprimer
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
