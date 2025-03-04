@@ -1,5 +1,7 @@
 logs/
 venv/
+media/articles/*
+media/fournisseurs/*
 .idea/
 .git/
 __pycache__/
