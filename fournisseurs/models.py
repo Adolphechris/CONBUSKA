@@ -31,6 +31,12 @@ class Fournisseur(models.Model):
             code = 2000
         return code
 
-    @staticmethod
-    def get_absolute_url():
-        return reverse('fournisseurs')
+    def save(self, *args, **kwargs):
+        if self.code is None:
+            self.code = self.get_next_code
+
+        super(Fournisseur, self).save(*args, **kwargs)
+
+
+    def get_absolute_url(self):
+        return reverse('fournisseur_details', args=[self.pk])
