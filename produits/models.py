@@ -58,6 +58,11 @@ class Article(models.Model):
     def __str__(self):
         return self.designation
 
+    def stock(self):
+        get_stock = Stock.objects.filter(article=self.pk)
+        qte = sum(i.qte for i in get_stock)
+        return qte
+
     @property
     def get_next_code(self):
         last_code = Article.objects.all().order_by('-code')[:1]
@@ -67,14 +72,19 @@ class Article(models.Model):
             code = 1000
         return code
 
-    @staticmethod
-    def get_absolute_url():
-        return reverse('articles')
+    def save(self, *args, **kwargs):
+        if self.code is None:
+            self.code = self.get_next_code
+
+        super(Article, self).save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('article_details', args=[self.pk])
 
 
 class Stock(models.Model):
     article = models.ForeignKey(Article, on_delete=models.PROTECT)
-    qte = models.IntegerField(blank=False, null=False)
+    qte = models.IntegerField(blank=False, null=False, default=0)
     date_peremption = models.DateField(blank=False, null=False)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)

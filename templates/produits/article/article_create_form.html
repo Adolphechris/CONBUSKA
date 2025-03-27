@@ -51,7 +51,10 @@
 
     <script>
         $(document).ready(function() {
-            $('.articles').addClass('active');
+            $('#liste_articles').addClass('current-page');
+            $('#articles').addClass('active');
+            let parent = document.getElementById('articles');
+            parent.childNodes[2].style.display = 'block';
          });
     </script>
 

@@ -2,6 +2,21 @@
 {% load static %}
 
 {% block title %} Fournisseurs {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .img_container {
+        width: 20px;
+        height: 12px;
+    }
+
+    /* Resize images */
+    .img_container img {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
@@ -51,7 +66,9 @@
                                         {% for fournisseur in liste_fournisseurs %}
 										    <tr>
                                                 <td>{{ fournisseur.code }}</td>
-                                                <td>{{ fournisseur.photo }}</td>
+                                                <td class="img_container">
+                                                    <img src="{{ fournisseur.photo.url }}" alt="..." class="">
+                                                </td>
                                                 <td>{{ fournisseur.nom }}</td>
                                                 <td>{{ fournisseur.tuteur }}</td>
                                                 <td>{{ fournisseur.email }}</td>

@@ -47,7 +47,8 @@ class ArticleCreateForm(forms.ModelForm):
                   'prix_vente', 'prix_vente_gros', 'devise', 'seuil', 'seuil_gros', 'emplacement', 'photo1', 'photo2']
         widgets = {
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'data-parsley-trigger': "keyup", 'rows': 4,
+                                                 'cols': 150}),
             'code_barre': forms.TextInput(attrs={'class': 'form-control'}),
             'categorie': forms.Select(attrs={'class': 'form-control js-simple-select'}),
             'unite': forms.Select(attrs={'class': 'form-control js-simple-select'}),
@@ -55,7 +56,7 @@ class ArticleCreateForm(forms.ModelForm):
             'prix_achat': forms.TextInput(attrs={'class': 'form-control'}),
             'prix_vente': forms.TextInput(attrs={'class': 'form-control'}),
             'prix_vente_gros': forms.TextInput(attrs={'class': 'form-control'}),
-            'devise': forms.TextInput(attrs={'class': 'form-control'}),
+            'devise': forms.Select(attrs={'class': 'form-control js-simple-select'}),
             'seuil': forms.TextInput(attrs={'class': 'form-control'}),
             'seuil_gros': forms.TextInput(attrs={'class': 'form-control'}),
             'emplacement': forms.TextInput(attrs={'class': 'form-control'}),

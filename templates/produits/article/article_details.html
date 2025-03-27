@@ -2,6 +2,123 @@
 {% load static %}
 
 {% block title %} Détails Article {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    /* En-tête du produit */
+    .product-header {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .product-header h1 {
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .product-badges {
+      margin-top: 10px;
+    }
+
+    .product-badges .badge,
+    .product-badges .label {
+      margin-right: 5px;
+    }
+
+    /* Onglets */
+.product-tabs {
+  margin-top: 20px;
+}
+
+.nav-tabs {
+  margin-bottom: 20px;
+}
+
+.tab-content {
+  padding-top: 20px;
+}
+
+    /* Galerie d'images */
+    .image-gallery {
+      margin-bottom: 30px;
+    }
+
+    .main-image {
+        height: 450px;
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .image-controls {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+
+.image-controls button {
+  opacity: 0.7;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-controls button:hover {
+  opacity: 1;
+}
+
+.thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.thumbnail {
+  width: 60px;
+  height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+  opacity: 1;
+  border-color: #337ab7;
+}
+
+/* Détails produit */
+.product-description,
+.product-features {
+  margin-bottom: 20px;
+}
+
+.product-features ul {
+  padding-left: 20px;
+}
+
+.product-details-table th {
+  width: 60%;
+}
+
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
@@ -11,19 +128,179 @@
                     <h5>Détails Article </h5>
                 </div>
             </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Détails de l'article {{ article.designation }}</h2>
-                            <div class="clearfix"></div>
+            <div class="row">
+                <!-- En-tête du produit -->
+                <div class="x_panel">
+                    <div class="x_content">
+                <div class="product-header">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h1>{{ article.designation }}
+                                {% if article.actif %}
+                                    <span class="label label-success">Actif</span>
+                                {% else %}
+                                    <span class="label label-danger">Inactif</span>
+                                {% endif %}
+                            </h1>
+                            <div class="product-badges">
+                                <span class="badge">Code: {{ article.code }}</span>
+                                <span class="label label-primary">{{ article.categorie }}</span>
+                                {% if article.stock < article.seuil %}
+                                    <span class="label label-danger">Stock critique</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="x_content">
+                        <div class="col-md-4 text-right">
+                            <div class="btn-group">
+                                <button class="btn btn-default"><i class="fa fa-shopping-cart"></i> Commander l'article</button>
+                                {% if article.actif %}
+                                    <button class="btn btn-danger"><i class="fa fa-toggle-off"></i> Desactiver l'article</button>
+                                {% else %}
+                                    <button class="btn btn-success"><i class="fa fa-toggle-on"></i> Activer l'article</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-tabs">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#details" aria-controls="details" role="tab" data-toggle="tab">Détails</a></li>
+                        <li role="presentation"><a href="#stock" aria-controls="stock" role="tab" data-toggle="tab">Stock & Mouvements</a></li>
+                        <li role="presentation"><a href="#stats" aria-controls="stats" role="tab" data-toggle="tab">Statistiques</a></li>
+                        <li role="presentation"><a href="#suppliers" aria-controls="suppliers" role="tab" data-toggle="tab">Fournisseurs</a></li>
+                    </ul>
+                    <!-- Contenu des onglets -->
+                    <div class="tab-content">
+                        <!-- Onglet Détails -->
+                        <div role="tabpanel" class="tab-pane active" id="details">
+                            <div class="row">
+                                <!-- Galerie d'images -->
+                                <div class="col-lg-4">
+                                    <div class="image-gallery">
+                                        <div class="main-image">
+                                            <img src="{{ article.photo1.url }}" alt="{{ article.designation }} - Vue principale" class="img-responsive">
+                                            <div class="image-controls">
+                                                <button class="btn btn-default btn-sm image-prev"><i class="fa fa-chevron-left"></i></button>
+                                                <button class="btn btn-default btn-sm image-next"><i class="fa fa-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="thumbnails">
+                                            <div class="thumbnail active">
+                                                <img src="{{ article.photo1.url }}" alt="Miniature 1" class="img-responsive">
+                                            </div>
+                                            <div class="thumbnail">
+                                                <img src="{{ article.photo2.url }}" alt="Miniature 2" class="img-responsive">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Informations produit -->
+                                <div class="col-lg-8">
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading">
+                                          <h3 class="panel-title">Détails du produit</h3>
+                                        </div>
+                                        <div class="panel-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="product-description">
+                                                        <h4>Description</h4>
+                                                        <p>{{ article.description }}</p>
+                                                    </div>
+                                                </div>
 
+                                                <div class="col-md-6">
+                                                    <div class="product-details-table">
+                                                        <table class="table table-condensed table-striped jambo_table bulk_action">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <th>Fournisseur:</th>
+                                                                    <td>{{ article.fournisseur.nom }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Unité de vente:</th>
+                                                                    <td>{{ article.unite }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Prix d'achat:</th>
+                                                                    <td>{{ article.prix_achat }} {{ article.devise }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Prix de vente:</th>
+                                                                    <td>{{ article.prix_vente }} {{ article.devise }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Prix de vente gros:</th>
+                                                                    <td>{{ article.prix_vente_gros }} {{ article.devise }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Seuil critique:</th>
+                                                                    <td>{{ article.seuil }} {{ article.unite }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Emplacement:</th>
+                                                                    <td>{{ article.emplacement }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Marge:</th>
+                                                                    <td class="text-success">39.99%</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    {% if article.stock < article.seuil %}
+                                                        <!-- Alerte de stock -->
+                                                        <div class="alert alert-warning">
+                                                            <i class="fa fa-exclamation-triangle"></i> Stock sous le seuil critique
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(() => {
+            // Galerie d'images
+            var currentImageIndex = 0
+            var images = ["{{ article.photo1.url }}", "{{ article.photo2.url }}"]
+
+            // Navigation des images
+            $(".image-next").click(() => {
+                currentImageIndex = (currentImageIndex + 1) % images.length
+                updateMainImage()
+            })
+
+            $(".image-prev").click(() => {
+                currentImageIndex = (currentImageIndex - 1 + images.length) % images.length
+                updateMainImage()
+            })
+
+              // Clic sur les miniatures
+              $(".thumbnail").click(function () {
+                var index = $(this).index()
+                currentImageIndex = index
+                updateMainImage()
+
+                // Mettre à jour la classe active
+                $(".thumbnail").removeClass("active")
+                $(this).addClass("active")
+              })
+
+              function updateMainImage() {
+                $(".main-image img").attr("src", images[currentImageIndex])
+                $(".thumbnail").removeClass("active")
+                $(".thumbnail").eq(currentImageIndex).addClass("active")
+              }
+        })
+    </script>
 {% endblock content %}
