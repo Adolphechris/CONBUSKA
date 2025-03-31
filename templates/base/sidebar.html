@@ -1,4 +1,4 @@
- {% load static %}
+{% load static %}
     <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
             <a href="" class="site_title"><i class="fa fa-spinner"></i> <span>ESM V.1</span></a>
@@ -19,7 +19,6 @@
         </div>
         {% endif %}
         <!-- /menu profile quick info -->
-
         <br />
 
         <!-- sidebar menu -->
@@ -29,7 +28,14 @@
                 <ul class="nav side-menu documents">
                     <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
                     <li id="fournisseurs"><a href="{% url 'fournisseurs' %}"><i class="fa fa-list-ul"></i> Fournisseurs </a></li>
-                    <li id="articles"><a href="{% url 'articles' %}"><i class="fa fa-tags"></i> Articles </a></li>
+                    <li id="articles"><a><i class="fa fa-tags"></i> Articles <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="liste_articles"><a href="{% url 'articles' %}">Articles</a></li>
+                            <li id="unites"><a href="{% url 'unites' %}">Unités</a></li>
+                            <li id="categories"><a href="{% url 'categories' %}">Catégories</a></li>
+                        </ul>
+                    </li>
+                    <li id="commandes"><a href="{% url 'commandes' %}"><i class="fa fa-file-text-o"></i> Commandes </a></li>
                 </ul>
             </div>
             <div class="menu_section">

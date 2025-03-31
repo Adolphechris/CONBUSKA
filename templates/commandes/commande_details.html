@@ -1,0 +1,264 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Détails Commande {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    /* En-tête avec logo */
+    .headerx {
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .logo-wrapper {
+      display: block;
+      overflow: hidden;
+    }
+
+    .logo-container {
+        width: 48px;
+        height: 48px;
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 8px;
+        display: flex; /* Active flexbox */
+        align-items: center; /* Centre verticalement */
+        justify-content: center; /* Centre horizontalement */
+        margin-right: 15px;
+    }
+
+    .logo-container i {
+        font-size: 24px;
+    }
+
+    .header-text {
+        margin-left: 63px; /* 48px logo + 15px margin */
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+
+    /* Panneaux personnalisés */
+    .custom-panel {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .panel-heading {
+      background-color: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 15px 20px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 20px;
+      color: #1f2937;
+      margin: 0;
+      line-height: 30px;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+    .text-medium {
+        font-weight: 500;
+        font-size: 16px;
+    }
+    .row-spacing {
+        margin-bottom: 10px;
+    }
+    .icon-space {
+  margin-right: 5px;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Commandes / Editer commande </h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="x_panel">
+                    <div class="headerx clearfix">
+                        <div class="logo-wrapper">
+                            <div class="logo-container pull-left">
+                                <i class="fa fa-file-text-o"></i>
+                            </div>
+                            <div class="header-text">
+                                <h1>Bon de Commande No. {{ commande.numero }}</h1>
+                                <p class="text-muted">Gestion des commandes fournisseurs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Informations de la commande -->
+                    <div class="panel panel-default custom-panel">
+                        <div class="panel-heading">
+                            <div class="clearfix">
+                                <h5 class="panel-title pull-left"><i class="fa fa-info-circle icon-space"></i>Informations de la commande</h5>
+                                <a href="{% url 'commande_update' commande.pk %}" class="btn btn-default btn-sm pull-right" id="btnModifier">
+                                  <i class="fa fa-pencil icon-space"></i>Modifier
+                                </a>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group row-spacing">
+                                        <label class="col-sm-4 control-label">FOURNISSEUR :</label>
+                                        <div class="col-sm-8">
+                                            <p class="form-control-static text-medium">{{ commande.fournisseur }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row-spacing">
+                                        <label class="col-sm-4 control-label">DATE :</label>
+                                        <div class="col-sm-8">
+                                          <p class="form-control-static text-medium">{{ commande.date_commande }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group row-spacing">
+                                        <label class="col-sm-4 control-label">TAUX :</label>
+                                        <div class="col-sm-8">
+                                            <p class="form-control-static text-medium">{{ commande.taux }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row-spacing">
+                                        <label class="col-sm-4 control-label">DEVISE :</label>
+                                        <div class="col-sm-8">
+                                            <p class="form-control-static text-medium">{{ commande.devise }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Détails de la commande -->
+                    <div class="panel panel-default custom-panel">
+                        <div class="panel-heading">
+                            <div class="clearfix">
+                                <h5 class="panel-title pull-left"><i class="fa fa-list-ul icon-space"></i>Détails de la commande</h5>
+                                <a class="btn btn-primary btn-sm pull-right" href="{% url 'add_article_commande' commande.pk %}" id="btnAjouter">
+                                    <i class="fa fa-plus icon-space"></i>Ajouter un article
+                                </a>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="tableCommande" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Code</th>
+                                            <th>Article</th>
+                                            <th>Quantité</th>
+                                            <th>Unité</th>
+                                            <th>Prix unitaire</th>
+                                            <th>Prix total</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in details_commande %}
+                                            <tr>
+                                                <td class="vertical-middle">1</td>
+                                                <td class="vertical-middle">{{ i.article.code }}</td>
+                                                <td class="vertical-middle">{{ i.article.designation }}</td>
+                                                <td class="vertical-middle">{{ i.qte }}</td>
+                                                <td class="vertical-middle">{{ i.article.unite }}</td>
+                                                <td class="vertical-middle">{{ i.prix }} {{ commande.devise }}</td>
+                                                <td class="vertical-middle text-medium">{{ i.prix_total }} {{ commande.devise }}</td>
+                                                <td class="text-center">
+                                                    <div class="btn-group">
+                                                        <a class="btn btn-default btn-sm action-btn" href="{% url 'update_article_commande' commande.pk i.pk %}">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </a>
+                                                        <button class="btn btn-danger btn-sm action-btn" title="Supprimer">
+                                                            <i class="fa fa-trash-o"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total-row">
+                                            <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                                            <td><strong>{{ commande.total_commande }} {{ commande.devise }}</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-danger">
+                                <i class="fa fa-file-pdf-o"></i>
+                                Bon de commande
+                            </button>
+                        </div>
+                    </div>
+                    <div class="container-fluid text-right">
+                        <a class="btn btn-success" href="{% url 'commande_save' commande.pk %}">
+                            <i class="fa fa-save"></i>
+                            Enregister commande
+                        </a>
+                        <a class="btn btn-default" href="{% url 'commande_delete' commande.pk %}">
+                            <i class="fa fa-trash"></i>
+                            Annuler commande
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableCommande').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                scrollY: 300,
+                paging: false,
+			    autoWidth: true,
+                columnDefs: [
+                    { orderable: false, targets: 0 },
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+
+            $('#commandes').addClass('active');
+        });
+    </script>
+{% endblock content %}

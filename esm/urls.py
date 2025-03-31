@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('users.urls')),
     path('index/', include('dashboard.urls')),
     path('', include('dashboard.urls')),
+    path('commandes/', include('commandes.urls')),
     path('fournisseurs/', include('fournisseurs.urls')),
     path('produits/', include('produits.urls')),
     path('users/', include('users_management.urls')),

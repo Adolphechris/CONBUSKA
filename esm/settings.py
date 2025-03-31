@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # LOCAL
+    'commandes.apps.CommandesConfig',
     'fournisseurs.apps.FournisseursConfig',
     'produits.apps.ProduitsConfig',
     'parametres.apps.ParametresConfig',
