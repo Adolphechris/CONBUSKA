@@ -26,3 +26,14 @@ class Parametre(models.Model):
     @staticmethod
     def get_absolute_url():
         return reverse('parametres')
+
+
+class Magasin(models.Model):
+    nom = models.CharField(max_length=25)
+    description = models.TextField()
+    is_principal = models.BooleanField(default=False)
+    localisation = models.CharField(max_length=30)
+
+    @staticmethod
+    def get_absolute_url():
+        return reverse('magasins')

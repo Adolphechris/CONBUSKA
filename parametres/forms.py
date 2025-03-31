@@ -1,5 +1,5 @@
 from django import forms
-from .models import Parametre
+from .models import Parametre, Magasin
 
 
 class ParametresForm(forms.ModelForm):
@@ -45,4 +45,15 @@ class ParametresEditForm(forms.ModelForm):
             'ville': forms.TextInput(attrs={'class': 'form-control'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+
+class MagasinCreateForm(forms.ModelForm):
+    class Meta:
+        model = Magasin
+        exclude = ['is_principal']
+        widgets = {
+            'nom': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'localisation': forms.TextInput(attrs={'class': 'form-control'}),
         }

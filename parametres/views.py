@@ -1,9 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import FormView
+from django.views.generic import FormView, ListView, CreateView
 from django.views.generic.edit import UpdateView
 from django.urls import reverse_lazy
-from .models import Parametre
-from .forms import ParametresForm, ParametresEditForm
+from .models import Parametre, Magasin
+from .forms import ParametresForm, ParametresEditForm, MagasinCreateForm
 
 
 class ParametresView(LoginRequiredMixin, FormView):
@@ -46,3 +46,34 @@ class ParametresUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('parametres')
     template_name = 'parametres/parametres_form.html'
 
+
+class MagasinsView(LoginRequiredMixin, ListView):
+    model = Magasin
+    context_object_name = 'liste_magasins'
+    template_name = 'parametres/magasins.html'
+
+
+class MagasinCreateView(LoginRequiredMixin, CreateView):
+    model = Magasin
+    template_name = 'parametres/magasin_create_form.html'
+    form_class = MagasinCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Creation magasin'
+        context['title_page'] = 'Create'
+        context['title_form'] = "Formulaire de creation d'un magasin"
+        return context
+
+
+class MagasinUpdateView(LoginRequiredMixin, UpdateView):
+    model = Magasin
+    template_name = 'parametres/magasin_create_form.html'
+    form_class = MagasinCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Modification magasin'
+        context['title_page'] = 'Update'
+        context['title_form'] = 'Formulaire de modification du magasin #{}'.format(self.get_object().nom)
+        return context
