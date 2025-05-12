@@ -1,0 +1,22 @@
+<div class="add-form-container" id="updateFormContainer">
+    <h6 class="form-title">Modifier une ligne d'approvisionnement</h6>
+    <form id="updateForm"
+          method="POST"
+          hx-post="{% url 'approvisionnement_details' form_id %}"
+          hx-target="#updateForm"
+          hx-swap="outerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="update">
+        <input type="hidden" id="updateFormId" name="id" value="{{ update_form.instance.id }}">
+        <div id="updateFormFields">
+            {% include "approvisionnements/update_form_fields.html" with form=update_form %}
+        </div>
+        <button type="submit" class="btn btn-success btn-block">
+            <i class="fa fa-plus-circle icon-space"></i>Mettre à jour
+        </button>
+        <button type="button" class="btn btn-secondary btn-block"
+                onclick="document.getElementById('updateFormContainer').innerHTML = ''; document.getElementById('addFormContainer').style.display = 'block';">
+            <i class="fa fa-times icon-space"></i> Annuler
+        </button>
+    </form>
+</div>

@@ -28,6 +28,7 @@
                 <ul class="nav side-menu documents">
                     <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
                     <li id="fournisseurs"><a href="{% url 'fournisseurs' %}"><i class="fa fa-list-ul"></i> Fournisseurs </a></li>
+                    <li id="clients"><a href="{% url 'clients' %}"><i class="fa fa-user"></i> Clients </a></li>
                     <li id="articles"><a><i class="fa fa-tags"></i> Articles <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="liste_articles"><a href="{% url 'articles' %}">Articles</a></li>
@@ -36,6 +37,10 @@
                         </ul>
                     </li>
                     <li id="commandes"><a href="{% url 'commandes' %}"><i class="fa fa-file-text-o"></i> Commandes </a></li>
+                    <li id="approvisionnements"><a href="{% url 'approvisionnements' %}"><i class="fa fa-truck"></i> Approvisionnements </a></li>
+                    <li id="factures"><a href="{% url 'commandes' %}"><i class="fa fa-shopping-cart"></i> Factures </a></li>
+                    <li id="caisse"><a href="{% url 'unites' %}"><i class="fa fa-money"></i> Caisse </a></li>
+                    <li id="rapports"><a href="{% url 'unites' %}"><i class="fa fa-bar-chart-o"></i> Rapport </a></li>
                 </ul>
             </div>
             <div class="menu_section">

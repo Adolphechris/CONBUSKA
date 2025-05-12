@@ -1,4 +1,5 @@
 {% load static %}
+{% load django_htmx %}
 
 <html lang="en">
   <head>
@@ -90,9 +91,10 @@
       <!-- jQuery Tags Input -->
       <script src="{% static 'vendors/jquery.tagsinput/src/jquery.tagsinput.js' %}"></script>
     {% endblock head %}
+    {% htmx_script %}
   </head>
 
-  <body class="{% block body_class %} nav-md {% endblock body_class %}">
+  <body class="{% block body_class %} nav-md {% endblock body_class %}" hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
     {% block body %}
       <div class="container body">
         <div class="main_container">

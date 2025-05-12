@@ -1,0 +1,82 @@
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-cube"></i></span>
+        {{ form.article }}
+    </div>
+</div>
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-list-ul"></i></span>
+        {{ form.fournisseur }}
+    </div>
+</div>
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-sort-numeric-asc"></i></span>
+        {{ form.qte }}
+    </div>
+</div>
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-usd"></i>&nbsp;</span>
+        {{ form.prix }}
+    </div>
+</div>
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+        {{ form.date_peremption }}
+    </div>
+</div>
+<div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon"><i class="fa fa-file-text"></i></span>
+        {{ form.facture }}
+    </div>
+</div>
+
+<div class="cost-fields">
+    <h6 class="form-subtitle">Frais d'achat</h6>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-file-text-o"></i></span>
+                    {{ form.declaration }}
+              </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-truck"></i>&nbsp;</span>
+                    {{ form.transport }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-percent"></i></span>
+                    {{ form.tva }}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-cubes"></i></span>
+                    {{ form.manutention }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
+            {{ form.autre_frais }}
+        </div>
+    </div>
+</div>

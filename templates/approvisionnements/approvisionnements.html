@@ -1,0 +1,102 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Approvisionnements {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Approvisionnements</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Historique des approvisionnements<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'approvisionnement_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEL APPROVISIONNEMENT
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tableApprovisionnements" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Numero</th>
+                                            <th class="column-title"> Magasin</th>
+                                            <th class="column-title"> Date</th>
+                                            <th class="column-title"> Taux</th>
+                                            <th class="column-title"> Devise</th>
+                                            <th class="column-title"> Montant </th>
+                                            <th class="column-title"> Cout d'achat </th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for approvisionnement in liste_approvisionnements %}
+										    <tr>
+                                                <td>{{ approvisionnement.numero }}</td>
+                                                <td>{{ approvisionnement.magasin }}</td>
+                                                <td>{{ approvisionnement.date_approvisionnement }}</td>
+                                                <td>{{ approvisionnement.taux }}</td>
+                                                <td>{{ approvisionnement.devise }}</td>
+                                                <td>{{ approvisionnement.total_approvisionnement }}</td>
+                                                <td>{{ approvisionnement.cout_achat }}</td>
+                                                <td>
+                                                    <a href="{{ approvisionnement.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableApprovisionnements').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+        });
+    </script>
+{% endblock content %}

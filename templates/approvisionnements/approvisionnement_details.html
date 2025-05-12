@@ -1,0 +1,738 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Détails Approvisionnement {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    /* En-tête avec logo */
+    .header {
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .logo-wrapper {
+      display: block;
+      overflow: hidden;
+    }
+
+    .logo-container {
+        width: 48px;
+        height: 48px;
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 8px;
+        display: flex; /* Active flexbox */
+        align-items: center; /* Centre verticalement */
+        justify-content: center; /* Centre horizontalement */
+        margin-right: 15px;
+    }
+
+    .logo-container i {
+      font-size: 24px;
+    }
+
+    .header-text {
+      margin-left: 57px; /* 42px logo + 15px margin */
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-top: 0;
+      margin-bottom: 3px;
+    }
+
+    /* Panneaux personnalisés */
+    .custom-panel {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 15px;
+    }
+
+    .panel-heading {
+      background-color: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 15px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    .panel-heading.compact {
+      padding: 8px 12px;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: #1f2937;
+      margin: 0;
+      line-height: 30px;
+    }
+
+    .panel-body {
+      padding: 15px;
+    }
+
+    .panel-body.compact {
+      padding: 10px;
+    }
+
+    /* Panneau mis en évidence */
+    .highlighted-panel {
+      border: 1px solid #d1d5db;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .highlighted-panel .panel-heading {
+      background-color: #f9fafb;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    /* Formulaire d'ajout */
+    .add-form-container {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 15px;
+      height: 65%;
+    }
+
+    .form-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1f2937;
+      margin-top: 0;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .form-subtitle {
+      font-weight: 600;
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+
+    .cost-fields {
+      background-color: #f3f4f6;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .input-group-addon {
+      background-color: #f3f4f6;
+      color: #6b7280;
+      border-color: #d1d5db;
+    }
+
+    .form-control {
+      border-color: #d1d5db;
+      box-shadow: none;
+      height: 34px;
+    }
+
+    .form-control:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Tableau personnalisé */
+    .custom-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+    }
+
+    .custom-table th {
+      background-color: #f3f4f6;
+      color: #1f2937;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.05em;approvisionnement
+      padding: 10px;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .custom-table th:first-child {
+      border-left: 1px solid #e5e7eb;
+      border-top-left-radius: 6px;
+    }
+
+    .custom-table th:last-child {
+      border-right: 1px solid #e5e7eb;
+      border-top-right-radius: 6px;
+    }
+
+    .custom-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #1f2937;
+      font-size: 13px;
+    }
+
+    .custom-table td:first-child {
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .custom-table td:last-child {
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .custom-table tbody tr:hover {
+      background-color: #f3f4f6;
+    }
+
+    .custom-table tbody tr:last-child td:first-child {
+      border-bottom-left-radius: 6px;
+    }
+
+    .custom-table tbody tr:last-child td:last-child {
+      border-bottom-right-radius: 6px;
+    }
+
+    .total-row {
+      background-color: #f9fafb;
+    }
+
+    .total-row td {
+      border-top: 2px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    /* Boutons d'action */
+    .action-buttons-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .action-buttons-container .btn {
+      margin: 0 10px;
+      min-width: 150px;
+    }
+
+    .btn {
+      font-weight: 500;
+      border-radius: 6px;
+    }
+
+    .btn-primary {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .btn-success {
+      background-color: #10b981;
+      border-color: #10b981;
+    }
+
+    .btn-success:hover,
+    .btn-success:focus {
+      background-color: #059669;
+      border-color: #059669;
+    }
+
+    .btn-default {
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      color: #1f2937;
+    }
+
+    .btn-default:hover,
+    .btn-default:focus {
+      background-color: #f9fafb;
+    }
+
+    .action-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      line-height: 28px;
+      text-align: center;
+    }
+
+    /* Utilitaires */
+    .icon-space {
+      margin-right: 5px;
+    }
+
+    .text-medium {
+      font-weight: 500;
+    }
+
+    .vertical-middle {
+      vertical-align: middle !important;
+    }
+
+    .row-spacing-sm {
+      margin-bottom: 5px;
+    }
+
+    /* Formulaires compacts */
+    .form-group label.control-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .form-control-static {
+      padding-top: 0;
+      padding-bottom: 0;
+      min-height: auto;
+      margin-bottom: 5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+      .add-form-container {
+        margin-bottom: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .content-wrapper {
+        padding: 15px 10px;
+      }
+
+      .btn {
+        padding: 6px 12px;
+      }
+
+      .action-buttons-container .btn {
+        margin-bottom: 10px;
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .custom-table th,
+      .custom-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .panel-title {
+        font-size: 14px;
+      }
+
+      .btn-group {
+        display: flex;
+      }
+
+      .action-buttons-container {
+        padding: 10px;
+      }
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Approvisionnement / Editer approvisionnement </h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="x_panel">
+                    <div class="headerx clearfix">
+                        <div class="logo-wrapper">
+                            <div class="logo-container pull-left">
+                                <i class="fa fa-truck"></i>
+                            </div>
+                            <div class="header-text">
+                                <h1>Fiche d'approvisionnement</h1>
+                                <p class="text-muted">Gestion des réceptions de marchandises</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Informations simplifiées du bon d'approvisionnement -->
+                    <div class="panel panel-default custom-panel">
+                        <div class="panel-heading compact">
+                            <div class="clearfix">
+                                <h5 class="panel-title pull-left"><i class="fa fa-info-circle icon-space"></i>Informations du bon</h5>
+                                <button class="btn btn-default btn-xs pull-right" id="btnModifier">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-body compact">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="form-group row-spacing-sm">
+                                        <label class="control-label">N° Fiche d'approvisionnement:</label>
+                                        <p class="form-control-static text-medium">{{ approvisionnement.numero }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="form-group row-spacing-sm">
+                                        <label class="control-label">Magasin de réception:</label>
+                                        <p class="form-control-static text-medium">{{ approvisionnement.magasin }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="form-group row-spacing-sm">
+                                        <label class="control-label">Devise:</label>
+                                        <p class="form-control-static text-medium">{{ approvisionnement.devise }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="form-group row-spacing-sm">
+                                        <label class="control-label">Taux:</label>
+                                        <p class="form-control-static text-medium">{{ approvisionnement.taux }}</p>
+                                    </div>
+                                </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    <!-- Section principale avec formulaire et tableau -->
+                    <div class="panel panel-default custom-panel highlighted-panel">
+                        <div class="panel-heading">
+                            <h5 class="panel-title"><i class="fa fa-list-ul icon-space"></i>Détails de l'approvisionnement</h5>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <!-- Formulaire d'ajout à gauche -->
+                                <div class="col-md-4">
+                                    <div class="add-form-container" id="addFormContainer">
+                                        <h6 class="form-title">Ajouter une ligne d'approvisionnement</h6>
+                                        <form id="addForm"
+                                              method="POST"
+                                              hx-post="{% url 'approvisionnement_details' approvisionnement.pk %}"
+                                              hx-target="#addForm"
+                                              hx-swap="innerHTML">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="form_type" value="add">
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-cube"></i></span>
+                                                    {{ add_form.article }}
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-list-ul"></i></span>
+                                                    {{ add_form.fournisseur }}
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-sort-numeric-asc"></i></span>
+                                                    {{ add_form.qte }}
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-usd"></i>&nbsp;</span>
+                                                    {{ add_form.prix }}
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                                    {{ add_form.date_peremption }}
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-file-text"></i></span>
+                                                    {{ add_form.facture }}
+                                                </div>
+                                            </div>
+
+                                            <div class="cost-fields">
+                                                <h6 class="form-subtitle">Frais d'achat</h6>
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <span class="input-group-addon"><i class="fa fa-file-text-o"></i></span>
+                                                                {{ add_form.declaration }}
+                                                          </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <span class="input-group-addon"><i class="fa fa-truck"></i>&nbsp;</span>
+                                                                {{ add_form.transport }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <span class="input-group-addon"><i class="fa fa-percent"></i></span>
+                                                                {{ add_form.tva }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <span class="input-group-addon"><i class="fa fa-cubes"></i></span>
+                                                                {{ add_form.manutention }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
+                                                        {{ add_form.autre_frais }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-block">
+                                                <i class="fa fa-plus-circle icon-space"></i>Ajouter un article
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div id="updateFormContainer">
+
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="table-responsive">
+                                        <table id="tableApprovisionnement" class="table table-striped bulk_action">
+                                            <thead>
+                                                <tr>
+                                                    <th>N°</th>
+                                                    <th>Fnsseur</th>
+                                                    <th>Facture</th>
+                                                    <th>Article</th>
+                                                    <th>Qté livrée</th>
+                                                    <th>Date p</th>
+                                                    <th>PAN</th>
+                                                    <th>Frais achat</th>
+                                                    <!--<th>Tr.</th>
+                                                    <th>Man.</th>
+                                                    <th>TVA</th>
+                                                    <th>AF</th>-->
+                                                    <th>PVD</th>
+                                                    <th>PVG</th>
+                                                    <th>Resultats</th>
+                                                    <th class="text-center">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in details_approvisionnement %}
+                                                    <tr id="row-{{ i.pk }}">
+                                                        <td class="vertical-middle">{{ forloop.counter }}</td>
+                                                        <td class="vertical-middle">{{ i.fournisseur }}</td>
+                                                        <td class="vertical-middle">{{ i.facture }}</td>
+                                                        <td class="vertical-middle">{{ i.article.designation }}</td>
+                                                        <td class="vertical-middle">{{ i.qte }}</td>
+                                                        <td class="vertical-middle">{{ i.date_peremption }}</td>
+                                                        <td class="vertical-middle">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
+                                                        <td class="vertical-middle">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
+                                                        <!--<td class="vertical-middle">{{ i.transport }} {{ approvisionnement.devise }}</td>
+                                                        <td class="vertical-middle">{{ i.manutention }} {{ approvisionnement.devise }}</td>
+                                                        <td class="vertical-middle">{{ i.tva }} {{ approvisionnement.devise }}</td>
+                                                        <td class="vertical-middle">{{ i.autre_frais }} {{ approvisionnement.devise }}</td>-->
+                                                        <td class="vertical-middle text-medium">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
+                                                        <td class="vertical-middle text-medium">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
+                                                        <td class="vertical-middle">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
+                                                        <td class="text-center">
+                                                            <div class="btn-group">
+                                                                <button
+                                                                        class="btn btn-default btn-sm"
+                                                                        hx-get="{% url 'get_form_update' i.pk %}"
+                                                                        hx-target="#updateFormContainer"
+                                                                        hx-swap="innerHTML"
+                                                                        hx-trigger="click"
+                                                                        hx-on:click="document.getElementById('addFormContainer').style.display = 'none';">
+                                                                    <i class="fa fa-pencil"></i>
+                                                                </button>
+                                                                <button
+                                                                    class="btn btn-danger btn-sm"
+                                                                    hx-delete=""
+                                                                    hx-target="#row-{{ i.pk }}"
+                                                                    hx-swap="outerHTML">
+                                                                    <i class="fa fa-trash-o"></i>
+                                                                </button>
+                                                            </div>
+                                                            <!--<div class="btn-group">
+                                                                <a class="btn btn-default btn-sm action-btn edit-btn" href="#" data-id="{{ i.pk }}">
+                                                                    <i class="fa fa-pencil"></i>
+                                                                </a>
+                                                                <button class="btn btn-danger btn-sm action-btn" title="Supprimer">
+                                                                    <i class="fa fa-trash-o"></i>
+                                                                </button>
+                                                            </div>-->
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total-row">
+                                                    <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise  }}</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-danger">
+                                        <i class="fa fa-file-pdf-o"></i>
+                                        Bon d'approvisionnement
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-fluid text-right">
+                        <a class="btn btn-primary" href="">
+                            <i class="fa fa-save"></i>
+                            Enregister approvisionnement
+                        </a>
+                        <a class="btn btn-default" href="">
+                            <i class="fa fa-trash"></i>
+                            Annuler approvisionnement
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableApprovisionnement').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                scrollY: 300,
+                paging: false,
+			    autoWidth: true,
+                columnDefs: [
+                    { orderable: false, targets: 0 },
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const id = this.dataset.id;
+                    console.log('ID ### ', id);
+
+                    fetch(`/approvisionnements/get-form-update/${id}/`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('ID INSIDE ##### ', id);
+                            console.log(data.form_html);
+                            document.getElementById('updateFormFields').innerHTML = data.form_html;
+
+                            setTimeout(() => {
+                                const updateFormIdField = document.getElementById('updateFormId');
+                                if (updateFormIdField) {
+                                    updateFormIdField.value = id;
+                                } else {
+                                    console.warn("Champ #updateFormId introuvable !");
+                                }
+
+                                document.getElementById('addFormContainer').style.display = 'none';
+                                document.getElementById('updateFormContainer').style.display = 'block';
+                            }, 0);
+
+                            // document.getElementById('updateFormId').value = id;
+                            // document.getElementById('addFormContainer').style.display = 'none';
+                            // document.getElementById('updateFormContainer').style.display = 'block';
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    fetch("", {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(res => res.json())
+                         .then(data => {
+                             if (data.success) {
+                                 //alert("Succès !");
+                                 window.location.reload();
+                             } else {
+                                 console.log(data.errors);
+                                 // Affichage des erreurs à implémenter
+                             }
+                         });
+                });
+            });
+
+            $('#id_date_peremption').daterangepicker({
+                singleDatePicker: true,
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            });
+
+            $('#menu_toggle').on('click', function() {
+                $('.dataTables_scrollHeadInner').css('width', '100%');
+                $('#tableApprovisionnement').css('width', '100%');
+                var table = $('#tableApprovisionnement').DataTable();
+                setTimeout(function () {
+                    table.columns.adjust().draw();
+                },200);
+            });
+
+            $('#approvisionnements').addClass('active');
+        });
+    </script>
+{% endblock content %}
