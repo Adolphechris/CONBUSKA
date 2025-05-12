@@ -2,6 +2,19 @@
 {% load static %}
 
 {% block title %} Détails Fournisseur {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .total-row {
+      background-color: #f9fafb;
+    }
+
+    .total-row td {
+      border-top: 2px solid #e5e7eb;
+      font-size: 14px;
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
@@ -14,16 +27,128 @@
              <div class="row">
                 <div class="col-md-12">
                     <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Détails du fournisseur {{ fournisseur.nom }}</h2>
-                            <div class="clearfix"></div>
+                        <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
+                            <div class="profile_img">
+                                <div id="crop-avatar">
+                                    <!-- Current avatar -->
+                                    <img class="img-circle" src="{{ fournisseur.photo.url }}"
+                                         alt="Avatar" title="Change the avatar" width="240">
+                                </div>
+                            </div>
+                            <h4><strong>{{fournisseur.nom}} / {{fournisseur.tuteur}}</strong></h4>
+                            <ul class="list-unstyled user_data">
+                                <li><i class="fa fa-map-marker"></i> Addresse: {{ fournisseur.adresse }}</li>
+                                <li><i class="fa fa-phone"></i> Telephone: {{ fournisseur.telephone }}</li>
+                                <li><i class="fa fa-envelope"></i> Email: {{ fournisseur.email }}</li>
+                            </ul>
+                            <hr>
+                            <ul class="list-unstyled user_data">
+                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde fournisseur: {{ solde_fournisseur|floatformat }}$</li>
+                            </ul>
+                            <br />
+                            <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="btn btn-primary btn-lg">
+                                 <i class="fa fa-edit"></i>
+                                 Modifier
+                            </a>
                         </div>
-                        <div class="x_content">
-
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            <div class="" role="tabpanel" data-example-id="togglable-tabs">
+                                <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+                                    <li role="presentation" class="active"><a href="#tab_content1" id="mouvements-tab" role="tab" data-toggle="tab" aria-expanded="true">Mouvements</a></li>
+                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="paiements-tab" data-toggle="tab" aria-expanded="false">Paiements</a></li>
+                                </ul>
+                                <div id="myTabContent" class="tab-content">
+                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="mouvements-tab">
+                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
+                                            <thead>
+                                                <tr class="headings">
+                                                    <th class="column-title"> No.</th>
+                                                    <th class="column-title"> Facture</th>
+                                                    <th class="column-title"> Article</th>
+                                                    <th class="column-title"> Qte livrée</th>
+                                                    <th class="column-title"> PAU </th>
+                                                    <th class="column-title"> Total </th>
+                                                    <th class="column-title"> Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in mouvements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.facture }}</td>
+                                                        <td>{{ i.article }}</td>
+                                                        <td>{{ i.qte }}</td>
+                                                        <td>{{ i.prix|floatformat }}</td>
+                                                        <td>{{ i.prix_total|floatformat }}</td>
+                                                        <td>
+                                                            <a href="" class="btn btn-warning btn-xs">
+                                                                <i class="fa fa-eye"></i>
+                                                                Voir l'approvisionnement
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total_row">
+                                                    <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{ total_mouvements|floatformat  }}</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="paiements-tab">
+                                        <a href="{% url 'paiement_fournisseur_create' fournisseur.pk %}" class="btn btn-primary btn-lg pull-right">
+                                             <i class="fa fa-plus"></i>
+                                             Nouveau paiement
+                                        </a>
+                                        <table id="tablePaiements" class="table table-striped jambo_table bulk_action">
+                                            <thead>
+                                                <tr class="headings">
+                                                    <th class="column-title"> No.</th>
+                                                    <th class="column-title"> Date paiement</th>
+                                                    <th class="column-title"> Montant</th>
+                                                    <th class="column-title"> Percepteur</th>
+                                                    <th class="column-title"> Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in paiements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.date_paiement }}</td>
+                                                        <td>{{ i.montant|floatformat }}</td>
+                                                        <td>{{ i.percepteur }}</td>
+                                                        <td>
+                                                            <a href="" class="btn btn-primary btn-xs">
+                                                                <i class="fa fa-edit"></i>
+                                                                Modifier
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total_row">
+                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{ total_paiements|floatformat  }}</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function() {
+            $('.fournisseurs').addClass('active');
+         });
+    </script>
 {% endblock content %}

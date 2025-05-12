@@ -40,3 +40,20 @@ class Fournisseur(models.Model):
 
     def get_absolute_url(self):
         return reverse('fournisseur_details', args=[self.pk])
+
+
+class PaiementFournisseur(models.Model):
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT, null=False)
+    montant = models.DecimalField(max_digits=8, decimal_places=4)
+    percepteur = models.CharField(max_length=30)
+    date_paiement = models.DateField()
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    cree_par = models.ForeignKey('users.CustomUser',
+                                 related_name='paiementfournisseurcreepar',
+                                 on_delete=models.PROTECT)
+    modifie_par = models.ForeignKey('users.CustomUser',
+                                    blank=True, null=True,
+                                    related_name='paiementfournisseurmodpar',
+                                    on_delete=models.PROTECT)
+    objects = models.Manager()

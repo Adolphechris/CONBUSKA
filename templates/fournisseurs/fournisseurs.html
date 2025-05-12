@@ -34,7 +34,39 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            <div class="content table-responsive display">
+                            {% for fournisseur in liste_fournisseurs %}
+                                <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                    <div class="well profile_view">
+                                        <div class="col-sm-12">
+                                            <h4 class="brief"><i>Fournisseur</i></h4>
+                                            <div class="left col-xs-7">
+                                                <h2>{{ fournisseur.nom }}</h2>
+                                                <p><strong>Tuteur: </strong> {{ fournisseur.tuteur }} </p>
+                                                <ul class="list-unstyled">
+                                                  <li><i class="fa fa-map-marker"></i> Addresse: {{ fournisseur.adresse }}</li>
+                                                  <li><i class="fa fa-phone"></i> Telephone #: {{ fournisseur.telephone }}</li>
+                                                  <li><i class="fa fa-envelope"></i> Email: {{ fournisseur.email }}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="right col-xs-5 text-center">
+                                                <img src="{{ fournisseur.photo.url }}" alt="..." class="img-circle img-responsive">
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 bottom text-center">
+                                            <div class="col-xs-12 col-sm-6 emphasis">
+                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ solde_fournisseur }}</h4>
+                                            </div>
+                                            <div class="col-xs-12 col-sm-6 emphasis">
+                                                <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
+                                                  <i class="fa fa-user"> </i> Voir le profil
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">
                                         <a href="{% url 'fournisseur_create' %}">
@@ -98,7 +130,7 @@
 									    {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
+                            </div>-->
                         </div>
                     </div>
                 </div>
