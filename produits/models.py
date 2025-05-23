@@ -1,7 +1,8 @@
 from django.db import models
 from django.urls import reverse
 from django.forms.models import model_to_dict
-# from common.utils import is_duplicate
+from parametres.models import Magasin
+from common.utils import is_duplicate
 
 
 class Categorie(models.Model):
@@ -56,12 +57,32 @@ class Article(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.designation
+        return f'{self.designation}| 20 | 2000FC | 1800FC'
 
     def stock(self):
         get_stock = Stock.objects.filter(article=self.pk)
-        qte = sum(i.qte for i in get_stock)
-        return qte
+        stock = sum(i.qte for i in get_stock)
+        return stock
+
+    @property
+    def prix_vente_devise(self):
+        if self.devise == '$':
+            prix_vente_fc = self.prix_vente * 2800
+            prix_vente_usd = self.prix_vente
+        else:
+            prix_vente_usd = round(self.prix_vente / 2800, 2)
+            prix_vente_fc = self.prix_vente
+        return prix_vente_fc, prix_vente_usd
+
+    @property
+    def prix_vente_gros_devise(self):
+        if self.devise == '$':
+            prix_vente_gros_fc = self.prix_vente_gros * 2800
+            prix_vente_gros_usd = self.prix_vente_gros
+        else:
+            prix_vente_gros_usd = round(self.prix_vente_gros / 2800, 2)
+            prix_vente_gros_fc = self.prix_vente_gros
+        return prix_vente_gros_fc, prix_vente_gros_usd
 
     @property
     def get_next_code(self):
@@ -83,6 +104,7 @@ class Article(models.Model):
 
 
 class Stock(models.Model):
+    magasin = models.ForeignKey(Magasin, on_delete=models.PROTECT)
     article = models.ForeignKey(Article, on_delete=models.PROTECT)
     qte = models.IntegerField(blank=False, null=False, default=0)
     date_peremption = models.DateField(blank=False, null=False)
@@ -93,24 +115,3 @@ class Stock(models.Model):
 
     def __str__(self):
         return self.article
-
-    def valid(self):
-        data = {'article': self.article.id, 'lot': self.lot}
-        items = Stock.objects.filter(produit=data.get('produit'))
-        items_to_dict = [model_to_dict(i) for i in items]
-
-        duplicate = True # is_duplicate(items_to_dict, data)
-        if duplicate:
-            duplicated_line = Stock.objects.get(id=duplicate['id'])
-            # delta = abs(duplicated_line.qte - self.qte)
-            duplicated_line.qte += self.qte
-            duplicated_line.save()
-        else:
-            self.save()
-
-    def remove(self, qte):
-        if self.qte - qte != 0:
-            self.qte -= qte
-            self.save()
-        else:
-            self.delete()

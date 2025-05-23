@@ -377,9 +377,9 @@
                         <div class="panel-heading compact">
                             <div class="clearfix">
                                 <h5 class="panel-title pull-left"><i class="fa fa-info-circle icon-space"></i>Informations du bon</h5>
-                                <button class="btn btn-default btn-xs pull-right" id="btnModifier">
+                                <a href="{% url 'approvisionnement_update' approvisionnement.pk %}" class="btn btn-default btn-xs pull-right" id="btnModifier">
                                     <i class="fa fa-pencil"></i>
-                                </button>
+                                </a>
                             </div>
                         </div>
                         <div class="panel-body compact">
@@ -418,189 +418,18 @@
                             <h5 class="panel-title"><i class="fa fa-list-ul icon-space"></i>Détails de l'approvisionnement</h5>
                         </div>
                         <div class="panel-body">
-                            <div class="row">
+                            <div class="row" id="formTableContainer">
                                 <!-- Formulaire d'ajout à gauche -->
                                 <div class="col-md-4">
-                                    <div class="add-form-container" id="addFormContainer">
-                                        <h6 class="form-title">Ajouter une ligne d'approvisionnement</h6>
-                                        <form id="addForm"
-                                              method="POST"
-                                              hx-post="{% url 'approvisionnement_details' approvisionnement.pk %}"
-                                              hx-target="#addForm"
-                                              hx-swap="innerHTML">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="form_type" value="add">
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-cube"></i></span>
-                                                    {{ add_form.article }}
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-list-ul"></i></span>
-                                                    {{ add_form.fournisseur }}
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-sort-numeric-asc"></i></span>
-                                                    {{ add_form.qte }}
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-usd"></i>&nbsp;</span>
-                                                    {{ add_form.prix }}
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                                                    {{ add_form.date_peremption }}
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-file-text"></i></span>
-                                                    {{ add_form.facture }}
-                                                </div>
-                                            </div>
-
-                                            <div class="cost-fields">
-                                                <h6 class="form-subtitle">Frais d'achat</h6>
-                                                <div class="row">
-                                                    <div class="col-sm-6">
-                                                        <div class="form-group">
-                                                            <div class="input-group">
-                                                                <span class="input-group-addon"><i class="fa fa-file-text-o"></i></span>
-                                                                {{ add_form.declaration }}
-                                                          </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-6">
-                                                        <div class="form-group">
-                                                            <div class="input-group">
-                                                                <span class="input-group-addon"><i class="fa fa-truck"></i>&nbsp;</span>
-                                                                {{ add_form.transport }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-sm-6">
-                                                        <div class="form-group">
-                                                            <div class="input-group">
-                                                                <span class="input-group-addon"><i class="fa fa-percent"></i></span>
-                                                                {{ add_form.tva }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-6">
-                                                        <div class="form-group">
-                                                            <div class="input-group">
-                                                                <span class="input-group-addon"><i class="fa fa-cubes"></i></span>
-                                                                {{ add_form.manutention }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
-                                                        {{ add_form.autre_frais }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary btn-block">
-                                                <i class="fa fa-plus-circle icon-space"></i>Ajouter un article
-                                            </button>
-                                        </form>
+                                    <div id="addFormContainer">
+                                        {% include "approvisionnements/partials/add_form.html" %}
                                     </div>
-                                    <div id="updateFormContainer">
-
-                                    </div>
+                                    <div id="updateFormContainer"></div>
                                 </div>
+                                <!-- Tableau à droite -->
                                 <div class="col-md-8">
-                                    <div class="table-responsive">
-                                        <table id="tableApprovisionnement" class="table table-striped bulk_action">
-                                            <thead>
-                                                <tr>
-                                                    <th>N°</th>
-                                                    <th>Fnsseur</th>
-                                                    <th>Facture</th>
-                                                    <th>Article</th>
-                                                    <th>Qté livrée</th>
-                                                    <th>Date p</th>
-                                                    <th>PAN</th>
-                                                    <th>Frais achat</th>
-                                                    <!--<th>Tr.</th>
-                                                    <th>Man.</th>
-                                                    <th>TVA</th>
-                                                    <th>AF</th>-->
-                                                    <th>PVD</th>
-                                                    <th>PVG</th>
-                                                    <th>Resultats</th>
-                                                    <th class="text-center">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in details_approvisionnement %}
-                                                    <tr id="row-{{ i.pk }}">
-                                                        <td class="vertical-middle">{{ forloop.counter }}</td>
-                                                        <td class="vertical-middle">{{ i.fournisseur }}</td>
-                                                        <td class="vertical-middle">{{ i.facture }}</td>
-                                                        <td class="vertical-middle">{{ i.article.designation }}</td>
-                                                        <td class="vertical-middle">{{ i.qte }}</td>
-                                                        <td class="vertical-middle">{{ i.date_peremption }}</td>
-                                                        <td class="vertical-middle">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
-                                                        <td class="vertical-middle">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
-                                                        <!--<td class="vertical-middle">{{ i.transport }} {{ approvisionnement.devise }}</td>
-                                                        <td class="vertical-middle">{{ i.manutention }} {{ approvisionnement.devise }}</td>
-                                                        <td class="vertical-middle">{{ i.tva }} {{ approvisionnement.devise }}</td>
-                                                        <td class="vertical-middle">{{ i.autre_frais }} {{ approvisionnement.devise }}</td>-->
-                                                        <td class="vertical-middle text-medium">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
-                                                        <td class="vertical-middle text-medium">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
-                                                        <td class="vertical-middle">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
-                                                        <td class="text-center">
-                                                            <div class="btn-group">
-                                                                <button
-                                                                        class="btn btn-default btn-sm"
-                                                                        hx-get="{% url 'get_form_update' i.pk %}"
-                                                                        hx-target="#updateFormContainer"
-                                                                        hx-swap="innerHTML"
-                                                                        hx-trigger="click"
-                                                                        hx-on:click="document.getElementById('addFormContainer').style.display = 'none';">
-                                                                    <i class="fa fa-pencil"></i>
-                                                                </button>
-                                                                <button
-                                                                    class="btn btn-danger btn-sm"
-                                                                    hx-delete=""
-                                                                    hx-target="#row-{{ i.pk }}"
-                                                                    hx-swap="outerHTML">
-                                                                    <i class="fa fa-trash-o"></i>
-                                                                </button>
-                                                            </div>
-                                                            <!--<div class="btn-group">
-                                                                <a class="btn btn-default btn-sm action-btn edit-btn" href="#" data-id="{{ i.pk }}">
-                                                                    <i class="fa fa-pencil"></i>
-                                                                </a>
-                                                                <button class="btn btn-danger btn-sm action-btn" title="Supprimer">
-                                                                    <i class="fa fa-trash-o"></i>
-                                                                </button>
-                                                            </div>-->
-                                                        </td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="6" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise  }}</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                    <div class="table-responsive" id="linesTableContainer">
+                                        {% include "approvisionnements/partials/lines_table.html" %}
                                     </div>
                                     <button type="button" class="btn btn-danger">
                                         <i class="fa fa-file-pdf-o"></i>
@@ -624,13 +453,23 @@
             </div>
         </div>
     </div>
+    <!-- Modal Bootstrap -->
+    <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="modalContent">
+          <!-- Le contenu HTMX (formulaire de confirmation) sera injecté ici -->
+        </div>
+      </div>
+    </div>
+
     <script>
-        $(document).ready(function () {
-            var t = $('#tableApprovisionnement').DataTable({
+        function initDataTable() {
+            $('#tableApprovisionnement').DataTable({
+                destroy: true, // Important si tu réinitialises
                 dom: '<"top">rflt<"bottom"p><"clear">',
                 scrollY: 300,
                 paging: false,
-			    autoWidth: true,
+                autoWidth: true,
                 columnDefs: [
                     { orderable: false, targets: 0 },
                 ],
@@ -639,82 +478,43 @@
                     "sInfoEmpty": "Aucun r&eacute;sultat disponible",
                     "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
                     "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLengthMenu": "Afficher _MENU_ éléments",
                     "sLoadingRecords": "Chargement...",
                     "sProcessing": "Traitement...",
                     "oPaginate": {
-                        "sFirst":    "Premier",
-                        "sLast":     "Dernier",
-                        "sNext":     "Suivant",
+                        "sFirst": "Premier",
+                        "sLast": "Dernier",
+                        "sNext": "Suivant",
                         "sPrevious": "Précédent"
                     },
                     "oAria": {
-                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
                         "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
                     }
                 },
             });
+        }
 
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const id = this.dataset.id;
-                    console.log('ID ### ', id);
+        document.addEventListener("DOMContentLoaded", function () {
+            initDataTable();
+        });
 
-                    fetch(`/approvisionnements/get-form-update/${id}/`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            console.log('ID INSIDE ##### ', id);
-                            console.log(data.form_html);
-                            document.getElementById('updateFormFields').innerHTML = data.form_html;
-
-                            setTimeout(() => {
-                                const updateFormIdField = document.getElementById('updateFormId');
-                                if (updateFormIdField) {
-                                    updateFormIdField.value = id;
-                                } else {
-                                    console.warn("Champ #updateFormId introuvable !");
-                                }
-
-                                document.getElementById('addFormContainer').style.display = 'none';
-                                document.getElementById('updateFormContainer').style.display = 'block';
-                            }, 0);
-
-                            // document.getElementById('updateFormId').value = id;
-                            // document.getElementById('addFormContainer').style.display = 'none';
-                            // document.getElementById('updateFormContainer').style.display = 'block';
-                        }
-                    });
-                });
+        $(document).ready(function () {
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                // Vérifie que c'est le bon container (optionnel)
+                if (evt.target && evt.target.id === "formTableContainer") {
+                    initDataTable();
+                }
+                if (evt.target.id === "modalContent") {
+                    $('#mainModal').modal('show');
+                }
             });
 
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const formData = new FormData(this);
-                    fetch("", {
-                        method: "POST",
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    }).then(res => res.json())
-                         .then(data => {
-                             if (data.success) {
-                                 //alert("Succès !");
-                                 window.location.reload();
-                             } else {
-                                 console.log(data.errors);
-                                 // Affichage des erreurs à implémenter
-                             }
-                         });
-                });
-            });
+            function resetForms() {
+                // Réaffiche le addForm et vide le updateForm
+                document.getElementById('updateFormContainer').innerHTML = '';
+                document.getElementById('addFormContainer').style.display = 'block';
+              }
 
             $('#id_date_peremption').daterangepicker({
                 singleDatePicker: true,

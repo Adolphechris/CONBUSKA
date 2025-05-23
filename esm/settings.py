@@ -39,7 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # LOCAL
+    'approvisionnements.apps.ApprovisionnementsConfig',
+    'clients.apps.ClientsConfig',
     'commandes.apps.CommandesConfig',
+    'factures.apps.FacturesConfig',
     'fournisseurs.apps.FournisseursConfig',
     'produits.apps.ProduitsConfig',
     'parametres.apps.ParametresConfig',
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
     # Contrib
     'django.forms',
     'django_filters',
+    'django_htmx',
 ]
 
 MIDDLEWARE = [

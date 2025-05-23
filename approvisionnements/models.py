@@ -1,9 +1,8 @@
 from django.db import models
 from django.urls import reverse
-from django.forms.models import model_to_dict
 from django.db import transaction
-from common.utils import is_duplicate
 from produits.models import Stock
+from django.shortcuts import redirect, render
 import datetime
 
 
@@ -114,12 +113,12 @@ class DetailsApprovisionnement(models.Model):
             return (prix_vente_fc - self.cout_achat) * self.qte
 
     @transaction.atomic
-    def add_details(self):
+    def add(self):
         detail, created = DetailsApprovisionnement.objects.get_or_create(
-            approvisionnement=self.approvisionnement.pk,
-            article=self.article.pk,
+            approvisionnement=self.approvisionnement,
+            article=self.article,
             date_peremption=self.date_peremption,
-            fournisseur=self.fournisseur.pk,
+            fournisseur=self.fournisseur,
             facture=self.facture,
             defaults={
                 'declaration': self.declaration,
@@ -136,37 +135,85 @@ class DetailsApprovisionnement(models.Model):
             detail.qte += self.qte
             detail.save()
 
-    def update(self, old_object):
-        # First remove old object in the stock
-        get_stock = Stock.objects.get(magasin=self.approvisionnement.magasin, article=self.article,
-                                      date_peremption=old_object.date_peremption)
-        get_stock.remove(old_object.qte)
-
-        # Find if duplicate
-        data = {'article': self.article.pk, 'date_peremption': self.date_peremption}
-        items = DetailsApprovisionnement.objects.filter(approvisionnement=self.approvisionnement.pk)
-        items_to_dict = [model_to_dict(i) for i in items]
-
-        duplicate = is_duplicate(items_to_dict, data)
-        if duplicate:
-            # Merge
-            duplicated_line = DetailsApprovisionnement.objects.get(id=duplicate['id'])
-            duplicated_line.qte += self.qte
-            duplicated_line.save()
-
-            # Remove
-            old_object.delete()
-        else:
-            self.save()
-
-    def save(self, *args, **kwargs):
-        stock = Stock(
+        # Mise à jour ou création du stock
+        stock, stock_created = Stock.objects.get_or_create(
             magasin=self.approvisionnement.magasin,
             article=self.article,
-            qte=self.qte,
-            date_peremption=self.date_peremption
+            date_peremption=self.date_peremption,
+            defaults={'qte': self.qte}
         )
-        stock.add_stock()
+        if not stock_created:
+            stock.qte += self.qte
+            stock.save()
+
+    @transaction.atomic
+    def update_appro(self):
+        old_details = DetailsApprovisionnement.objects.get(pk=self.pk)
+        print(old_details)
+        old_article = old_details.article
+        old_peremption = old_details.date_peremption
+        old_qte = old_details.qte
+
+        # Valeurs modifiées
+        new_article = self.article
+        new_peremption = self.date_peremption
+        new_qte = self.qte
+
+        appro = self.approvisionnement
+
+        # Même article / même date ➜ simple update
+        if (old_article == new_article) and (old_peremption == new_peremption):
+            self.save()
+
+            stock = Stock.objects.get(
+                magasin=appro.magasin.pk,
+                article=old_article,
+                date_peremption=old_peremption
+            )
+            stock.qte = stock.qte - old_qte + new_qte
+            stock.save()
+
+        else:
+            # Fusion avec ligne existante si elle existe
+            autre_detail = DetailsApprovisionnement.objects.filter(
+                approvisionnement=appro,
+                article=new_article,
+                date_peremption=new_peremption
+            ).exclude(pk=self.pk).first()
+
+            if autre_detail:
+                autre_detail.qte += new_qte
+                autre_detail.save()
+                self.delete()
+            else:
+                self.save()
+
+            # Mise à jour du stock
+            # Ancienne ligne
+            stock_old = Stock.objects.get(
+                magasin=appro.magasin,
+                article=old_article,
+                date_peremption=old_peremption
+            )
+            stock_old.qte -= old_qte
+            if stock_old.qte <= 0:
+                stock_old.delete()
+            else:
+                stock_old.save()
+
+            # Nouvelle ligne
+            stock_new, created = Stock.objects.get_or_create(
+                magasin=appro.magasin,
+                article=new_article,
+                date_peremption=new_peremption,
+                defaults={'qte': new_qte}
+            )
+            if not created:
+                stock_new.qte += new_qte
+                stock_new.save()
+
+
+    def save(self, *args, **kwargs):
 
         super(DetailsApprovisionnement, self).save(*args, **kwargs)
 

@@ -1,0 +1,17 @@
+<div class="add-form-container">
+    <h6 class="form-title">Ajouter une ligne d'approvisionnement</h6>
+    <form id="addForm"
+          method="POST"
+          hx-post="{% url 'approvisionnement_details' approvisionnement.pk %}"
+          hx-target="#formTableContainer"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="add">
+        <div id="addFormFields">
+            {% include "approvisionnements/partials/form_fields.html" with form=add_form %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+            <i class="fa fa-plus-circle icon-space"></i>Ajouter un article
+        </button>
+    </form>
+</div>

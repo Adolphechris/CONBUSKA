@@ -1,12 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from .models import Approvisionnement, DetailsApprovisionnement
+from produits.models import Stock
 from .forms import ApprovisionnementCreateForm, ArticleApprovisionnementAddForm, ArticleApprovisionnementUpdateForm
 
 
@@ -88,9 +90,9 @@ class ApprovisionnementSaveView(LoginRequiredMixin, TemplateView):
 @require_GET
 def get_update_form(request, pk):
     instance = get_object_or_404(DetailsApprovisionnement, pk=pk)
-    print(instance.article, '############# ')
     form = ArticleApprovisionnementUpdateForm(instance=instance)
-    return render(request, "approvisionnements/update_form.html", {"update_form": form, 'form_id': pk})
+    return render(request, "approvisionnements/partials/update_form.html",
+                  {"update_form": form, "appro_pk": instance.approvisionnement.pk, "detail_appro_pk": pk})
 
 
 class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
@@ -98,9 +100,14 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'approvisionnement'
     template_name = 'approvisionnements/approvisionnement_details.html'
 
+    def get_details_approvisionnement(self):
+        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.kwargs['pk'])
+        return details_approvisionnement
+
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(object=self.object)
+        # context['details_approvisionnement'] = self.get_details_approvisionnement()
         context['add_form'] = ArticleApprovisionnementAddForm()
         context['update_form'] = ArticleApprovisionnementUpdateForm(
             instance=DetailsApprovisionnement.objects.filter(approvisionnement=self.kwargs['pk']).first()
@@ -108,35 +115,44 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'), request.POST.get('form_type'))
+        if request.headers.get('HX-Request') == 'true':
             form_type = request.POST.get('form_type')
             if form_type == 'add':
                 form = ArticleApprovisionnementAddForm(request.POST)
                 if form.is_valid():
-                    print("********** HTMX POST",)
-                    """
                     detail_approvisionnement = form.save(commit=False)
                     detail_approvisionnement.approvisionnement = self.get_object()
                     detail_approvisionnement.article = form.cleaned_data['article']
                     detail_approvisionnement.fournisseur = form.cleaned_data['fournisseur']
-                    detail_approvisionnement.add_details()
-                    """
-                    return JsonResponse({'success': True})
+                    detail_approvisionnement.add()
+
+                    html = render_to_string("approvisionnements/partials/add_form_and_table.html", {
+                        "add_form": ArticleApprovisionnementAddForm(),
+                        "approvisionnement": self.get_object(),
+                        "details_approvisionnement": self.get_details_approvisionnement()
+                    }, request=request)
+
+                    return HttpResponse(html)
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
             else:
-                instance = get_object_or_404(DetailsApprovisionnement, pk=request.POST.get('id'))  # ou autre logique d'instance
+                instance = get_object_or_404(DetailsApprovisionnement, pk=request.POST.get('id'))
                 form = ArticleApprovisionnementUpdateForm(request.POST, instance=instance)
                 if form.is_valid():
-                    form.save()
-                    return JsonResponse({'success': True})
+                    detail_approvisionnement = form.save(commit=False)
+                    detail_approvisionnement.update_appro()
+
+                    html = render_to_string("approvisionnements/partials/add_form_and_table.html", {
+                        "add_form": ArticleApprovisionnementAddForm(),
+                        "approvisionnement": self.get_object(),
+                        "details_approvisionnement": self.get_details_approvisionnement()
+                    }, request=request)
+
+                    return HttpResponse(html)
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
         return JsonResponse({'error': 'Invalid request'}, status=400)
-
-    def get_details_approvisionnement(self):
-        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.kwargs['pk'])
-        return details_approvisionnement
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -144,47 +160,50 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ArticleApprovisionnementAddView(LoginRequiredMixin, CreateView):
+class ArticleApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
     model = DetailsApprovisionnement
-    context_object_name = 'article_approvisionnement'
-    template_name = 'approvisionnements/add_article_form.html'
-    form_class = ArticleApprovisionnementAddForm
-
-    def get_approvisionnement(self):
-        return get_object_or_404(Approvisionnement, pk=self.kwargs['pk'])
-
-    def form_valid(self, form, *args, **kwargs):
-        detail_approvisionnement = form.save(commit=False)
-        detail_approvisionnement.approvisionnement = self.get_approvisionnement()
-        detail_approvisionnement.valid()
-        return redirect('approvisionnement_details', pk=self.get_approvisionnement().pk)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['approvisionnement'] = self.get_approvisionnement()
-        return context
-
-
-class ArticleApprovisionnementUpdateView(LoginRequiredMixin, UpdateView):
-    model = DetailsApprovisionnement
-    template_name = 'approvisionnements/edit_article_form.html'
-    form_class = ArticleApprovisionnementUpdateForm
+    template_name = 'approvisionnements/approvisionnement_confirm_delete.html'
 
     def get_approvisionnement(self):
         return get_object_or_404(Approvisionnement, pk=self.kwargs['approvisionnement_pk'])
 
-    def get_form_kwargs(self):
-        kwargs = super(ArticleApprovisionnementUpdateView, self).get_form_kwargs()
-        kwargs['article'] = self.object.article
-        return kwargs
-
-    def form_valid(self, form, *args, **kwargs):
-        print(self.get_object().qte, self.get_object().date_peremption)
-        detail_approvisionnement = form.save(commit=False)
-        detail_approvisionnement.update_details(self.get_object())
-        return redirect('approvisionnement_details', pk=self.get_approvisionnement().pk)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['title'] = "Supprimer un article de l'approvisionnement"
+        context['message'] = f"Voulez-vous supprimer l'article {self.get_object().article} de l'approvisionnement ?"
+        context['submit_icon'] = 'fa fa-check'
+        context['submit_label'] = 'Valider'
         context['approvisionnement'] = self.get_approvisionnement()
         return context
+
+    def get_success_url(self):
+        return reverse('approvisionnement_details', kwargs={'pk': self.object.pk})
+
+    @transaction.atomic
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        appro = self.object.approvisionnement
+
+        # Supprimer ou mettre à jour le stock
+        stock = Stock.objects.get(
+            magasin=appro.magasin,
+            article=self.object.article,
+            date_peremption=self.object.date_peremption
+        )
+        stock.qte -= self.object.qte
+        if stock.qte <= 0:
+            stock.delete()
+        else:
+            stock.save()
+
+        self.object.delete()
+
+        if request.headers.get('HX-Request') == 'true':
+            details = DetailsApprovisionnement.objects.filter(approvisionnement=appro)
+            context = {
+                'details_approvisionnement': details,
+                'approvisionnement': appro
+            }
+            return render(request, "approvisionnements/partials/lines_table.html", context)
+
+        return redirect(self.get_success_url())

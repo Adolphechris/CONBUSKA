@@ -1,0 +1,67 @@
+<table id="tableApprovisionnement" class="table table-striped bulk_action">
+    <thead>
+        <tr>
+            <th>N°</th>
+            <th>Fnsseur</th>
+            <th>Facture</th>
+            <th>Article</th>
+            <th>Qté livrée</th>
+            <th>Date p</th>
+            <th>PAN</th>
+            <th>Frais achat</th>
+            <th>PVD</th>
+            <th>PVG</th>
+            <th>Resultats</th>
+            <th class="text-center">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in details_approvisionnement %}
+            <tr id="row-{{ i.pk }}">
+                <td class="vertical-middle">{{ forloop.counter }}</td>
+                <td class="vertical-middle">{{ i.fournisseur }}</td>
+                <td class="vertical-middle">{{ i.facture }}</td>
+                <td class="vertical-middle">{{ i.article.designation }}</td>
+                <td class="vertical-middle">{{ i.qte }}</td>
+                <td class="vertical-middle">{{ i.date_peremption }}</td>
+                <td class="vertical-middle">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
+                <td class="vertical-middle">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
+                <td class="vertical-middle text-medium">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="vertical-middle text-medium">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="vertical-middle">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="text-center">
+                    <div class="btn-group">
+                        <button
+                                class="btn btn-default btn-sm"
+                                hx-get="{% url 'get_form_update' i.pk %}"
+                                hx-target="#updateFormContainer"
+                                hx-swap="innerHTML"
+                                hx-trigger="click"
+                                hx-on:click="document.getElementById('addFormContainer').style.display = 'none';">
+                            <i class="fa fa-pencil"></i>
+                        </button>
+                        <button
+                            class="btn btn-danger btn-sm"
+                            hx-get="{% url 'delete_article_approvisionnement' approvisionnement.pk i.pk %}"
+                            hx-target="#modalContent"
+                            hx-trigger="click"
+                            hx-swap="innerHTML">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="12" class="text-center text-muted">Aucune ligne d’approvisionnement enregistrée.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr class="total-row">
+            <td colspan="10" class="text-right"><strong>Total:</strong></td>
+            <td><strong>{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise  }}</strong></td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>

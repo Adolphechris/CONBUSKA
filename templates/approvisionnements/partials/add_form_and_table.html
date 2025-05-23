@@ -1,0 +1,18 @@
+<!-- Formulaire à gauche -->
+<div class="col-md-4" id="formContainer">
+    <div id="addFormContainer">
+        {% include "approvisionnements/partials/add_form.html" %}
+    </div>
+    <div id="updateFormContainer"></div>
+</div>
+
+<!-- Tableau à droite -->
+<div class="col-md-8">
+    <div class="table-responsive" id="linesTableContainer">
+        {% include "approvisionnements/partials/lines_table.html" %}
+    </div>
+    <button type="button" class="btn btn-danger mt-3">
+        <i class="fa fa-file-pdf-o"></i>
+        Bon d'approvisionnement
+    </button>
+</div>
