@@ -18,17 +18,17 @@
     <tbody>
         {% for i in details_approvisionnement %}
             <tr id="row-{{ i.pk }}">
-                <td class="vertical-middle">{{ forloop.counter }}</td>
-                <td class="vertical-middle">{{ i.fournisseur }}</td>
-                <td class="vertical-middle">{{ i.facture }}</td>
-                <td class="vertical-middle">{{ i.article.designation }}</td>
-                <td class="vertical-middle">{{ i.qte }}</td>
-                <td class="vertical-middle">{{ i.date_peremption }}</td>
-                <td class="vertical-middle">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
-                <td class="vertical-middle">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
-                <td class="vertical-middle text-medium">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
-                <td class="vertical-middle text-medium">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
-                <td class="vertical-middle">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td>{{ forloop.counter }}</td>
+                <td class="text-center">{{ i.fournisseur }}</td>
+                <td class="text-center">{{ i.facture }}</td>
+                <td class="text-center">{{ i.article.designation }}</td>
+                <td class="text-center">{{ i.qte }}</td>
+                <td class="text-center">{{ i.date_peremption }}</td>
+                <td class="text-center">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
+                <td class="text-center">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
+                <td class="text-center">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="text-center">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="text-center">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
                 <td class="text-center">
                     <div class="btn-group">
                         <button

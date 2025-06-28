@@ -2,7 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.db import transaction
 from produits.models import Stock
-from django.shortcuts import redirect, render
+from django.db.models import Max
 import datetime
 
 
@@ -38,13 +38,18 @@ class Approvisionnement(models.Model):
         return total
 
     @property
-    def get_next_num(self):
-        last_num = Approvisionnement.objects.all().order_by('-numero')[:1]
-        try:
-            numero = [i.numero + 1 for i in last_num][0]
-        except IndexError:
-            numero = int(str(datetime.datetime.now().year)[2:] + '0000')
-        return numero
+    def cout_achat(self):
+        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.pk)
+        total = sum(i.cout_achat for i in details_approvisionnement)
+        return total
+
+    @classmethod
+    def get_next_num(cls):
+        last_num = cls.objects.aggregate(Max('numero'))['numero__max']
+        if last_num:
+            return last_num + 1
+        # Format de départ basé sur l’année : exemple 250000
+        return int(datetime.datetime.now().strftime('%y') + '0000')
 
     def save(self, *args, **kwargs):
         if self.numero is None:
@@ -63,7 +68,6 @@ class DetailsApprovisionnement(models.Model):
     facture = models.CharField(max_length=15)
     declaration = models.DecimalField(max_digits=8, decimal_places=4)
     transport = models.DecimalField(max_digits=8, decimal_places=4)
-    tva = models.DecimalField(max_digits=8, decimal_places=4)
     manutention = models.DecimalField(max_digits=8, decimal_places=4)
     autre_frais = models.DecimalField(max_digits=8, decimal_places=4)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
@@ -80,7 +84,7 @@ class DetailsApprovisionnement(models.Model):
 
     @property
     def frais_achat(self):
-        total = self.declaration + self.transport + self.tva + self.manutention + self.autre_frais
+        total = self.declaration + self.transport + self.manutention + self.autre_frais
         return total
 
     @property
@@ -123,7 +127,6 @@ class DetailsApprovisionnement(models.Model):
             defaults={
                 'declaration': self.declaration,
                 'transport': self.transport,
-                'tva': self.tva,
                 'manutention': self.manutention,
                 'autre_frais': self.autre_frais,
                 'qte': self.qte,
