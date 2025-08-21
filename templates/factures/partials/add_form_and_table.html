@@ -1,0 +1,30 @@
+ <!-- Formulaire d'ajout d'articles amélioré -->
+<div class="content-sidebar">
+    <!-- Information Card -->
+    {% include "factures/partials/info_form.html" %}
+    <!-- Add Item Card -->
+    <div class="card-premium add-item-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa fa-plus-circle"></i>
+                <span>Ajouter un article</span>
+            </div>
+            <div class="card-actions">
+                <button class="card-action-btn" title="Scanner code-barres">
+                    <i class="fa fa-barcode"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-content">
+            <div id="addFormContainer">
+                {% include "factures/partials/add_form.html" %}
+            </div>
+            <div id="updateFormContainer"></div>
+        </div>
+    </div>
+</div>
+
+ <!-- Main Content -->
+ <div class="content-main">
+     {% include "factures/partials/lines_table.html" %}
+ </div>

@@ -1,0 +1,41 @@
+<div class="card-premium info-card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fa fa-info-circle"></i>
+            <span>Informations facture</span>
+        </div>
+        <div class="card-status">
+            <div class="status-dot status-pending"></div>
+        </div>
+    </div>
+    <div class="card-content">
+        <form class="form-premium" id="infoForm">
+            <div class="form-group-premium">
+                <div class="input-premium disabled">
+                    <div class="input-icon">
+                        <i class="fa fa-truck"></i>
+                    </div>
+                    {{ info_form.livreur }}
+                    <div class="input-badge">Auto</div>
+                </div>
+            </div>
+            <div class="form-group-premium">
+                <div class="input-premium">
+                    <div class="input-icon">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    {{ info_form.client }}
+                    <button type="button" class="input-action" title="Rechercher client">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary-premium btn-block" id="validateInfo">
+                    <i class="fa fa-check"></i>
+                    <span>Valider les informations</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

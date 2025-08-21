@@ -1,0 +1,138 @@
+<div class="card-premium invoice-table-card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fa fa-list-alt"></i>
+            <span>Détails de la facture</span>
+            <div class="items-count">
+                <span id="itemsCount">1</span> article(s)
+            </div>
+        </div>
+        <div class="card-actions">
+            <div class="table-search">
+                <input type="text" placeholder="Filtrer..." id="tableFilter">
+                <i class="fa fa-search"></i>
+            </div>
+            <button class="card-action-btn" title="Exporter">
+                <i class="fa fa-download"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-content no-padding">
+        <div class="table-container">
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                      <th width="3%"><input type="checkbox" id="selectAll"></th>
+                      <th width="5%">No.</th>
+                      <th width="37%">Article</th>
+                      <th width="10%" class="text-right">Quantité</th>
+                      <th width="15%" class="text-right">Prix unitaire</th>
+                      <th width="15%" class="text-right">Prix total</th>
+                      <th width="15%" class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                    {% for i in details_facture %}
+                        <tr id="row-{{ i.pk }}">
+                            <td><input type="checkbox" class="item-select"></td>
+                            <td class="">{{ forloop.counter }}</td>
+                            <td class="">{{ i.article.designation }}</td>
+                            <td class="">{{ i.qte }}</td>
+                            <td class="">{{ i.prix|floatformat }} {{ facture.devise }}</td>
+                            <td class="text-medium">{{ i.total|floatformat }} {{ facture.devise }}</td>
+                            <td class="">
+                                <div class="btn-group">
+                                    <button class="btn btn-default btn-sm action-btn" title="Modifier" data-toggle="tooltip"
+                                            hx-get="{% url 'get_form_update_facture' i.pk %}"
+                                            hx-target="#updateFormContainer"
+                                            hx-swap="innerHTML"
+                                            hx-trigger="click"
+                                            hx-on:click="document.getElementById('addFormContainer').style.display = 'none';">
+                                        <i class="fa fa-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm action-btn" title="Supprimer" data-id="1" data-toggle="tooltip"
+                                            hx-get="{% url 'delete_article_facture' facture.pk i.pk %}"
+                                            hx-target="#modalContent"
+                                            hx-trigger="click"
+                                            hx-swap="innerHTML">
+                                        <i class="fa fa-trash-o"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Aucune ligne de facture enregistrée.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary amélioré -->
+        <div class="invoice-summary-premium">
+            <div class="summary-grid">
+                <div class="summary-left">
+                </div>
+                <div class="summary-right">
+                    <div class="calculation-card">
+                        <div class="calc-row">
+                            <span class="calc-label">Sous-total</span>
+                            <span class="calc-value" id="subtotal">{{ facture.sous_total }} {{ facture.devise }}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Remise</span>
+                            <div class="discount-input">
+                                <input type="number" id="discount" value="{{ facture.remise }}" min="0">
+                                <span class="currency">{{ facture.devise }}</span>
+                            </div>
+                        </div>
+                        <div class="calc-divider"></div>
+                        <div class="calc-row total-row">
+                            <span class="calc-label">Total à payer</span>
+                            <span class="calc-value total-value" id="total">{{ facture.total }} {{ facture.devise }}</span>
+                        </div>
+                        <div class="calc-row conversion-row">
+                            <span class="calc-label">Équivalent USD</span>
+                            <span class="calc-value conversion-value" id="totalUSD">${{ facture.total_devise|floatformat }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ </div>
+
+<!-- Boutons d'action améliorés -->
+<div class="action-buttons-container">
+        <div class="row">
+            <div class="col-md-6 text-left">
+                <div class="btn-group">
+                  <button class="btn btn-default" id="btnPrevisualiser">
+                    <i class="fa fa-eye icon-space"></i>Prévisualiser
+                  </button>
+                  <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a href="#"><i class="fa fa-file-pdf-o icon-space"></i>PDF</a></li>
+                    <li><a href="#"><i class="fa fa-print icon-space"></i>Imprimer</a></li>
+                    <li><a href="#"><i class="fa fa-envelope icon-space"></i>Envoyer par email</a></li>
+                  </ul>
+                </div>
+                <button class="btn btn-default" id="btnAnnuler">
+                  <i class="fa fa-times-circle icon-space"></i>Annuler
+                </button>
+            </div>
+            <div class="col-md-6 text-right">
+                <div class="btn-group">
+                    <button class="btn btn-default" id="btnBrouillon">
+                        <i class="fa fa-save icon-space"></i>Enregistrer le brouillon
+                    </button>
+                    <button class="btn btn-primary" id="btnEnregistrer">
+                        <i class="fa fa-check-circle icon-space"></i>Finaliser la facture
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

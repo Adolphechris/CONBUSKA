@@ -1,0 +1,30 @@
+<form class="form-premium" id="addForm"
+      method="POST"
+      hx-post="{% url 'facture_details' facture.pk %}"
+      hx-target="#formTableContainer"
+      hx-swap="innerHTML">
+
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="add">
+
+    <div class="form-group-premium">
+        {{ add_form.article }}
+    </div>
+    <div class="form-group-premium">
+        <div class="quantity-input">
+            <button type="button" class="qty-btn qty-minus">
+                <i class="fa fa-minus"></i>
+            </button>
+            {{ add_form.qte }}
+            <button type="button" class="qty-btn qty-plus">
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary-premium btn-block">
+            <i class="fa fa-plus-circle"></i>
+            <span>Ajouter à la facture</span>
+        </button>
+    </div>
+</form>

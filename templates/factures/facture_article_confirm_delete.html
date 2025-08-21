@@ -1,0 +1,19 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ title }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form method="POST"
+      hx-delete="{% url 'delete_article_facture' facture.pk object.pk %}"
+      hx-target="#linesTableContainer"
+      hx-swap="outerHTML">
+  <div class="modal-body">
+    {% csrf_token %}
+    <p>{{ message }}</p>
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-danger">
+      <i class="{{ submit_icon }}"></i> {{ submit_label }}
+    </button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+  </div>
+</form>
