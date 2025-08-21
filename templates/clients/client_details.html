@@ -8,22 +8,120 @@
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5>Détails Client </h5>
+                    <h5><a href="{% url 'clients' %}">Clients</a> / Détails Client </h5>
                 </div>
             </div>
              <div class="row">
                 <div class="col-md-12">
                     <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Détails du client {{ client.nom }}</h2>
-                            <div class="clearfix"></div>
+                        <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
+                            <div class="profile_img">
+                                <div id="crop-avatar">
+                                    <!-- Current avatar -->
+                                    <img class="img-circle" src="{{ client.photo.url }}"
+                                         alt="Avatar" title="Change the avatar" width="240">
+                                </div>
+                            </div>
+                            <h4><strong>{{ client.nom }} / {{ client.code }}</strong></h4>
+                            <ul class="list-unstyled user_data">
+                                <li><i class="fa fa-map-marker"></i> Addresse: {{ client.adresse }}</li>
+                                <li><i class="fa fa-phone"></i> Telephone: {{ client.telephone }}</li>
+                                <li><i class="fa fa-envelope"></i> Email: {{ client.email }}</li>
+                            </ul>
+                            <hr>
+                            <ul class="list-unstyled user_data">
+                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde client: {{ solde_client|floatformat }}$</li>
+                            </ul>
+                            <br />
+                            <a href="{% url 'client_update' client.pk %}" class="btn btn-primary btn-lg">
+                                 <i class="fa fa-edit"></i>
+                                 Modifier
+                            </a>
                         </div>
-                        <div class="x_content">
 
+                        <div class="col-md-9 col-sm-9 col-xs-12">
+                            <div class="" role="tabpanel" data-example-id="togglable-tabs">
+                                <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+                                    <li role="presentation" class="active"><a href="#tab_content1" id="mouvements-tab" role="tab" data-toggle="tab" aria-expanded="true">Mouvements</a></li>
+                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="paiements-tab" data-toggle="tab" aria-expanded="false">Paiements</a></li>
+                                </ul>
+                                <div id="myTabContent" class="tab-content">
+                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="mouvements-tab">
+                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
+                                            <thead>
+                                                <tr class="headings">
+                                                    <th class="column-title"> No.</th>
+                                                    <th class="column-title"> Date</th>
+                                                    <th class="column-title"> Facture</th>
+                                                    <th class="column-title"> Total </th>
+                                                    <th class="column-title"> Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in mouvements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.date }}</td>
+                                                        <td>{{ i.facture }}</td>
+                                                        <td>{{ i.prix_total|floatformat }}</td>
+                                                        <td>
+                                                            <a href="" class="btn btn-warning btn-xs">
+                                                                <i class="fa fa-eye"></i>
+                                                                Voir la facture
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total_row">
+                                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{ total_mouvements|floatformat  }}</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="paiements-tab">
+                                        <table id="tablePaiements" class="table table-striped jambo_table bulk_action">
+                                            <thead>
+                                                <tr class="headings">
+                                                    <th class="column-title"> No.</th>
+                                                    <th class="column-title"> Date paiement</th>
+                                                    <th class="column-title"> Montant</th>
+                                                    <th class="column-title"> Percepteur</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in paiements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.date_paiement }}</td>
+                                                        <td>{{ i.montant|floatformat }}</td>
+                                                        <td>{{ i.cree_par }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total_row">
+                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{ total_paiements|floatformat  }}</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function() {
+            $('#clients').addClass('active');
+         });
+    </script>
 {% endblock content %}

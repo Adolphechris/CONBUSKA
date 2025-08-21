@@ -35,3 +35,18 @@ class Client(models.Model):
     def get_absolute_url(self):
         return reverse('client_details', args=[self.pk])
 
+
+class PaiementClient(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, null=False)
+    montant = models.DecimalField(max_digits=8, decimal_places=4)
+    date_paiement = models.DateField()
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    cree_par = models.ForeignKey('users.CustomUser',
+                                 related_name='paiementclientcreepar',
+                                 on_delete=models.PROTECT)
+    modifie_par = models.ForeignKey('users.CustomUser',
+                                    blank=True, null=True,
+                                    related_name='paiementclientmodpar',
+                                    on_delete=models.PROTECT)
+    objects = models.Manager()

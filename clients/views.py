@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Client
+from .models import Client, PaiementClient
 from .forms import ClientCreateForm
 
 
@@ -16,6 +16,15 @@ class ClientDetailsView(LoginRequiredMixin, DetailView):
     model = Client
     context_object_name = 'client'
     template_name = 'clients/client_details.html'
+
+    def get_paiements(self):
+        paiements = PaiementClient.objects.filter(client=self.get_object())
+        return paiements
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['paiements'] = self.get_paiements()
+        return context
 
 
 class ClientCreateView(LoginRequiredMixin, CreateView):
