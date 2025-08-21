@@ -57,8 +57,9 @@ class Article(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return f'{self.designation}| 20 | 2000FC | 1800FC'
+        return f'{self.designation} | {self.stock} | {self.prix_vente}FC | {self.prix_vente_gros}FC'
 
+    @property
     def stock(self):
         get_stock = Stock.objects.filter(article=self.pk)
         stock = sum(i.qte for i in get_stock)
