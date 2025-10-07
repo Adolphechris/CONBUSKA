@@ -1,0 +1,115 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Caisses {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'caisses' %}">Caisses</a> / Historique caisse</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h1>Historique de la #{{ caisse.nom }}<small></small></h1>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'ouverture_caisse' caisse.pk %}">
+                                            <i class="fa fa-plus"></i>
+                                            OUVRIR NOUVELLE CAISSE
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tableCaisses" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> </th>
+                                            <th class="column-title"> Date ouverture</th>
+                                            <th class="column-title"> Date fermeture</th>
+                                            <th class="column-title"> Ouvert par</th>
+                                            <th class="column-title"> Fermee par</th>
+                                            <th class="column-title"> Solde initial</th>
+                                            <th class="column-title"> Solde final </th>
+                                            <th class="column-title"> Est ouverte </th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for caisse in liste_caisses %}
+										    <tr>
+                                                <td>{{ caisse.id }}</td>
+                                                <td>{{ caisse.date_ouverture }}</td>
+                                                <td>{{ caisse.date_fermeture }}</td>
+                                                <td>{{ caisse.ouvert_par }}</td>
+                                                <td>{{ caisse.ferme_par }}</td>
+                                                <td>{{ caisse.solde_initial }}</td>
+                                                <td>{{ caisse.solde_final }}</td>
+                                                <td>
+                                                    {% if caisse.est_ouverte %}
+                                                        <span class="badge badge-success">Ouverte</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">Clôturée</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'caisse_details' caisse.pk %}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableCaisses').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+
+            $('#liste_caisses').addClass('current-page');
+            $('#caisses').addClass('active');
+            let parent = document.getElementById('caisses');
+            parent.childNodes[2].style.display = 'block';
+        });
+    </script>
+{% endblock content %}

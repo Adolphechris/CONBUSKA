@@ -1,0 +1,116 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Caisses {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .cardbox{
+        padding: 5px 5px 5px 5px;
+    }
+    .cardcontainer{
+        background-color: rgb(202 138 4);
+        padding: 2px;
+    }
+    .cardhead{
+        display: flex;
+        justify-content: space-between;
+        margin: auto;
+        padding: 10px 10px 15px 20px;
+    }
+    .cardfoot{
+         display: flex;
+         padding: 10px 10px 15px 20px;
+    }
+    .cardniveau{
+        font-size: 12px;
+        color: rgb(249 250 251);
+    }
+    .cardclasse{
+        font-size: 24px;
+        font-weight: 800;
+        color: white;
+    }
+    .cardicon{
+        position: relative;
+        top: 15px; left: -30px;
+    }
+    .iconelem{
+        display: inline-block;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 0 2px #888;
+        padding: 0.5em 0.6em;
+        font-size: 28px;
+    }
+    .cardfootelem{
+        padding-right: 15px;
+    }
+    .cardfootelem i{
+        font-size: 14px;
+        color: white;
+    }
+    .cardfootelem span{
+        font-size: 14px;
+        color: white;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Caisses</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des caisses<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            {% for caisse in liste_caisses %}
+                                <a href="{% url 'historique_caisse' caisse.pk %}">
+                                    <div class="col-md-3 col-xs-12 cardbox">
+                                        <div class="cardcontainer">
+                                            <div class="cardhead">
+                                                <div>
+                                                    <h5 class="cardniveau">CAISSE</h5>
+                                                    <h2 class="cardclasse">{{ caisse.nom }}</h2>
+                                                </div>
+                                                <div class="cardicon">
+                                                    <i class="fa fa-calculator iconelem"></i>
+                                                </div>
+                                            </div>
+                                            <div class="cardfoot">
+                                                <div class="cardfootelem">
+                                                    {% if caisse.is_principal %}
+                                                        <span>Caisse principale</span>
+                                                    {% else %}
+                                                        <span>Caisse secondaire</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#liste_caisses').addClass('current-page');
+            $('#caisses').addClass('active');
+            let parent = document.getElementById('caisses');
+            parent.childNodes[2].style.display = 'block';
+         });
+    </script>
+{% endblock content %}

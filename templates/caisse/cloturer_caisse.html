@@ -1,0 +1,67 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Caisse {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .img_container {
+        width: 20px;
+        height: 12px;
+    }
+
+    /* Resize images */
+    .img_container img {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title">
+                                    {% if title %}
+                                        <h3>{{ title }}</h3>
+                                    {% endif %}
+                                </h4>
+                            </div>
+                            {% if message %}
+                                <div class="modal-body text-center">
+                                    <h5>{{ message }}</h5>
+                                </div>
+                            {% endif %}
+                            <div class="modal-footer">
+                                <form action="" class="form" method="post">
+                                    {% csrf_token %}
+                                    {% if next %}
+                                        <input name="next" type="hidden" value="{{ next }}" />
+                                    {% endif %}
+
+                                    {% if previous %}
+                                        <input name="previous" type="hidden" value="{{ previous }}" />
+                                    {% endif %}
+
+                                    <a class="btn btn-default" onclick='{% if previous %}window.location.replace("{{ previous }}");{% else %}history.go(-1);{% endif %}'>
+                                        <i class="fa fa-times"></i> Non
+                                    </a>
+
+                                    <button type="submit" class="btn btn-info" data-dismiss="modal">
+                                        <i class="{{ submit_icon|default:'fa fa-check' }}"></i>
+                                        {% if submit_label %}{{ submit_label }}{% else %} Yes {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
