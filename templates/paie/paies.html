@@ -1,0 +1,85 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Paie {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .img_container {
+        width: 20px;
+        height: 12px;
+    }
+
+    /* Resize images */
+    .img_container img {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Listes de paie</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Listes de paie<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'paie_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            COMMENCER LA PAIE
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tablePaies" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Mois de paie</th>
+                                            <th class="column-title"> Effectif total</th>
+                                            <th class="column-title"> Motant total dû</th>
+                                            <th class="column-title"> Motant total payé</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in liste_paies %}
+										    <tr>
+                                                <td>{{ item.mois }}</td>
+                                                <td>{{ item.effectif_total }}</td>
+                                                <td>{{ item.montant_a_payer }}</td>
+                                                <td>{{ item.montant_paye }}</td>
+                                                <td>
+                                                    <a href="{% url 'paie_details' item.pk %}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#paies').addClass('active');
+         });
+    </script>
+{% endblock content %}

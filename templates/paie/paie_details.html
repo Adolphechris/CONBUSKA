@@ -1,0 +1,81 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Paie/Details {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .img_container {
+        width: 20px;
+        height: 12px;
+    }
+
+    /* Resize images */
+    .img_container img {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'listes_paie' %}">Listes de paie</a>/ Détails paie #{{ paie.mois }}</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Détails de la paie de #{{ paie.mois }} <small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <table id="tablePaie" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Agent</th>
+                                            <th class="column-title"> Salaire</th>
+                                            <th class="column-title"> Motant perçu</th>
+                                            <th class="column-title"> Nombre de jours à préster</th>
+                                            <th class="column-title"> Nombre de jours préstés</th>
+                                            <th class="column-title"> Absences</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in paie_agents %}
+										    <tr>
+                                                <td>{{ item.agent.nom }}</td>
+                                                <td>{{ item.agent.salaire }}</td>
+                                                <td>{{ item.montant_percu }}</td>
+                                                <td>{{ item.jap }} Jours</td>
+                                                <td>{{ item.jp }} Jours / {{ item.jap }}</td>
+                                                <td>{{ item.absence }} Jours</td>
+                                                <td>
+                                                    <a href="{% url 'paie_agent_create' paie.pk item.agent.pk %}" class="btn btn-primary btn-xs">
+                                                        <i class="fa fa-money"></i>
+                                                        Faire le payement
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#paies').addClass('active');
+         });
+    </script>
+{% endblock content %}
