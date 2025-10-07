@@ -1,0 +1,221 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Rapport ventes | details {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    /* Invoice Summary Premium */
+.invoice-summary-premium {
+  border-top: 1px solid var(--gray-200);
+  padding: var(--space-xl);
+  background: var(--gray-50);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--space-xl);
+  align-items: start;
+}
+.calculation-card {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.calc-label {
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.calc-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.discount-input {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  width: 120px;
+}
+
+.discount-input input {
+  border: none;
+  padding: var(--space-sm);
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  width: 80px;
+}
+
+.discount-input input:focus {
+  outline: none;
+}
+
+.discount-input .currency {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  padding: var(--space-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.calc-divider {
+  height: 2px;
+  background: gray;
+  margin: 2px;
+}
+
+.total-row {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 2px solid var(--primary-500);
+}
+
+.total-row .calc-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.total-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary-600);
+}
+
+.conversion-row {
+  margin-top: var(--space-sm);
+  margin-bottom: 0;
+}
+
+.conversion-row .calc-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.conversion-value {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'rapport_ventes' %}">Rapport des ventes</a> / details</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Factures du {{ date_facture|date:"d/m/Y" }}<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content row">
+                            <div class="col-md-6">
+                                <div class="content table-responsive display">
+                                    <table id="tableFactures" class="table table-striped jambo_table bulk_action">
+                                        <thead>
+                                            <tr class="headings">
+                                                <th class="column-title"> Numero</th>
+                                                <th class="column-title"> Date</th>
+                                                <th class="column-title"> Client</th>
+                                                <th class="column-title"> Remise</th>
+                                                <th class="column-title"> Montant </th>
+                                                <th class="column-title"> Livreur </th>
+                                                <th class="column-title"> Cree par </th>
+                                                <th class="column-title"> Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for facture in factures %}
+                                                <tr>
+                                                    <td>{{ facture.numero }}</td>
+                                                    <td>{{ facture.date_facture }}</td>
+                                                    <td>{{ facture.client }}</td>
+                                                    <td>{{ facture.remise }}</td>
+                                                    <td>{{ facture.total_facture }}</td>
+                                                    <td>{{ facture.livreur }}</td>
+                                                    <td>{{ facture.cree_par }}</td>
+                                                    <td>
+                                                        <a hx-get="{% url 'rapport_vente_details_facture' facture.pk %}"
+                                                           hx-target="#facture-details"
+                                                           hx-swap="innerHTML"
+                                                           class="btn btn-warning btn-xs">
+                                                            <i class="fa fa-eye"></i>
+                                                            Détails
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="facture-details">
+                                    <p class="text-muted">Sélectionnez une facture pour voir ses détails</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableFactures').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+        });
+    </script>
+{% endblock content %}

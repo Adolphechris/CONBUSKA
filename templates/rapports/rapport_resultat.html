@@ -1,0 +1,131 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Rapport des ventes {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    .panel-success .panel-heading {
+      background-color: #5cb85c;
+      color: white;
+    }
+
+    .form-inline .form-group {
+      margin-right: 15px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+     <div class="right_col" role="main">
+         <div class="">
+             <div class="page-title">
+                <div class="title_left">
+                    <h5>Rapport des résultats</h5>
+                </div>
+            </div>
+             <div class="row">
+                 <!-- Filtres -->
+                 <form class="form-inline" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                      <label for="startDate">Date de début</label>
+                      <input type="date" class="form-control" id="startDate" name="start_date">
+                    </div>
+                    <div class="form-group">
+                      <label for="endDate">Date de fin</label>
+                      <input type="date" class="form-control" id="endDate" name="end_date">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                 </form>
+
+                 <div class="row">
+                      <!-- Résultat global -->
+                     <div class="col-md-6">
+                         <div class="panel panel-info">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">Résultat des ventes</h4>
+                            </div>
+                            <div class="panel-body">
+                              <h3><strong>+ {{ total_ventes }} FC</strong></h3>
+                              <p>Calculé sur la période : 01/08/2025 - 21/08/2025</p>
+                              <p>Dérivé des factures de vente</p>
+                            </div>
+                         </div>
+                     </div>
+
+                     <!-- Résultat global -->
+                     <div class="col-md-6">
+                        <div class="panel panel-info">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">Résultat des appro</h4>
+                            </div>
+                            <div class="panel-body">
+                              <h3><strong>+ 52 800 FC</strong></h3>
+                              <p>Calculé sur la période : 01/08/2025 - 21/08/2025</p>
+                              <p>Dérivé des fiches d'approvisionnement</p>
+                            </div>
+                        </div>
+                     </div>
+                 </div>
+
+                  <!-- Graphique -->
+                  <div class="panel panel-default">
+                    <div class="panel-heading">Résultat par article (les plus rentables)</div>
+                    <div class="panel-body">
+                      <canvas id="resultatsChart" height="80"></canvas>
+                    </div>
+                  </div>
+
+                  <!-- Détail des résultats par article -->
+                  <div class="panel panel-default">
+                    <div class="panel-heading">Détail par article</div>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Article</th>
+                            <th>Résultat (FC)</th>
+                            <th>% du Résultat Global</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for article in resultat_articles %}
+                          <tr>
+                            <td>{{ article.designation }}</td>
+                            <td>{{ article.resultat }}</td>
+                            <td>{{ article.pourcentage }}</td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+             </div>
+         </div>
+     </div>
+
+<!-- Chart.js -->
+<script>
+  var ctx = document.getElementById('resultatsChart').getContext('2d');
+  var resultatsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Coca-Cola', 'Savon OMO'],
+      datasets: [{
+        label: 'Résultat (FC)',
+        data: [14000, 10000],
+        backgroundColor: '#5bc0de'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock content %}

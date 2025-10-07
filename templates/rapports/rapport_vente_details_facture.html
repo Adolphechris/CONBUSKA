@@ -1,0 +1,53 @@
+<h4>Détails de la facture #{{ object.numero }}</h4>
+
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th>N°</th>
+      <th>Article</th>
+      <th>Quantité</th>
+      <th>Prix</th>
+      <th>Sous-total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for d in details_facture %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ d.article.designation }}</td>
+        <td>{{ d.qte }}</td>
+        <td>{{ d.prix|floatformat }}FC</td>
+        <td>{{ d.total|floatformat }}FC</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="text-center">Aucun détail</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="invoice-summary-premium">
+            <div class="summary-grid">
+                <div class="summary-left">
+                </div>
+                <div class="summary-right">
+                    <div class="calculation-card">
+                        <div class="calc-row">
+                            <span class="calc-label">Sous-total</span>
+                            <span class="calc-value" id="subtotal">{{ object.sous_total }} {{ object.devise }}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Remise</span>
+                            <span class="calc-value" id="remise">{{ object.remise }} {{ object.devise }}</span>
+                        </div>
+                        <div class="calc-divider"></div>
+                        <div class="calc-row total-row">
+                            <span class="calc-label">Total à payer</span>
+                            <span class="calc-value total-value" id="total">{{ object.total }} {{ object.devise }}</span>
+                        </div>
+                        <div class="calc-row conversion-row">
+                            <span class="calc-label">Équivalent USD</span>
+                            <span class="calc-value conversion-value" id="totalUSD">${{ object.total_devise|floatformat }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>

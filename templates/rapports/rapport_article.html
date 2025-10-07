@@ -1,0 +1,126 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Rapport des articles {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    .panel-success .panel-heading {
+      background-color: #5cb85c;
+      color: white;
+    }
+    .form-inline .form-group {
+      margin-right: 15px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+     <div class="right_col" role="main">
+         <div class="">
+             <div class="page-title">
+                <div class="title_left">
+                    <h5>Rapport des articles</h5>
+                </div>
+            </div>
+             <div class="row">
+                 <!-- Filtres -->
+  <form class="form-inline" style="margin-bottom: 20px;">
+    <div class="form-group">
+      <label for="startDate">Date de début</label>
+      <input type="date" class="form-control" id="startDate" name="start_date">
+    </div>
+    <div class="form-group">
+      <label for="endDate">Date de fin</label>
+      <input type="date" class="form-control" id="endDate" name="end_date">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+  </form>
+
+  <!-- Valeur totale du stock -->
+  <div class="panel panel-primary">
+    <div class="panel-heading">
+      <h4 class="panel-title">Valeur totale du stock actuel</h4>
+    </div>
+    <div class="panel-body">
+      <h3><strong>1 250 000 FC</strong></h3>
+      <p>Calculé sur la base des prix de vente au détail</p>
+    </div>
+  </div>
+
+  <!-- Graphique -->
+  <div class="panel panel-default">
+    <div class="panel-heading">Top 5 des articles selon la valeur en stock</div>
+    <div class="panel-body">
+      <canvas id="articlesChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- Détail par article -->
+  <div class="panel panel-default">
+    <div class="panel-heading">Détails par article</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr class="info">
+            <th rowspan="2">Article</th>
+            <th colspan="2" class="text-center">Valeur en Stock</th>
+            <th colspan="2" class="text-center">Chiffre d’affaires (30j)</th>
+            <th colspan="2" class="text-center">Résultat (30j)</th>
+            <th colspan="2" class="text-center">Moyenne journalière stockée</th>
+          </tr>
+          <tr>
+            <th>Montant (FC)</th><th>% du stock</th>
+            <th>Montant (FC)</th><th>% du CA</th>
+            <th>Montant (FC)</th><th>% du Résultat</th>
+            <th>Moyenne (FC)</th><th>% du stock total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Coca-Cola</td>
+            <td>150 000</td><td>12%</td>
+            <td>90 000</td><td>18%</td>
+            <td>30 000</td><td>25%</td>
+            <td>145 000</td><td>11.6%</td>
+          </tr>
+          <tr>
+            <td>Savon OMO</td>
+            <td>120 000</td><td>9.6%</td>
+            <td>75 000</td><td>15%</td>
+            <td>22 000</td><td>18%</td>
+            <td>125 000</td><td>10%</td>
+          </tr>
+          <!-- autres articles -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+         </div>
+     </div>
+
+<!-- Chart.js -->
+<script>
+  var ctx = document.getElementById('articlesChart').getContext('2d');
+  var articlesChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Coca-Cola', 'Savon OMO'],
+      datasets: [{
+        label: 'Valeur en stock (FC)',
+        data: [150000, 120000],
+        backgroundColor: '#337ab7'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock content %}
