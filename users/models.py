@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
+from caisse.models import Caisse
 
 
 class TypeProfile(models.Model):
@@ -21,3 +22,11 @@ class CustomUser(AbstractUser):
 
     def get_absolute_url(self):
         return reverse('user_details', args=[str(self.pk)])
+
+
+class Caissier(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='medecin')
+    caisse = models.ForeignKey(Caisse, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.caisse.nom}'

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import TypeProfile
+from .models import TypeProfile, Caissier
 
 CustomUser = get_user_model()
 
@@ -17,3 +17,4 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(TypeProfile)
+admin.site.register(Caissier)
