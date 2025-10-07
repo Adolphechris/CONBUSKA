@@ -27,8 +27,10 @@
                 <!-- <h3>MENU</h3> -->
                 <ul class="nav side-menu documents">
                     <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
+                    <li><a href="{% url 'patrimoine' %}"><i class="fa fa-line-chart"></i> Gestion de patrimoine </a></li>
                     <li id="fournisseurs"><a href="{% url 'fournisseurs' %}"><i class="fa fa-list-ul"></i> Fournisseurs </a></li>
                     <li id="clients"><a href="{% url 'clients' %}"><i class="fa fa-user"></i> Clients </a></li>
+                    <li id="creanciers"><a href="{% url 'creanciers' %}"><i class="fa fa-exchange"></i> Créanciers - Débiteurs </a></li>
                     <li id="articles"><a><i class="fa fa-tags"></i> Articles <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="liste_articles"><a href="{% url 'articles' %}">Articles</a></li>
@@ -38,9 +40,28 @@
                     </li>
                     <li id="commandes"><a href="{% url 'commandes' %}"><i class="fa fa-file-text-o"></i> Commandes </a></li>
                     <li id="approvisionnements"><a href="{% url 'approvisionnements' %}"><i class="fa fa-truck"></i> Approvisionnements </a></li>
-                    <li id="factures"><a href="{% url 'commandes' %}"><i class="fa fa-shopping-cart"></i> Factures </a></li>
-                    <li id="caisse"><a href="{% url 'unites' %}"><i class="fa fa-money"></i> Caisse </a></li>
-                    <li id="rapports"><a href="{% url 'unites' %}"><i class="fa fa-bar-chart-o"></i> Rapport </a></li>
+                    <li id="factures"><a href="{% url 'factures' %}"><i class="fa fa-shopping-cart"></i> Factures </a></li>
+                    <li id="caisses"><a><i class="fa fa-usd"></i> Caisses <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="caisse"><a href="{% url 'ouverture_caisse' %}">Nouvelle caisse</a></li>
+                            <li id="liste_caisses"><a href="{% url 'caisses' %}">Liste des caisses</a></li>
+                        </ul>
+                    </li>
+                    <li id="rapports"><a><i class="fa fa-bar-chart-o"></i> Rapports <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="rapport_vente"><a href="{% url 'rapport_ventes' %}">Rapport des ventes</a></li>
+                            <li id="rapport_resultat"><a href="{% url 'rapport_resultats' %}">Rapport des résultats</a></li>
+                            <li id="rapport_article"><a href="{% url 'rapport_articles' %}">Rapport des articles</a></li>
+                            <li id="rapport_caisse"><a href="">Rapport des caisses</a></li>
+                            <li id="generation_commande"><a href="">Génération des commandes</a></li>
+                        </ul>
+                    </li>
+                    <li id="paie"><a><i class="fa fa-money"></i> Livre de paie <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li id="agents"><a href="{% url 'agents' %}">Agents</a></li>
+                            <li id="listes_paie"><a href="{% url 'listes_paie' %}">Listes de paie</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
             <div class="menu_section">

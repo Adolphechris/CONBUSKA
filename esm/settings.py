@@ -40,12 +40,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # LOCAL
     'approvisionnements.apps.ApprovisionnementsConfig',
+    'caisse.apps.CaisseConfig',
     'clients.apps.ClientsConfig',
     'commandes.apps.CommandesConfig',
+    'creanciers.apps.CreanciersConfig',
     'factures.apps.FacturesConfig',
     'fournisseurs.apps.FournisseursConfig',
     'produits.apps.ProduitsConfig',
+    'paie.apps.PaieConfig',
     'parametres.apps.ParametresConfig',
+    'patrimoine.apps.PatrimoineConfig',
+    'rapports.apps.RapportsConfig',
     'users.apps.UsersConfig',
     'users_management.apps.UsersManagementConfig',
     # Contrib
@@ -93,7 +98,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'esm',
         'USER': 'postgres',
-        'PASSWORD': 'Tobin@2022',
+        'PASSWORD': 'Tobin@2025',
         'HOST': 'localhost',
         'PORT': 5432
     }

@@ -1,5 +1,6 @@
 logs/
 venv/
+media/
 media/articles/*
 media/fournisseurs/*
 .idea/
