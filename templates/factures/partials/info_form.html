@@ -9,7 +9,16 @@
         </div>
     </div>
     <div class="card-content">
-        <form class="form-premium" id="infoForm">
+        <form method="POST"
+              action="{% url 'facture_infos_update' facture.pk %}"
+              hx-post="{% url 'facture_infos_update' facture.pk %}"
+              hx-trigger="change delay:500ms"
+              hx-swap="none"
+              hx-on="submit: event.preventDefault()"
+              class="form-premium"
+              id="infoForm"
+        >
+            {% csrf_token %}
             <div class="form-group-premium">
                 <div class="input-premium disabled">
                     <div class="input-icon">
@@ -24,18 +33,44 @@
                     <div class="input-icon">
                         <i class="fa fa-user"></i>
                     </div>
-                    {{ info_form.client }}
+                    {{ info_form.client_comptoir }}
                     <button type="button" class="input-action" title="Rechercher client">
                         <i class="fa fa-search"></i>
                     </button>
                 </div>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-primary-premium btn-block" id="validateInfo">
-                    <i class="fa fa-check"></i>
-                    <span>Valider les informations</span>
-                </button>
+                <input type="submit" class="btn btn-primary-premium btn-block valider" value="Valider les informations" disabled id="validateInfo">
+                <div id="save-feedback" class="text-success mt-2" style="display:none;">Infos sauvegardées</div>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    const form = document.getElementById('infoForm');
+    const saveBtn = document.getElementById('validateInfo');
+    const feedback = document.getElementById('save-feedback');
+    let initialData = new FormData(form);
+    let formChanged = false;
+
+    // Active le bouton si un champ change
+    form.addEventListener('input', () => {
+        formChanged = true;
+        saveBtn.disabled = false;
+    });
+
+    // Gère le retour HTMX après la sauvegarde
+    document.body.addEventListener('htmx:afterRequest', function (e) {
+        if (formChanged) {
+            saveBtn.disabled = true;
+            feedback.style.display = 'block';
+            formChanged = false;
+
+            // Cache le message après 2 secondes
+            setTimeout(() => {
+                feedback.style.display = 'none';
+            }, 2000);
+        }
+    });
+</script>

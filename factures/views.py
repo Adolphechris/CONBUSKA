@@ -59,7 +59,7 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(object=self.object)
-        context['info_form'] = InfosFactureForm(livreur=self.object.livreur)
+        context['info_form'] = InfosFactureForm(instance=self.object)
         context['add_form'] = ArticleFactureAddForm()
         context['update_form'] = ArticleFactureUpdateForm(
             instance=DetailsFacture.objects.filter(facture=self.kwargs['pk']).first()
@@ -117,6 +117,35 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['details_facture'] = self.get_details_facture()
         return context
+
+
+class FactureInfosUpdateView(LoginRequiredMixin, UpdateView):
+    model = Facture
+    form_class = InfosFactureForm
+    template_name = 'factures/partials/info_form.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Facture, pk=self.kwargs['pk'])
+
+    def form_valid(self, form):
+        self.object = form.save()
+
+        if self.request.headers.get("HX-Request"):
+            context = {
+                'info_form': self.get_form(instance=self.object),
+                'facture': self.object
+            }
+            html = render_to_string(self.template_name, context, request=self.request)
+            return JsonResponse({'success': True, 'html': html})
+        return redirect('facture_details', pk=self.object.pk)
+
+    def form_invalid(self, form):
+        context = {
+            'info_form': form,
+            'facture': self.get_object()
+        }
+        html = render_to_string(self.template_name, context, request=self.request)
+        return JsonResponse({'success': False, 'html': html})
 
 
 class ArticleFactureDeleteView(LoginRequiredMixin, DeleteView):

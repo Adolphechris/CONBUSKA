@@ -1,8 +1,9 @@
 from django.db import models, transaction
 from django.urls import reverse
 from produits.models import Stock, Magasin
-from django.db.models import Max
-from django.utils.timezone import now
+from django.db.models import Max, Count, Sum, F, DecimalField
+from django.db.models.functions import TruncDate
+from django.utils import timezone
 import datetime
 
 
@@ -11,6 +12,24 @@ class Livreur(models.Model):
     livraison = models.IntegerField(default=0)
     def __str__(self):
         return self.nom
+
+
+class FactureManager(models.Manager):
+    def ventes_journalieres(self):
+        today = timezone.now().date()
+        premier_jour = today.replace(day=1)
+        return (self.get_queryset()
+                .filter(date_facture__range=(premier_jour, today))
+                .annotate(date=TruncDate('date_facture'))
+                .values('date')
+                .annotate(
+                    nb_factures=Count('id', distinct=True),
+                    total_vendu=Sum(
+                        F('facture_details__qte') * F('facture_details__prix'),
+                        output_field=DecimalField(max_digits=12, decimal_places=2)
+                    ) - Sum('remise', distinct=True)
+                )
+                .order_by('date'))
 
 
 class Facture(models.Model):
@@ -36,7 +55,7 @@ class Facture(models.Model):
                                     on_delete=models.PROTECT)
     actif = models.BooleanField(default=True)
 
-    objects = models.Manager()
+    objects = FactureManager()
 
     def __str__(self):
         return self.numero
@@ -61,7 +80,7 @@ class Facture(models.Model):
         if last_num:
             return last_num + 1
         # Format de départ basé sur l’année : exemple 250000
-        return int(now().strftime('%y') + '0000')
+        return int(timezone.now().strftime('%y') + '0000')
 
     def save(self, *args, **kwargs):
         if self.numero is None:
@@ -74,7 +93,7 @@ class Facture(models.Model):
 
 
 class DetailsFacture(models.Model):
-    facture = models.ForeignKey(Facture, on_delete=models.PROTECT, null=True)
+    facture = models.ForeignKey(Facture, related_name='facture_details', on_delete=models.PROTECT, null=True)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
     prix = models.DecimalField(max_digits=8, decimal_places=4)
