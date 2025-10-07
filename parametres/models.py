@@ -34,6 +34,9 @@ class Magasin(models.Model):
     is_principal = models.BooleanField(default=False)
     localisation = models.CharField(max_length=30)
 
+    def __str__(self):
+        return self.nom
+
     @staticmethod
     def get_absolute_url():
         return reverse('magasins')
