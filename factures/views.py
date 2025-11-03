@@ -8,8 +8,8 @@ from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from django.db.models import Min
-from .models import Facture, DetailsFacture, Livreur, DetailsLigneFacture
-from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm
+from .models import Facture, DetailsFacture, Livreur, DetailsLigneFacture, FactureClient
+from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm, FactureClientForm
 import random
 
 
@@ -59,6 +59,7 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(object=self.object)
+        print("FACTURE CLIENT ", self.object.numero)
         context['info_form'] = InfosFactureForm(instance=self.object)
         context['add_form'] = ArticleFactureAddForm()
         context['update_form'] = ArticleFactureUpdateForm(
@@ -146,6 +147,96 @@ class FactureInfosUpdateView(LoginRequiredMixin, UpdateView):
         }
         html = render_to_string(self.template_name, context, request=self.request)
         return JsonResponse({'success': False, 'html': html})
+
+
+class FactureClientCreateView(LoginRequiredMixin, CreateView):
+    model = FactureClient
+    template_name = 'factures/partials/facture_client_form.html'
+    form_class = FactureClientForm
+
+    def get_facture(self):
+        return get_object_or_404(Facture, pk=self.kwargs['pk'])
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['facture'] = self.get_facture()
+        return context
+
+
+    def form_valid(self, form):
+        facture = self.get_facture()
+
+        facture_client = form.save(commit=False)
+        facture_client.facture = facture
+        facture_client.save()
+
+        context = {
+            'facture': self.get_facture(),
+        }
+
+        html = render_to_string('factures/partials/facture_client_partial.html', context)
+
+        response = HttpResponse(html)
+        response["HX-Trigger"] = "closeModalClient"
+        return response
+
+    def form_invalid(self, form):
+        # S'assure que le formulaire est affiché dans la modale même si invalide
+        return render(self.request, self.template_name, {
+            'form': form,
+            'facture': self.get_facture()
+        })
+
+
+class FactureClientUpdateView(LoginRequiredMixin, UpdateView):
+    model = FactureClient
+    template_name = 'factures/partials/facture_client_form.html'
+    form_class = FactureClientForm
+
+    def get_facture(self):
+        return get_object_or_404(Facture, pk=self.kwargs['facture_pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['facture'] = self.get_facture()
+        return context
+
+    def form_valid(self, form):
+        facture_client = form.save(commit=False)
+        facture_client.save()
+
+        context = {
+            'facture': self.get_facture(),
+        }
+
+        html = render_to_string('factures/partials/facture_client_partial.html', context)
+
+        response = HttpResponse(html)
+        response["HX-Trigger"] = "closeModalClient"
+        return response
+
+    def form_invalid(self, form):
+        # S'assure que le formulaire est affiché dans la modale même si invalide
+        return render(self.request, self.template_name, {
+            'form': form,
+            'facture': self.get_facture()
+        })
+
+
+class FactureClientDeleteView(LoginRequiredMixin, DeleteView):
+    model = FactureClient
+
+    def delete(self, request, *args, **kwargs):
+        facture_client = self.get_object()
+        facture = facture_client.facture
+        facture_client.delete()
+
+        # Retour à l’état initial (info_form.html)
+        info_form = InfosFactureForm(instance=facture)
+        context = {'facture': facture, 'info_form': info_form}
+        html = render_to_string('factures/partials/info_form.html', context)
+        return HttpResponse(html)
 
 
 class ArticleFactureDeleteView(LoginRequiredMixin, DeleteView):

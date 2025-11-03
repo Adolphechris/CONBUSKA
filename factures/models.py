@@ -3,6 +3,7 @@ from django.urls import reverse
 from produits.models import Stock, Magasin
 from django.db.models import Max, Count, Sum, F, DecimalField
 from django.db.models.functions import TruncDate
+from clients.models import Client
 from django.utils import timezone
 import datetime
 
@@ -54,6 +55,7 @@ class Facture(models.Model):
                                     related_name='facturemodpar',
                                     on_delete=models.PROTECT)
     actif = models.BooleanField(default=True)
+    valide = models.BooleanField(default=False)
 
     objects = FactureManager()
 
@@ -228,7 +230,7 @@ class DetailsFacture(models.Model):
                 self.save()
 
     @transaction.atomic
-    def delte_facture(self):
+    def delete_facture(self):
         magasin = Magasin.objects.get(nom="Alimentation")
         get_lignes_facture = DetailsLigneFacture.objects.filter(detail_facture=self.pk)
         for i in get_lignes_facture:
@@ -252,3 +254,8 @@ class DetailsLigneFacture(models.Model):
     qte = models.IntegerField()
     date_peremption = models.DateField(blank=False, null=False)
     date_creation = models.DateTimeField(auto_now_add=True)
+
+
+class FactureClient(models.Model):
+    facture = models.OneToOneField(Facture, related_name='facture_client', on_delete=models.PROTECT)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT)

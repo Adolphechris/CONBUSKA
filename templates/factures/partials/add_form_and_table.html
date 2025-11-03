@@ -1,7 +1,11 @@
  <!-- Formulaire d'ajout d'articles amélioré -->
 <div class="content-sidebar">
     <!-- Information Card -->
-    {% include "factures/partials/info_form.html" %}
+    {% if facture.facture_client %}
+        {% include "factures/partials/facture_client_partial.html" %}
+    {% else %}
+        {% include "factures/partials/info_form.html" %}
+    {% endif %}
     <!-- Add Item Card -->
     <div class="card-premium add-item-card">
         <div class="card-header">
@@ -24,7 +28,7 @@
     </div>
 </div>
 
- <!-- Main Content -->
- <div class="content-main">
-     {% include "factures/partials/lines_table.html" %}
- </div>
+<!-- Main Content -->
+<div class="content-main">
+    {% include "factures/partials/lines_table.html" %}
+</div>

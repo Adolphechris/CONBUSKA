@@ -1,8 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from factures.models import Facture, DetailsFacture
+from factures.models import Facture, DetailsFacture, FactureClient
 from produits.models import Article, Stock
 from parametres.models import Magasin
+from clients.models import Client
 
 """
 class InfosFactureForm(forms.Form):
@@ -22,26 +23,13 @@ class InfosFactureForm(forms.Form):
 class InfosFactureForm(forms.ModelForm):
     class Meta:
         model = Facture
-        fields = ['livreur', 'client_comptoir']  # on limite aux champs qui nous intéressent
+        fields = ['client_comptoir']
         widgets = {
-            'livreur': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Livreur',
-                'disabled': True
-            }),
             'client_comptoir': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Client'
             }),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(InfosFactureForm, self).__init__(*args, **kwargs)
-        # On affiche le nom du livreur si disponible
-        if self.instance and self.instance.livreur:
-            self.fields['livreur'].initial = self.instance.livreur
-        else:
-            self.fields['livreur'].initial = "—"
 
     def save(self, commit=True):
         facture = super().save(commit=False)
@@ -96,3 +84,15 @@ class ArticleFactureUpdateForm(forms.ModelForm):
 
         if qte > stock:
             raise ValidationError("La quantité est supérieure à la quantité en stock.")
+
+
+class FactureClientForm(forms.ModelForm):
+    client = forms.ModelChoiceField(
+        queryset=Client.objects.all(),
+        empty_label="--- Sélectionner un client ---",
+        widget = forms.Select(attrs={'class': 'form-control js-simple-select'}),
+    )
+
+    class Meta:
+        model = FactureClient
+        exclude = ['facture']

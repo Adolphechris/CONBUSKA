@@ -1,0 +1,13 @@
+<form method="post"
+      hx-post="{% if facture.facture_client.pk %}{% url 'update_facture_client' facture.pk facture.facture_client.pk %}{% else %}{% url 'create_facture_client' facture.pk %}{% endif %}"
+      hx-target="#modal-client"
+      hx-swap="innerHTML">
+    {% csrf_token %}
+    <div class="row">
+        {{ form.as_p }}
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-success">Valider</button>
+    </div>
+</form>

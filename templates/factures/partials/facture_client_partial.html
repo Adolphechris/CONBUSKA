@@ -1,0 +1,58 @@
+<div class="card-premium info-card" id="facture-info">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fa fa-info-circle"></i>
+            <span>Informations facture</span>
+        </div>
+        <div class="card-status">
+            <div class="status-dot status-success"></div>
+        </div>
+    </div>
+
+    <div class="card-content">
+        <div class="form-group-premium">
+            <div class="input-premium disabled">
+                <div class="input-icon">
+                    <i class="fa fa-truck"></i>
+                </div>
+                <input type="text" value="{{ facture.livreur.nom|default:'Auto' }}" readonly>
+                <div class="input-badge">Auto</div>
+            </div>
+        </div>
+
+        <div class="form-group-premium">
+            <div class="input-premium">
+                <div class="input-icon">
+                    <i class="fa fa-user"></i>
+                </div>
+                <input type="text"
+                       value="{{ facture.facture_client.client.nom }}"
+                       readonly
+                       class="form-control-premium">
+                <div class="input-actions">
+                    <!-- Bouton pour modifier le client -->
+                    <button hx-get="{% url 'create_facture_client' facture.pk %}"
+                            hx-target="#modal-client"
+                            hx-trigger="click"
+                            hx-swap="innerHTML"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalSearchClient"
+                            title="Modifier le client"
+                            class="input-actionx btn-edit">
+                        <i class="fa fa-edit"></i>
+                    </button>
+
+                    <!-- Bouton pour supprimer le client lié -->
+                    <button hx-delete="{% url 'delete_facture_client' facture.facture_client.pk %}"
+                            hx-target="#facture-info"
+                            hx-swap="outerHTML"
+                            hx-confirm="Voulez-vous vraiment supprimer ce client et réinitialiser les infos ?"
+                            title="Supprimer le client"
+                            class="input-actionx btn-delete">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

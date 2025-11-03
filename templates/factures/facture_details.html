@@ -368,6 +368,39 @@
   color: var(--gray-800);
 }
 
+.input-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* espace horizontal entre les boutons */
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.input-actionx {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.input-actionx i {
+    font-size: 14px;
+}
+
+.input-action.btn-edit:hover {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.input-action.btn-delete:hover {
+    background-color: #fdecea;
+    color: #d32f2f;
+}
+
 .input-badge {
   position: absolute;
   right: var(--space-md);
@@ -1268,13 +1301,13 @@
                                     <span class="meta-separator">•</span>
                                     <span class="meta-item">
                                         <i class="fa fa-calendar"></i>
-                                        <strong>24 Mai 2025</strong>
+                                        <strong>{{ facture.date_facture }}</strong>
                                     </span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                   </div>
+                   <div class="col-md-4">
                         <div class="header-actions">
                             <button class="btn btn-secondary-premium" data-toggle="modal" data-target="#editInfoModal">
                                 <i class="fa fa-edit"></i>
@@ -1285,7 +1318,7 @@
                                 Brouillon
                             </div>
                         </div>
-                    </div>
+                   </div>
                 </div>
             </div>
              <!-- Content Grid Premium -->
@@ -1295,6 +1328,7 @@
          </div>
          </div>
     </div>
+
     <!-- Modal Bootstrap -->
     <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1303,6 +1337,22 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL RECHERCHE CLIENT -->
+    <div id="modalSearchClient" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sélectionner un client</h5>
+                    <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>-->
+                </div>
+                <div class="modal-body" id="modal-client">
+                    <!-- Le contenu du formulaire sera injecté ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         $(document).ready(function () {
             document.body.addEventListener('htmx:afterSwap', function(evt) {
@@ -1315,7 +1365,32 @@
                 }
             });
 
+            // MODAL CLIENT -> Géstion fermeture manuelle modale
+            document.body.addEventListener("closeModalClient", function () {
+                $('#modalSearchClient').modal('hide');
 
+                const modal = $('#modalSearchClient');
+                modal.modal('hide');
+
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+            });
+
+            // Imagerie -> Quand HTMX injecte le contenu de la modale
+            document.body.addEventListener("htmx:afterSwap", function (e) {
+                if (e.target.id === "modal-client") {
+                    $('#modalSearchClient').modal('show');
+                }
+            });
+
+            document.body.addEventListener('htmx:beforeSwap', function(e) {
+                if (e.target.id === 'modal-client') {
+                    $('#modalSearchClient').modal('hide');
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                }
+            });
 
             $('#factures').addClass('active');
         });

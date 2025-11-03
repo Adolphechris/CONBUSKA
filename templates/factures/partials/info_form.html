@@ -24,7 +24,7 @@
                     <div class="input-icon">
                         <i class="fa fa-truck"></i>
                     </div>
-                    {{ info_form.livreur }}
+                    <input type="text" class="form-control" value="{{ facture.livreur.nom|default:'—' }}" readonly>
                     <div class="input-badge">Auto</div>
                 </div>
             </div>
@@ -34,7 +34,14 @@
                         <i class="fa fa-user"></i>
                     </div>
                     {{ info_form.client_comptoir }}
-                    <button type="button" class="input-action" title="Rechercher client">
+                    <button hx-get="{% url 'create_facture_client' facture.pk %}"
+                            hx-target="#modal-client"
+                            hx-trigger="click"
+                            hx-swap="innerHTML"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalSearchClient"
+                            title="Rechercher client"
+                            class="input-action">
                         <i class="fa fa-search"></i>
                     </button>
                 </div>
