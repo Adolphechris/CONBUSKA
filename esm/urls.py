@@ -34,7 +34,7 @@ urlpatterns = [
     path('caisse/', include('caisse.urls')),
     path('clients/', include('clients.urls')),
     path('commandes/', include('commandes.urls')),
-    path('creanciers/', include('creanciers.urls')),
+    path('credits/', include('creanciers.urls')),
     path('factures/', include('factures.urls')),
     path('fournisseurs/', include('fournisseurs.urls')),
     path('paie/', include('paie.urls')),

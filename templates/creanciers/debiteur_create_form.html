@@ -1,20 +1,20 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Creancier|Create {% endblock title %}
+{% block title %} Débiteur|Create {% endblock title %}
 
 {% block content %}
     <div class="right_col" role="main">
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5><a href="{% url 'creanciers' %}">Creanciers</a> / Création creancier</h5>
+                    <h5><a href="{% url 'debiteurs' %}">Débiteurs</a> / Création débiteur</h5>
                 </div>
             </div>
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h4>Formulaire de création d'un creancier</h4>
+                        <h4>Formulaire de création d'un débiteur</h4>
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
@@ -33,7 +33,7 @@
                             <div class="ln_solid"></div>
                             <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
                                 <input type="submit" class="btn btn-info valider" value="Valider">
-                                <a href="{% url 'creanciers' %}">
+                                <a href="{% url 'debiteurs' %}">
                                     <button class="btn btn-danger" type="button">
                                         Annuler
                                     </button>
@@ -48,7 +48,7 @@
 
     <script>
         $(document).ready(function() {
-            $('#creanciers').addClass('current-page');
+            $('#debiteurs').addClass('current-page');
             $('#cr_db').addClass('active');
             let parent = document.getElementById('cr_db');
             parent.childNodes[2].style.display = 'block';

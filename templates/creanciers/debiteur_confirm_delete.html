@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Creancier|Delete {% endblock title %}
+{% block title %} Débiteur|Delete {% endblock title %}
 
 {% block content %}
     <div class="right_col" role="main">
@@ -51,7 +51,7 @@
     </div>
     <script>
         $(document).ready(function() {
-            $('#creanciers').addClass('current-page');
+            $('#debiteurs').addClass('current-page');
             $('#cr_db').addClass('active');
             let parent = document.getElementById('cr_db');
             parent.childNodes[2].style.display = 'block';

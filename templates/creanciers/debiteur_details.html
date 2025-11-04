@@ -1,14 +1,14 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Creancier {% endblock title %}
+{% block title %} Détails Débiteur {% endblock title %}
 
 {% block content %}
     <div class="right_col" role="main">
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5><a href="{% url 'creanciers' %}">Creanciers</a> / Détails Creancier </h5>
+                    <h5><a href="{% url 'debiteurs' %}">Débiteurs</a> / Détails débiteur </h5>
                 </div>
             </div>
              <div class="row">
@@ -18,22 +18,22 @@
                             <div class="profile_img">
                                 <div id="crop-avatar">
                                     <!-- Current avatar -->
-                                    <img class="img-circle" src="{{ creancier.photo.url }}"
+                                    <img class="img-circle" src="{{ debiteur.photo.url }}"
                                          alt="Avatar" title="Change the avatar" width="240">
                                 </div>
                             </div>
-                            <h4><strong>{{ creancier.nom }} / {{ creancier.code }}</strong></h4>
+                            <h4><strong>{{ debiteur.nom }} / {{ debiteur.code }}</strong></h4>
                             <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-map-marker"></i> Addresse: {{ creancier.adresse }}</li>
-                                <li><i class="fa fa-phone"></i> Telephone: {{ creancier.telephone }}</li>
-                                <li><i class="fa fa-envelope"></i> Email: {{ creancier.email }}</li>
+                                <li><i class="fa fa-map-marker"></i> Addresse: {{ debiteur.adresse }}</li>
+                                <li><i class="fa fa-phone"></i> Telephone: {{ debiteur.telephone }}</li>
+                                <li><i class="fa fa-envelope"></i> Email: {{ debiteur.email }}</li>
                             </ul>
                             <hr>
                             <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde creancier: {{ solde_creancier|floatformat }}$</li>
+                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde débiteur: {{ solde_debiteur|floatformat }}$</li>
                             </ul>
                             <br />
-                            <a href="{% url 'creancier_update' creancier.pk %}" class="btn btn-primary btn-lg">
+                            <a href="{% url 'debiteur_update' debiteur.pk %}" class="btn btn-primary btn-lg">
                                  <i class="fa fa-edit"></i>
                                  Modifier
                             </a>
@@ -121,7 +121,7 @@
     </div>
     <script>
         $(document).ready(function() {
-            $('#creanciers').addClass('current-page');
+            $('#debiteurs').addClass('current-page');
             $('#cr_db').addClass('active');
             let parent = document.getElementById('cr_db');
             parent.childNodes[2].style.display = 'block';

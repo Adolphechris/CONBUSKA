@@ -1,0 +1,101 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Débiteurs {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .img_container {
+        width: 20px;
+        height: 12px;
+    }
+
+    /* Resize images */
+    .img_container img {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Débiteurs</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Liste des débiteurs<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'debiteur_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEAU DEBITEUR
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tableDebiteurs" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Code</th>
+                                            <th class="column-title"> Photo</th>
+                                            <th class="column-title"> Nom</th>
+                                            <th class="column-title"> Email</th>
+                                            <th class="column-title"> Telephone </th>
+                                            <th class="column-title"> Adresse</th>
+                                            <th class="column-title"> Ville</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for debiteur in liste_debiteurs %}
+										    <tr>
+                                                <td>{{ debiteur.code }}</td>
+                                                <td class="img_container">
+                                                    <img src="{{ debiteur.photo.url }}" alt="..." class="">
+                                                </td>
+                                                <td>{{ debiteur.nom }}</td>
+                                                <td>{{ debiteur.email }}</td>
+                                                <td>{{ debiteur.telephone }}</td>
+                                                <td>{{ debiteur.adresse }}</td>
+                                                <td>{{ debiteur.ville }}</td>
+                                                <td>
+                                                    <a href="{{ debiteur.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Détails
+                                                    </a>
+                                                    <a href="{% url 'debiteur_update' debiteur.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'debiteur_delete' debiteur.pk %}" class="btn btn-danger btn-xs">
+                                                        <i class="fa fa-trash-alt"></i>
+                                                        Supprimer
+                                                    </a>
+                                                </td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#debiteurs').addClass('active');
+         });
+    </script>
+{% endblock content %}
