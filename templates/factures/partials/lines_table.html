@@ -4,7 +4,7 @@
             <i class="fa fa-list-alt"></i>
             <span>Détails de la facture</span>
             <div class="items-count">
-                <span id="itemsCount">1</span> article(s)
+                <span id="itemsCount">{{ facture.total_articles }}</span> article(s)
             </div>
         </div>
         <div class="card-actions">
@@ -12,9 +12,6 @@
                 <input type="text" placeholder="Filtrer..." id="tableFilter">
                 <i class="fa fa-search"></i>
             </div>
-            <button class="card-action-btn" title="Exporter">
-                <i class="fa fa-download"></i>
-            </button>
         </div>
     </div>
     <div class="card-content no-padding">
@@ -70,36 +67,7 @@
         </div>
 
         <!-- Summary amélioré -->
-        <div class="invoice-summary-premium">
-            <div class="summary-grid">
-                <div class="summary-left">
-                </div>
-                <div class="summary-right">
-                    <div class="calculation-card">
-                        <div class="calc-row">
-                            <span class="calc-label">Sous-total</span>
-                            <span class="calc-value" id="subtotal">{{ facture.sous_total }} {{ facture.devise }}</span>
-                        </div>
-                        <div class="calc-row">
-                            <span class="calc-label">Remise</span>
-                            <div class="discount-input">
-                                <input type="number" id="discount" value="{{ facture.remise }}" min="0">
-                                <span class="currency">{{ facture.devise }}</span>
-                            </div>
-                        </div>
-                        <div class="calc-divider"></div>
-                        <div class="calc-row total-row">
-                            <span class="calc-label">Total à payer</span>
-                            <span class="calc-value total-value" id="total">{{ facture.total }} {{ facture.devise }}</span>
-                        </div>
-                        <div class="calc-row conversion-row">
-                            <span class="calc-label">Équivalent USD</span>
-                            <span class="calc-value conversion-value" id="totalUSD">${{ facture.total_devise|floatformat }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% include "factures/partials/facture_summary_partial.html" %}
     </div>
  </div>
 
@@ -108,29 +76,30 @@
         <div class="row">
             <div class="col-md-6 text-left">
                 <div class="btn-group">
-                  <button class="btn btn-default" id="btnPrevisualiser">
-                    <i class="fa fa-eye icon-space"></i>Prévisualiser
-                  </button>
-                  <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu">
-                    <li><a href="#"><i class="fa fa-file-pdf-o icon-space"></i>PDF</a></li>
-                    <li><a href="#"><i class="fa fa-print icon-space"></i>Imprimer</a></li>
-                    <li><a href="#"><i class="fa fa-envelope icon-space"></i>Envoyer par email</a></li>
-                  </ul>
+                    <button class="btn btn-danger" id="btnPdf">
+                        <i class="fa fa-file-pdf-o icon-space"></i>PDF
+                    </button>
+                    <button class="btn btn-warning" id="btnPrint">
+                        <i class="fa fa-print icon-space"></i>POS
+                    </button>
                 </div>
-                <button class="btn btn-default" id="btnAnnuler">
-                  <i class="fa fa-times-circle icon-space"></i>Annuler
-                </button>
             </div>
             <div class="col-md-6 text-right">
                 <div class="btn-group">
                     <button class="btn btn-default" id="btnBrouillon">
-                        <i class="fa fa-save icon-space"></i>Enregistrer le brouillon
+                        <a href="{% url 'facture_create' %}">
+                            <i class="fa fa-save icon-space"></i> Enregistrer le brouillon
+                        </a>
                     </button>
-                    <button class="btn btn-primary" id="btnEnregistrer">
-                        <i class="fa fa-check-circle icon-space"></i>Finaliser la facture
+                    <button hx-get="{% url 'validate_facture' facture.pk %}"
+                            hx-target="body"
+                            hx-swap="none"
+                            class="btn btn-primary"
+                            id="btnEnregistrer">
+                        <i class="fa fa-check-circle icon-space"></i>Valider la facture
+                    </button>
+                    <button class="btn btn-danger" id="btnAnnuler">
+                        <i class="fa fa-times-circle icon-space"></i>Annuler la facture
                     </button>
                 </div>
             </div>

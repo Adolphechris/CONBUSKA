@@ -1,3 +1,5 @@
+import decimal
+
 from django.db import models, transaction
 from django.urls import reverse
 from produits.models import Stock, Magasin
@@ -70,11 +72,16 @@ class Facture(models.Model):
 
     @property
     def total(self):
-        return self.sous_total - self.remise
+        sous_total = decimal.Decimal(self.sous_total)
+        return sous_total - self.remise
 
     @property
     def total_devise(self):
         return self.total / self.taux
+
+    @property
+    def total_articles(self):
+        return DetailsFacture.objects.filter(facture=self.pk).count()
 
     @classmethod
     def get_next_num(cls):

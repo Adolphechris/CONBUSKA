@@ -1,0 +1,39 @@
+<div id="invoice-summary" class="summary-grid invoice-summary-premium">
+    <div class="summary-left"></div>
+    <div class="summary-right">
+        <div class="calculation-card">
+            <div class="calc-row">
+                <span class="calc-label">Sous-total</span>
+                <span class="calc-value" id="subtotal">{{ facture.sous_total }} {{ facture.devise }}</span>
+            </div>
+            <div class="calc-row">
+                <span class="calc-label">Remise</span>
+                <div class="discount-input">
+                    <input
+                        type="number"
+                        id="discount"
+                        name="remise"
+                        value="{{ facture.remise }}"
+                        min="0"
+                        hx-post="{% url 'remise_facture' facture.pk %}"
+                        hx-trigger="change delay:300ms"
+                        hx-target="#invoice-summary"
+                        hx-swap="outerHTML"
+                    >
+                    <span class="currency">{{ facture.devise }}</span>
+                </div>
+            </div>
+            <div class="calc-divider"></div>
+            <div class="calc-row total-row">
+                <span class="calc-label">Total à payer</span>
+                <span class="calc-value total-value" id="total">{{ facture.total }} {{ facture.devise }}</span>
+            </div>
+            <div class="calc-row conversion-row">
+                <span class="calc-label">Équivalent USD</span>
+                <span class="calc-value conversion-value" id="totalUSD">
+                    ${{ facture.total_devise|floatformat }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

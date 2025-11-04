@@ -391,12 +391,12 @@
     font-size: 14px;
 }
 
-.input-action.btn-edit:hover {
+.input-actionx.btn-edit:hover {
     background-color: #e3f2fd;
     color: #1976d2;
 }
 
-.input-action.btn-delete:hover {
+.input-actionx.btn-delete:hover {
     background-color: #fdecea;
     color: #d32f2f;
 }
@@ -1313,10 +1313,12 @@
                                 <i class="fa fa-edit"></i>
                                 Modifier les informations
                             </button>
-                            <div class="status-badge status-draft">
-                                <i class="fa fa-circle"></i>
-                                Brouillon
-                            </div>
+                            {% if not facture.valide %}
+                                <div class="status-badge status-draft">
+                                    <i class="fa fa-circle"></i>
+                                    Brouillon
+                                </div>
+                            {% endif %}
                         </div>
                    </div>
                 </div>

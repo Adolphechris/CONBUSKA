@@ -32,14 +32,16 @@
                                     <thead>
                                         <tr class="headings">
                                             <th class="column-title"> Numero</th>
-                                            <th class="column-title"> Date</th>
+                                            <th class="column-title"> Date facture</th>
                                             <th class="column-title"> Client</th>
+                                            <th class="column-title"> Articles</th>
                                             <th class="column-title"> Taux</th>
                                             <th class="column-title"> Devise</th>
                                             <th class="column-title"> Remise</th>
                                             <th class="column-title"> Montant </th>
                                             <th class="column-title"> Livreur </th>
-                                            <th class="column-title"> Cree par </th>
+                                            <th class="column-title"> Crée par </th>
+                                            <th class="column-title"> Statut </th>
                                             <th class="column-title"> Action</th>
                                         </tr>
                                     </thead>
@@ -48,17 +50,38 @@
 										    <tr>
                                                 <td>{{ facture.numero }}</td>
                                                 <td>{{ facture.date_facture }}</td>
-                                                <td>{{ facture.client }}</td>
+
+                                                <td>
+                                                    {% if facture.facture_client %}
+                                                        <span class="label label-danger">{{ facture.facture_client.client }}</span>
+                                                    {% else %}
+                                                        <span class="label label-info">{{ facture.client_comptoir|default:"-" }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ facture.total_articles }} article(s)</td>
                                                 <td>{{ facture.taux }}</td>
                                                 <td>{{ facture.devise }}</td>
                                                 <td>{{ facture.remise }}</td>
-                                                <td>{{ facture.total_facture }}</td>
+                                                <td>{{ facture.total }}FC</td>
                                                 <td>{{ facture.livreur }}</td>
                                                 <td>{{ facture.cree_par }}</td>
                                                 <td>
-                                                    <a href="{{ facture.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                    {% if facture.valide %}
+                                                        <span class="label label-success">
+                                                            <i class="fa fa-check-circle"></i>
+                                                            Validée
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="label label-warning">
+                                                            <i class="fa fa-circle"></i>
+                                                             Brouillon
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ facture.get_absolute_url }}" class="btn btn-primary btn-xs">
                                                         <i class="fa fa-eye"></i>
-                                                        Details
+                                                        Détails
                                                     </a>
                                                 </td>
 										    </tr>
