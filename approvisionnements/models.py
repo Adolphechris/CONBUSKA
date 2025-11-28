@@ -45,15 +45,13 @@ class Approvisionnement(models.Model):
 
     @classmethod
     def get_next_num(cls):
-        last_num = cls.objects.aggregate(Max('numero'))['numero__max']
-        if last_num:
-            return last_num + 1
-        # Format de départ basé sur l’année : exemple 250000
-        return int(datetime.datetime.now().strftime('%y') + '0000')
+        with transaction.atomic():
+            last = cls.objects.select_for_update().aggregate(Max("numero"))["numero__max"]
+            return (last + 1) if last else int(datetime.datetime.now().strftime('%y') + '0000')
 
     def save(self, *args, **kwargs):
-        if self.numero is None:
-            self.numero = self.get_next_num
+        if not self.pk and not self.numero:
+            self.numero = self.get_next_num()
 
         super(Approvisionnement, self).save(*args, **kwargs)
 
