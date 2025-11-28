@@ -13,6 +13,12 @@ class ClientsView(LoginRequiredMixin, ListView):
     context_object_name = 'liste_clients'
     template_name = 'clients/clients.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        clients = self.get_queryset()
+        context['total_solde'] = sum(client.solde() for client in clients)
+        return context
+
 
 class ClientDetailsView(LoginRequiredMixin, DetailView):
     model = Client

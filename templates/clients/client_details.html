@@ -134,7 +134,7 @@
                                                         <td>{{ i.facture.numero }}</td>
                                                         <td>{{ i.facture.total|floatformat }}FC</td>
                                                         <td>
-                                                            <a href="" class="btn btn-warning btn-xs">
+                                                            <a href="{% url 'facture_show_details' i.facture.pk %}" class="btn btn-warning btn-xs">
                                                                 <i class="fa fa-eye"></i>
                                                             </a>
                                                         </td>

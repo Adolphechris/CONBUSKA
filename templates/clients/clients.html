@@ -5,56 +5,38 @@
 {% block stylesheets %}
 {{block.super}}
 <style>
-    .img_container {
-        width: 20px;
-        height: 12px;
+    .info-box {
+        display: flex;
+        background: #f7f7f7;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
     }
 
-    /* Resize images */
-    .img_container img {
-        width: 100%;
-        height: auto;
+    .info-box-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        border-radius: 8px;
     }
-    .client-card {
-    min-height: 260px;
-    border-radius: 6px;
-    padding-bottom: 15px;
-}
 
-.client-card .client-photo {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
-    border: 2px solid #ddd;
-}
+    .info-box-content {
+        margin-left: 10px;
+    }
 
-.info-box {
-    display: flex;
-    background: #f7f7f7;
-    border-radius: 8px;
-    padding: 10px;
-    border: 1px solid #e0e0e0;
-}
+    .info-box-number {
+        font-size: 22px;
+        font-weight: bold;
+    }
 
-.info-box-icon {
-    width: 60px;
-    height: 60px;
-    color: #fff;
-    font-size: 30px;
-    text-align: center;
-    line-height: 60px;
-    border-radius: 8px;
-}
-
-.info-box-content {
-    margin-left: 10px;
-}
-
-.info-box-number {
-    font-size: 22px;
-    font-weight: bold;
-}
-
+    .profile_details:nth-child(3n) {
+        clear: none !important;
+    }
 </style>
 {% endblock stylesheets %}
 
@@ -85,8 +67,8 @@
                                     <div class="info-box">
                                         <span class="info-box-icon bg-green"><i class="fa fa-money"></i></span>
                                         <div class="info-box-content">
-                                            <span class="info-box-text">TOTAL SOLDES CLIENTS</span>
-                                            <span class="info-box-number">{{ total_soldes|floatformat:0 }} FC</span>
+                                            <span class="info-box-text">TOTAL SOLDES CLIENTS:</span><br>
+                                            <span class="info-box-number">{{ total_solde|floatformat:0 }} FC</span>
                                         </div>
                                     </div>
                                 </div>
@@ -115,7 +97,13 @@
                                             </div>
                                             <div class="col-xs-12 bottom text-center">
                                                 <div class="col-xs-12 col-sm-6 emphasis">
-                                                    <h4 class="ratings"><i class="fa fa-usd"></i> {{ client.solde }}FC</h4>
+                                                    <h4 class="ratings">
+                                                        {% if client.solde < 0 %}
+                                                            <span style="color: red;">{{ client.solde }}</span>FC
+                                                        {% else %}
+                                                            <span style="color: green;">{{ client.solde }}</span>FC
+                                                        {% endif %}
+                                                    </h4>
                                                 </div>
                                                 <div class="col-xs-12 col-sm-6 emphasis">
                                                     <a  href="{% url 'client_details' client.pk %}" class="btn btn-primary btn-xs">
