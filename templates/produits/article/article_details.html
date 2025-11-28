@@ -964,7 +964,7 @@ footer {
                                     <div class="x_content">
                                         <div class="image-gallery">
                                             <div class="main-image product-image-container">
-                                                <img src="{{ article.photo1.url }}" alt="{{ article.designation }} - Vue principale" class="img-responsive main-product-image">
+                                                <img src="{{ article.photo1_url }}" alt="{{ article.designation }} - Vue principale" class="img-responsive main-product-image">
                                                 <div class="image-controls">
                                                     <button class="btn btn-default btn-sm image-prev"><i class="fa fa-chevron-left"></i></button>
                                                     <button class="btn btn-default btn-sm image-next"><i class="fa fa-chevron-right"></i></button>
@@ -972,10 +972,10 @@ footer {
                                             </div>
                                             <div class="thumbnails product-thumbnails">
                                                 <div class="thumbnail active">
-                                                    <img src="{{ article.photo1.url }}" alt="Miniature 1" class="img-responsive">
+                                                    <img src="{{ article.photo1_url }}" alt="Miniature 1" class="img-responsive">
                                                 </div>
                                                 <div class="thumbnail">
-                                                    <img src="{{ article.photo2.url }}" alt="Miniature 2" class="img-responsive">
+                                                    <img src="{{ article.photo2_url }}" alt="Miniature 2" class="img-responsive">
                                                 </div>
                                             </div>
                                         </div>
@@ -1383,7 +1383,7 @@ footer {
         $(document).ready(() => {
             // Galerie d'images
             var currentImageIndex = 0
-            var images = ["{{ article.photo1.url }}", "{{ article.photo2.url }}"]
+            var images = ["{{ article.photo1_url }}", "{{ article.photo2_url }}"]
 
             // Navigation des images
             $(".image-next").click(() => {

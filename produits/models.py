@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.forms.models import model_to_dict
 from parametres.models import Magasin
 from common.utils import is_duplicate
+from django.templatetags.static import static
 
 
 class Categorie(models.Model):
@@ -99,6 +100,16 @@ class Article(models.Model):
             self.code = self.get_next_code
 
         super(Article, self).save(*args, **kwargs)
+
+    def photo1_url(self):
+        if self.photo1:
+            return self.photo1.url
+        return static('img/default-article.png')
+
+    def photo2_url(self):
+        if self.photo2:
+            return self.photo2.url
+        return static('img/default-article.png')
 
     def get_absolute_url(self):
         return reverse('article_details', args=[self.pk])
