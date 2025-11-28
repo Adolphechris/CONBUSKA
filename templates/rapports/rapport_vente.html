@@ -13,6 +13,18 @@
     .form-inline .form-group {
       margin-right: 15px;
     }
+    .inner-addon {
+            position: relative;
+        }
+        .inner-addon .fa {
+          position: absolute;
+          padding: 10px;
+          pointer-events: none;
+        }
+        .left-addon .fa  { left:  10px;}
+        .right-addon .fa { right: 0px;}
+        .left-addon input  { padding-left:  30px; }
+        .right-addon input { padding-right: 30px; }
 </style>
 {% endblock stylesheets %}
 
@@ -23,28 +35,26 @@
                 <div class="title_left">
                     <h5>Rapport des ventes</h5>
                 </div>
-            </div>
+             </div>
+             <div class="clearfix"></div>
              <div class="row">
-                <form class="form-inline" style="margin-bottom: 20px;">
-                    <div class="form-group">
-                      <label for="startDate">Date de début</label>
-                      <input type="date" class="form-control" id="startDate" name="start_date">
-                    </div>
-                    <div class="form-group">
-                      <label for="endDate">Date de fin</label>
-                      <input type="date" class="form-control" id="endDate" name="end_date">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Filtrer</button>
-                </form>
+                     <div class="col-md-6 inner-addon left-addon">
+                         <i class="fa fa-calendar"></i>
+                         <input type="text" class="form-control" id="daterange" />
+                     </div>
+                     <div class="col-md-3">
+                        <button type="button" class="btn btn-danger pdf"><i class="fa fa-file-pdf-o"></i>&nbsp;PDF</button>
+                     </div>
+                 </div>
+             <div class="row">
 
                 <!-- Carte chiffre d'affaires -->
                 <div class="panel panel-success">
                     <div class="panel-heading">
-                        <h4 class="panel-title">Chiffre d'affaires total</h4>
+                        <h4 class="panel-title">Chiffre d'affaires</h4>
                     </div>
                     <div class="panel-body">
-                        <h3><strong>{{ total_ventes }} FC</strong></h3>
-                        <p>Période : 01/07/2025 - 31/07/2025</p>
+                        <h2><strong>{{ total_ventes }} FC</strong></h2>
                     </div>
                 </div>
 
@@ -77,7 +87,7 @@
                                             <td>{{ vente.nb_factures }}</td>
                                             <td>{{ vente.total_vendu }}</td>
                                             <td>
-                                                <a href="{% url 'details_rapport_vente' vente.date|date:'Y/m/d' %}" class="btn btn-warning btn-xs">
+                                                <a href="" class="btn btn-warning btn-xs">
                                                     <i class="fa fa-eye"></i>
                                                     Détails
                                                 </a>
@@ -95,24 +105,85 @@
 
 <!-- Chart.js -->
 <script>
-  var ctx = document.getElementById('ventesChart').getContext('2d');
-  var ventesChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: {{ mois_labels|safe }},
-      datasets: [{
-        label: "Chiffre d'affaires (FC)",
-        data: {{ chart_data|safe }},
-        backgroundColor: '#5cb85c'
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      }
+    var ctx = document.getElementById('ventesChart').getContext('2d');
+    var ventesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: {{ mois_labels|safe }},
+          datasets: [{
+            label: "Chiffre d'affaires (FC)",
+            data: {{ chart_data|safe }},
+            backgroundColor: '#5cb85c'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+    });
+
+    var start = moment().subtract(29, 'days');
+    var end = moment();
+
+    function cb(start, end) {
+        $('#daterange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
     }
-  });
+
+    $('#daterange').daterangepicker({
+        startDate: start,
+        endDate: end,
+        ranges: {
+           'Today': [moment(), moment()],
+           'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'This Month': [moment().startOf('month'), moment().endOf('month')],
+           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    }, cb);
+
+    cb(start, end);
+
+    // GESTION DU CSRF TOKEN
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    /*$('.pdf').click(function() {
+        var drp = $('#daterange').data('daterangepicker');
+
+        var start = drp.startDate.format("DD/MM/YYYY");
+        var end = drp.endDate.format("DD/MM/YYYY");
+
+        alert(start, end);
+
+        var date_range = start + ' - ' + end;
+
+        // encoder pour éviter de casser l'URL
+        date_range = encodeURIComponent(date_range);
+
+        location.href = '/rapports/export_rapport_pdf/' + date_range + '/';
+    });*/
+
+    // EXPORT RAPPORT PDF
+    $('.pdf').click(function() {
+        var date_range = $('#daterange').val();
+        location.href = '/rapports/export_rapport_pdf/' + date_range;
+    });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

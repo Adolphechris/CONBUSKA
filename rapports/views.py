@@ -14,19 +14,18 @@ from django.db.models import Sum, F, DecimalField
 from django.db.models.functions import ExtractMonth
 from django.utils import timezone
 import datetime
+from utils.pdf_generator import DocumentGenerator
+from parametres.models import Parametre
+from operator import itemgetter
 
 
 class RapportVenteView(LoginRequiredMixin, TemplateView):
     template_name = 'rapports/rapport_vente.html'
 
     def get_factures(self):
-        first_date = datetime.datetime.today().replace(day=1).date()
-        factures_qs = Facture.objects.filter(date_facture__gte=first_date)
+        # first_date = datetime.datetime.today().replace(day=1).date()
+        factures_qs = Facture.objects.filter(date_facture__gte=datetime.datetime.today().date())
         return factures_qs
-
-    def get_ventes(self):
-        ventes_qs = Facture.objects.ventes_journalieres()
-        return ventes_qs
 
     def get_ca(self):
         ca = sum(facture.total for facture in self.get_factures())
@@ -69,8 +68,12 @@ class RapportVenteView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        ventes = Facture.objects.ventes_journalieres()
+        for i in ventes:
+            print('Vente :', i)
+
         context['total_ventes'] = self.get_ca()
-        context['ventes'] = self.get_ventes()
+        context['ventes'] = Facture.objects.ventes_journalieres()
         context['mois_labels'] = self.get_mois()
         context['chart_data'] = self.get_ventes_chart()
         return context
@@ -160,3 +163,44 @@ class RapportArticleView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['total_ventes'] = 5000
         return context
+
+
+class RapportCaisseView(LoginRequiredMixin, TemplateView):
+    template_name = 'rapports/rapport_caisse.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_caisses'] = 3
+        context['total_entrees'] = 700000
+        context['total_sorties'] = 200000
+        context['solde_total'] = 500000
+        return context
+
+
+def export_rapport_pdf(request, date_range):
+    date1, date2 = date_range
+    filename = 'RAPPORT VENTES {}-{}.pdf'.format(date1.strftime("%Y-%m-%d"), date2.strftime("%Y-%m-%d"))
+    title = 'RAPPORT DES VENTES du {} au {}'.format(date1.strftime("%Y-%m-%d"), date2.strftime("%Y-%m-%d"))
+    doc = DocumentGenerator(filename, title)
+
+    get_params = Parametre.objects.get(code='Params')
+
+    current_year = timezone.now().year
+    qs = Facture.objects.all()
+    data = []
+
+    for i in qs:
+        dico = dict()
+        dico['numero'] = i.numero
+        dico['date_facture'] = i.date_facture.strftime('%d-%m-%Y')
+        dico['devise'] = i.devise
+        dico['taux'] = i.taux
+        dico['remise'] = i.remise
+        dico['client'] = i.client_comptoir
+        dico['livreur'] = i.livreur
+        dico['total'] = i.total
+        dico['cree_par'] = i.cree_par
+        data.append(dico)
+
+    data.sort(key=itemgetter('date_facture'))
+    return doc.generate_rapport(data)
