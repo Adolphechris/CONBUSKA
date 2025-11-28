@@ -15,6 +15,46 @@
         width: 100%;
         height: auto;
     }
+    .client-card {
+    min-height: 260px;
+    border-radius: 6px;
+    padding-bottom: 15px;
+}
+
+.client-card .client-photo {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.info-box {
+    display: flex;
+    background: #f7f7f7;
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+.info-box-icon {
+    width: 60px;
+    height: 60px;
+    color: #fff;
+    font-size: 30px;
+    text-align: center;
+    line-height: 60px;
+    border-radius: 8px;
+}
+
+.info-box-content {
+    margin-left: 10px;
+}
+
+.info-box-number {
+    font-size: 22px;
+    font-weight: bold;
+}
+
 </style>
 {% endblock stylesheets %}
 
@@ -26,15 +66,69 @@
                     <h5>Clients</h5>
                 </div>
             </div>
-             <div class="row">
+            <div class="row">
                 <div class="col-md-12">
                     <div class="x_panel">
                         <div class="x_title">
                             <h2>Liste des clients<small></small></h2>
+                            <button type="button" class="btn btn-link pull-right creer">
+                                <a href="{% url 'client_create' %}">
+                                    <i class="fa fa-plus"></i>
+                                    NOUVEAU CLIENT
+                                </a>
+                            </button>
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            <div class="content table-responsive display">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-5 col-xs-12 pull-right">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-green"><i class="fa fa-money"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">TOTAL SOLDES CLIENTS</span>
+                                            <span class="info-box-number">{{ total_soldes|floatformat:0 }} FC</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <div class="row">
+                                {% for client in liste_clients %}
+                                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                        <div class="well profile_view">
+                                            <div class="col-sm-12">
+                                                <h4 class="brief"><i>Client</i></h4>
+                                                <div class="left col-xs-7">
+                                                    <h2>{{ client.nom }}</h2>
+                                                    <p><strong>Code: </strong> #{{ client.code }} </p>
+                                                    <ul class="list-unstyled">
+                                                      <li><i class="fa fa-map-marker"></i> Addresse: {{ client.adresse }}</li>
+                                                      <li><i class="fa fa-phone"></i> Telephone #: {{ client.telephone }}</li>
+                                                      <li><i class="fa fa-envelope"></i> Email: {{ client.email }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="right col-xs-5 text-center">
+                                                    <img src="{{ client.photo.url }}" alt="..." class="img-circle img-responsive">
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-12 bottom text-center">
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <h4 class="ratings"><i class="fa fa-usd"></i> {{ client.solde }}FC</h4>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <a  href="{% url 'client_details' client.pk %}" class="btn btn-primary btn-xs">
+                                                      <i class="fa fa-user"> </i> Voir le profil
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">
                                         <a href="{% url 'client_create' %}">
@@ -86,7 +180,7 @@
 									    {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
+                            </div>-->
                         </div>
                     </div>
                 </div>

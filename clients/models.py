@@ -1,5 +1,9 @@
 from django.db import models
 from django.urls import reverse
+from django.db.models import F, Sum
+from factures.models import Facture, FactureClient
+from caisse.models import MouvementCaisseClient
+import decimal
 
 
 class Client(models.Model):
@@ -15,6 +19,25 @@ class Client(models.Model):
 
     def __str__(self):
         return self.nom
+
+    def factures(self):
+        return FactureClient.objects.select_related('facture').filter(client=self)
+
+    def paiements(self):
+        return MouvementCaisseClient.objects.filter(client=self)
+
+    def total_factures(self):
+        total = sum(i.facture.total for i in self.factures())
+        return total
+
+
+    def total_paiements(self):
+        return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+
+    def solde(self):
+        return self.total_factures() - self.total_paiements()
+
 
     @property
     def get_next_code(self):
@@ -34,19 +57,3 @@ class Client(models.Model):
 
     def get_absolute_url(self):
         return reverse('client_details', args=[self.pk])
-
-
-class PaiementClient(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.PROTECT, null=False)
-    montant = models.DecimalField(max_digits=8, decimal_places=4)
-    date_paiement = models.DateField()
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_modification = models.DateTimeField(auto_now=True)
-    cree_par = models.ForeignKey('users.CustomUser',
-                                 related_name='paiementclientcreepar',
-                                 on_delete=models.PROTECT)
-    modifie_par = models.ForeignKey('users.CustomUser',
-                                    blank=True, null=True,
-                                    related_name='paiementclientmodpar',
-                                    on_delete=models.PROTECT)
-    objects = models.Manager()
