@@ -1,0 +1,14 @@
+- Dashboard ESM
+- Fiche produit:
+    - Entrées, sorties, cons. Mensuelle
+    - historique des mouvements
+    - Statistiques
+    - Fournisseurs
+    - Bouton modifier sur les détails
+    - Activer/Désactiver
+    - Commander
+- Finaliser factures
+- Revoir la caisse
+- Finaliser la paie
+- Finaliser les rapports
+- 
