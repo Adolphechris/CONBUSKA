@@ -1,0 +1,213 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Factures {% endblock title %}
+
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .invoice-identity {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem; /* ou 1rem si non défini */
+      flex-wrap: wrap; /* optionnel si contenu long */
+    }
+
+    .invoice-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #2A3F54, #2A3F54);
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .invoice-details {
+      flex: 1;
+    }
+
+    .invoice-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #111827;
+      margin: 0 0 0.75rem; 0;
+      line-height: 1.1;
+    }
+
+    .invoice-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      color: #2563eb;
+    }
+
+    .meta-item i {
+      color: #1ABB9C;
+    }
+
+    .meta-item strong {
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .meta-separator {
+      color: #d1d5db;
+      font-weight: 300;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'factures' %}">Factures</a> / Détails facture</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <div class="invoice-identity">
+                                <div class="invoice-icon">
+                                    <i class="fa fa-file-text-o"></i>
+                                </div>
+                                <div class="invoice-details">
+                                    <h1>Détails de la facture #{{ facture.numero }}</h1>
+                                    <div class="invoice-meta">
+                                        <span class="meta-item">
+                                            <i class="fa fa-money"></i>
+                                            <strong>{{ facture.devise }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-exchange"></i>
+                                            Taux: <strong>{{ facture.taux }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-calendar"></i>
+                                            <strong>{{ facture.date_facture }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-truck"></i>
+                                            Livreur : <strong>{{ facture.livreur }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-user"></i>
+                                            Client:
+                                            <strong>
+                                                {% if facture.facture_client %}
+                                                    {{ facture.facture_client.client }}
+                                                {% else %}
+                                                    {{ facture.client_comptoir }}
+                                                {% endif %}
+                                            </strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <table id="tableFacture" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> N°</th>
+                                            <th class="column-title"> Article</th>
+                                            <th class="column-title"> Quantité</th>
+                                            <th class="column-title"> Prix unitaire</th>
+                                            <th class="column-title"> Prix total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in details_facture %}
+										    <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td><span>{{ i.article.designation }}</span></td>
+                                                <td>{{ i.qte }}</td>
+                                                <td>{{ i.prix|floatformat }} {{ facture.devise }}</td>
+                                                <td>{{ i.total|floatformat }} {{ facture.devise }}</td>
+										    </tr>
+									    {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total_row">
+                                            <td colspan="4" class="text-right"><strong>Sous total:</strong></td>
+                                            <td><strong>{{ facture.sous_total }} {{ facture.devise }}</strong></td>
+                                        </tr>
+                                        <tr class="total_row">
+                                            <td colspan="4" class="text-right"><strong>Remise:</strong></td>
+                                            <td><strong>{{ facture.remise }} {{ facture.devise }}</strong></td>
+                                        </tr>
+                                        <tr class="total_row">
+                                            <td colspan="4" class="text-right"><strong>Total:</strong></td>
+                                            <td><strong>{{ facture.total }} {{ facture.devise }}</strong></td>
+                                        </tr>
+                                        <tr class="total_row">
+                                            <td colspan="4" class="text-right"><strong>Equivalent USD:</strong></td>
+                                            <td><strong>${{ facture.total_devise|floatformat }}</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a onclick='{% if previous %}window.location.replace("{{ previous }}");{% else %}history.go(-1);{% endif %}'>
+                            <i class="fa fa-arrow-left"></i>
+                            Retourner
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableFacture').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+            $('#factures').addClass('active');
+        });
+    </script>
+{% endblock content %}

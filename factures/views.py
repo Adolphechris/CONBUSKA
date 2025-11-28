@@ -1,5 +1,4 @@
 import decimal
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic import ListView, DetailView, TemplateView, RedirectView, View
@@ -7,10 +6,10 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.db.models import Min
-from .models import Facture, DetailsFacture, Livreur, DetailsLigneFacture, FactureClient
+from .models import Facture, DetailsFacture, Livreur, FactureClient
 from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm, FactureClientForm
 import random
 
@@ -324,3 +323,19 @@ class FactureClientDeleteView(LoginRequiredMixin, DeleteView):
         context = {'facture': facture, 'info_form': info_form}
         html = render_to_string('factures/partials/info_form.html', context)
         return HttpResponse(html)
+
+
+class FactureShowDetailsView(LoginRequiredMixin, TemplateView):
+    template_name = 'factures/facture_show_details.html'
+
+    def get_facture(self):
+        return get_object_or_404(Facture, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        facture = self.get_facture()
+        details_facture = DetailsFacture.objects.filter(facture=facture.pk)
+        context['facture'] = facture
+        context['details_facture'] = details_facture
+        return context

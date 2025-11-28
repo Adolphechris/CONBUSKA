@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (FacturesView, FactureCreateView, FactureDetailView, get_update_form, FactureInfosUpdateView,
                     ArticleFactureDeleteView, FactureClientCreateView, FactureClientUpdateView, FactureClientDeleteView,
-                    FactureValidateAndCreateView, FactureRemiseView)
+                    FactureValidateAndCreateView, FactureRemiseView, FactureShowDetailsView)
 
 urlpatterns = [
     path('', FacturesView.as_view(), name='factures'),
@@ -17,4 +17,5 @@ urlpatterns = [
     path('facture/<int:pk>/facture_client/delete/', FactureClientDeleteView.as_view(), name='delete_facture_client'),
     path('facture/<int:pk>/validate', FactureValidateAndCreateView.as_view(), name='validate_facture'),
     path('facture/<int:pk>/remise', FactureRemiseView.as_view(), name='remise_facture'),
+    path('facture/<int:pk>/show/details', FactureShowDetailsView.as_view(), name='facture_show_details'),
 ]
