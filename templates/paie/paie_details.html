@@ -23,14 +23,16 @@
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5><a href="{% url 'listes_paie' %}">Listes de paie</a>/ Détails paie #{{ paie.mois }}</h5>
+                    <h5>
+                        <a href="{% url 'agents' %}"> Agents </a> / <a href="{% url 'agent_details' agent.pk %}"> Détails agent </a> / Détails paie #{{ paie.mois }}
+                    </h5>
                 </div>
             </div>
              <div class="row">
                 <div class="col-md-12">
                     <div class="x_panel">
                         <div class="x_title">
-                            <h2>Détails de la paie de #{{ paie.mois }} <small></small></h2>
+                            <h2>Détails de la paie de #{{ paie.mois }} pour l'agent #{{ agent }}<small></small></h2>
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
@@ -38,33 +40,26 @@
                                 <table id="tablePaie" class="table table-striped jambo_table bulk_action">
                                     <thead>
                                         <tr class="headings">
-                                            <th class="column-title"> Agent</th>
-                                            <th class="column-title"> Salaire</th>
+                                            <th class="column-title"> N°</th>
+                                            <th class="column-title"> Libéllé</th>
                                             <th class="column-title"> Motant perçu</th>
-                                            <th class="column-title"> Nombre de jours à préster</th>
-                                            <th class="column-title"> Nombre de jours préstés</th>
-                                            <th class="column-title"> Absences</th>
-                                            <th class="column-title"> Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for item in paie_agents %}
+                                        {% for item in details_paie_agent %}
 										    <tr>
-                                                <td>{{ item.agent.nom }}</td>
-                                                <td>{{ item.agent.salaire }}</td>
-                                                <td>{{ item.montant_percu }}</td>
-                                                <td>{{ item.jap }} Jours</td>
-                                                <td>{{ item.jp }} Jours / {{ item.jap }}</td>
-                                                <td>{{ item.absence }} Jours</td>
-                                                <td>
-                                                    <a href="{% url 'paie_agent_create' paie.pk item.agent.pk %}" class="btn btn-primary btn-xs">
-                                                        <i class="fa fa-money"></i>
-                                                        Faire le payement
-                                                    </a>
-                                                </td>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ item.libelle }}</td>
+                                                <td>{{ item.montant }}FC</td>
 										    </tr>
 									    {% endfor %}
                                     </tbody>
+                                    <tfoot>
+                                        <tr class="bg-warning">
+                                            <td colspan="2" class="text-right"><strong>Total rémunération perçue:</strong></td>
+                                            <td class=""><strong>{{ total_remuneration }} FC</strong></td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>

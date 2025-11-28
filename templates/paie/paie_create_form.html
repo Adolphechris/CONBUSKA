@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Paie|Creation {% endblock title %}
+{% block title %} Paie|Création {% endblock title %}
 
 {% block content %}
     <div class="right_col" role="main">
@@ -11,7 +11,7 @@
                     <div class="title_left">
                         <div class="title_left">
                             <h5>
-                                  <a href="{% url 'listes_paie' %}"> Listes de paie </a> / Nouvelle paie
+                                  <a href="{% url 'agents' %}"> Agents </a> / <a href="{% url 'agent_details' agent.pk %}"> Détails agent </a> / Nouvelle paie
                             </h5>
                         </div>
                     </div>
@@ -19,7 +19,7 @@
                 <div class="col-md-12">
                     <div class="x_panel">
                         <div class="x_title">
-                            <h4>Formulaire de selection d'une période de paie</h4>
+                            <h4>Formulaire de selection d'une période de paie pour l'agent #{{ agent }}</h4>
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
@@ -39,7 +39,7 @@
                                 <div class="ln_solid"></div>
                                 <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
                                     <input type="submit" class="btn btn-info valider" value="Générer la paie">
-                                    <a href="{% url 'listes_paie' %}">
+                                    <a href="{% url 'agent_details' agent.pk %}">
                                         <button class="btn btn-danger" type="button">
                                             Annuler
                                         </button>

@@ -1,17 +1,20 @@
 from django.db import models
 from django.urls import reverse
 from django.db.models import Max
+from caisse.models import MouvementCaisseAgent, MouvementCaisse
 
 
 class Agent(models.Model):
     matricule = models.IntegerField(unique=True, blank=False)
+    date_naissance = models.DateField(blank=False, null=False)
+    date_engagement = models.DateField(blank=False, null=False)
     photo = models.ImageField(upload_to='agents/', blank=True)
     nom = models.CharField(max_length=150, unique=True)
     email = models.EmailField(unique=True, blank=True, null=True)
     adresse = models.CharField(max_length=150)
     telephone = models.CharField(max_length=150)
     ville = models.CharField(max_length=30)
-    salaire = models.DecimalField(max_digits=8, decimal_places=4)
+    salaire = models.DecimalField(max_digits=10, decimal_places=2)
 
     objects = models.Manager()
 
@@ -38,6 +41,12 @@ class Agent(models.Model):
 
 class Paie(models.Model):
     mois = models.DateField(blank=False, null=False)
+    agent = models.ForeignKey(Agent, related_name='agent_paie_details', on_delete=models.PROTECT)
+    salaire = models.DecimalField(max_digits=10, decimal_places=2)
+    montant_percu = models.DecimalField(max_digits=10, decimal_places=2)
+    jap = models.IntegerField(default=26)
+    jp = models.IntegerField(default=26)
+    absence = models.IntegerField(default=0)
     cree_par = models.ForeignKey('users.CustomUser',
                                  related_name='paiecreepar',
                                  on_delete=models.PROTECT)
@@ -50,12 +59,15 @@ class Paie(models.Model):
     valide = models.BooleanField(default=False)
     objects = models.Manager()
 
+    def remuneration_totale(self):
+        qs = MouvementCaisseAgent.objects.filter(
+            agent=self.pk,
+            mouvement_caisse__date_mouvement__year=self.mois.year,
+            mouvement_caisse__date_mouvement__month=self.mois.month
+        ).select_related('mouvement_caisse', 'agent')
 
-class DetailsPaie(models.Model):
-    paie = models.ForeignKey(Paie, related_name='details_paie', on_delete=models.PROTECT)
-    agent = models.ForeignKey(Agent, related_name='agent_paie_details', on_delete=models.PROTECT)
-    salaire = models.DecimalField(max_digits=8, decimal_places=4)
-    montant_percu = models.DecimalField(max_digits=8, decimal_places=4)
-    jap = models.IntegerField(default=26)
-    jp = models.IntegerField(default=26)
-    absence = models.IntegerField(default=0)
+        total = self.montant_percu
+        for i in qs:
+            if i.rubrique.nom.lower() in ["transport", "restauration", "assistance sociale"]:
+                total += i.montant
+        return total

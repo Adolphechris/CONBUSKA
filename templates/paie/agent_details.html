@@ -24,13 +24,15 @@
                             </div>
                             <h4><strong>{{ agent.nom }} / {{ agent.matricule }}</strong></h4>
                             <ul class="list-unstyled user_data">
+                                <li><i class="fa fa-birthday-cake"></i> Date de naissance: {{ agent.date_naissance }}</li>
+                                <li><i class="fa fa-calendar"></i> Date d'engagement: {{ agent.date_engagement }}</li>
                                 <li><i class="fa fa-map-marker"></i> Addresse: {{ agent.adresse }}</li>
                                 <li><i class="fa fa-phone"></i> Telephone: {{ agent.telephone }}</li>
                                 <li><i class="fa fa-envelope"></i> Email: {{ agent.email }}</li>
                             </ul>
                             <hr>
                             <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde agent: {{ solde_agent|floatformat }}$</li>
+                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Salaire: {{ agent.salaire }}FC</li>
                             </ul>
                             <br />
                             <a href="{% url 'agent_update' agent.pk %}" class="btn btn-primary btn-lg">
@@ -42,48 +44,49 @@
                         <div class="col-md-9 col-sm-9 col-xs-12">
                             <div class="" role="tabpanel" data-example-id="togglable-tabs">
                                 <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                                    <li role="presentation" class="active"><a href="#tab_content1" id="mouvements-tab" role="tab" data-toggle="tab" aria-expanded="true">Mouvements</a></li>
-                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="paiements-tab" data-toggle="tab" aria-expanded="false">Paiements</a></li>
+                                    <li role="presentation" class="active"><a href="#tab_content1" id="paie-tab" role="tab" data-toggle="tab" aria-expanded="true">Historique de paie</a></li>
+                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="mouvement-tab" data-toggle="tab" aria-expanded="false">Mouvements</a></li>
                                 </ul>
                                 <div id="myTabContent" class="tab-content">
-                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="mouvements-tab">
-                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
+                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="paie-tab">
+                                        <button type="button" class="btn btn-link pull-right creer">
+                                            <a href="{% url 'paie_agent_create' agent.pk %}">
+                                                <i class="fa fa-plus"></i>
+                                                COMMENCER LA PAIE
+                                            </a>
+                                        </button>
+                                        <table id="tablePaie" class="table table-striped jambo_table bulk_action">
                                             <thead>
                                                 <tr class="headings">
                                                     <th class="column-title"> No.</th>
-                                                    <th class="column-title"> Date</th>
-                                                    <th class="column-title"> Facture</th>
-                                                    <th class="column-title"> Total </th>
+                                                    <th class="column-title"> Mois</th>
+                                                    <th class="column-title"> Jours prestés</th>
+                                                    <th class="column-title"> Salaire net perçu</th>
+                                                    <th class="column-title"> Rémunération totale perçue</th>
                                                     <th class="column-title"> Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for i in mouvements %}
+                                                {% for i in paie_list %}
                                                     <tr>
                                                         <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.date }}</td>
-                                                        <td>{{ i.facture }}</td>
-                                                        <td>{{ i.prix_total|floatformat }}</td>
+                                                        <td>{{ i.mois }}</td>
+                                                        <td>{{ i.jp }}</td>
+                                                        <td>{{ i.montant_percu }} FC</td>
+                                                        <td>{{ i.remuneration_totale }} FC</td>
                                                         <td>
-                                                            <a href="" class="btn btn-warning btn-xs">
+                                                            <a href="{% url 'paie_agent_details' i.pk agent.pk %}" class="btn btn-warning btn-xs">
                                                                 <i class="fa fa-eye"></i>
-                                                                Voir la facture
+                                                                Voir les détails
                                                             </a>
                                                         </td>
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
-                                            <tfoot>
-                                                <tr class="total_row">
-                                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ total_mouvements|floatformat  }}</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
                                         </table>
                                     </div>
-                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="paiements-tab">
-                                        <table id="tablePaiements" class="table table-striped jambo_table bulk_action">
+                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="mouvement-tab">
+                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
                                             <thead>
                                                 <tr class="headings">
                                                     <th class="column-title"> No.</th>
