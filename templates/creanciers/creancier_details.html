@@ -1,111 +1,179 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Creancier {% endblock title %}
+{% block title %} Détails Créancier {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    .total-row {
+      background-color: #f9fafb;
+    }
+
+    .total-row td {
+      border-top: 2px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    .supplier-details h4 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2A3F54;
+        margin-bottom: 15px;
+        margin-top: 0;
+    }
+
+    .supplier-details .info-item {
+        margin-bottom: 10px;
+        color: #73879C;
+        font-size: 14px;
+    }
+
+    .supplier-details .info-item i {
+        width: 20px;
+        color: #1ABB9C;
+    }
+
+    .balance-box {
+        background: linear-gradient(135deg, #1ABB9C 0%, #159A80 100%);
+        color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .balance-box h3 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+        font-weight: 400;
+        opacity: 0.9;
+    }
+
+    .balance-box .amount {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .balance-box.negative {
+        background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5><a href="{% url 'creanciers' %}">Creanciers</a> / Détails Creancier </h5>
+                    <h5><a href="{% url 'creanciers' %}">Créanciers</a> / Détails Créancier </h5>
                 </div>
             </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
-                            <div class="profile_img">
-                                <div id="crop-avatar">
-                                    <!-- Current avatar -->
-                                    <img class="img-circle" src="{{ creancier.photo.url }}"
-                                         alt="Avatar" title="Change the avatar" width="240">
-                                </div>
-                            </div>
-                            <h4><strong>{{ creancier.nom }} / {{ creancier.code }}</strong></h4>
-                            <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-map-marker"></i> Addresse: {{ creancier.adresse }}</li>
-                                <li><i class="fa fa-phone"></i> Telephone: {{ creancier.telephone }}</li>
-                                <li><i class="fa fa-envelope"></i> Email: {{ creancier.email }}</li>
-                            </ul>
-                            <hr>
-                            <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Solde creancier: {{ solde_creancier|floatformat }}$</li>
-                            </ul>
-                            <br />
-                            <a href="{% url 'creancier_update' creancier.pk %}" class="btn btn-primary btn-lg">
-                                 <i class="fa fa-edit"></i>
-                                 Modifier
-                            </a>
-                        </div>
-
-                        <div class="col-md-9 col-sm-9 col-xs-12">
-                            <div class="" role="tabpanel" data-example-id="togglable-tabs">
-                                <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                                    <li role="presentation" class="active"><a href="#tab_content1" id="mouvements-tab" role="tab" data-toggle="tab" aria-expanded="true">Mouvements</a></li>
-                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="paiements-tab" data-toggle="tab" aria-expanded="false">Paiements</a></li>
-                                </ul>
-                                <div id="myTabContent" class="tab-content">
-                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="mouvements-tab">
-                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
-                                            <thead>
-                                                <tr class="headings">
-                                                    <th class="column-title"> No.</th>
-                                                    <th class="column-title"> Date</th>
-                                                    <th class="column-title"> Facture</th>
-                                                    <th class="column-title"> Total </th>
-                                                    <th class="column-title"> Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in mouvements %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.date }}</td>
-                                                        <td>{{ i.facture }}</td>
-                                                        <td>{{ i.prix_total|floatformat }}</td>
-                                                        <td>
-                                                            <a href="" class="btn btn-warning btn-xs">
-                                                                <i class="fa fa-eye"></i>
-                                                                Voir la facture
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total_row">
-                                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ total_mouvements|floatformat  }}</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+            <div class="clearfix"></div>
+            <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                     <div class="x_panel">
+                         <div class="x_content">
+                             <div class="row supplier-details">
+                                 <div class="profile_img text-center">
+                                    <div id="crop-avatar">
+                                        <!-- Current avatar -->
+                                        <img class="img-circle" src="{{ creancier.photo.url }}"
+                                             alt="Avatar" title="Change the avatar" width="240">
                                     </div>
-                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="paiements-tab">
-                                        <table id="tablePaiements" class="table table-striped jambo_table bulk_action">
+                                 </div>
+                                 <h4><strong>{{ creancier.nom }} / {{ creancier.code }}</strong></h4>
+                                 <hr>
+                                 <ul class="list-unstyled user_data">
+                                    <li class="info-item"><i class="fa fa-map-marker"></i> Addresse: {{ creancier.adresse }}</li>
+                                    <li class="info-item"><i class="fa fa-phone"></i> Telephone: {{ creancier.telephone }}</li>
+                                    <li class="info-item"><i class="fa fa-envelope"></i> Email: {{ creancier.email }}</li>
+                                 </ul>
+                                 <hr>
+                                 <!-- Balance Box -->
+                                 <div class="balance-box">
+                                    <h3>Solde Créancier</h3>
+                                    <p class="amount">{{ creancier.solde|floatformat:'2' }} FC</p>
+                                 </div>
+
+                                 <!-- Edit Button -->
+                                 <a href="{% url 'creancier_update' creancier.pk %}" class="btn btn-primary btn-block btn-lg">
+                                     <i class="fa fa-edit"></i>
+                                     Modifier
+                                 </a>
+                             </div>
+                         </div>
+                     </div>
+                </div>
+
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-12">
+                            <div class="x_panel">
+                                <div class="table-header">
+                                    <i class="fa fa-file-text-o"></i> Flux des prêts
+                                </div>
+                                <div class="x_content" style="padding: 0;">
+                                    <div class="table-responsive">
+                                        <table class="table">
                                             <thead>
-                                                <tr class="headings">
-                                                    <th class="column-title"> No.</th>
-                                                    <th class="column-title"> Date paiement</th>
-                                                    <th class="column-title"> Montant</th>
-                                                    <th class="column-title"> Percepteur</th>
+                                                <tr>
+                                                    <th>N°</th>
+                                                    <th>Date</th>
+                                                    <th>Montant prêté</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for i in paiements %}
+                                                {% for i in creancier.prets %}
                                                     <tr>
                                                         <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.date_paiement }}</td>
-                                                        <td>{{ i.montant|floatformat }}</td>
-                                                        <td>{{ i.cree_par }}</td>
+                                                        <td>{{ i.mouvement_caisse.date_mouvement }}</td>
+                                                        <td>{{ i.mouvement_caisse.montant }}FC</td>
+
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
                                             <tfoot>
                                                 <tr class="total_row">
                                                     <td colspan="2" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ total_paiements|floatformat  }}</strong></td>
+                                                    <td><strong>{{ creancier.total_prets|floatformat }}FC</strong></td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-12">
+                            <div class="x_panel">
+                                <div class="table-header">
+                                    <i class="fa fa-money"></i> Flux des remboursements
+                                </div>
+                                <div class="x_content" style="padding: 0;">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>N°</th>
+                                                    <th>Date</th>
+                                                    <th>Montant Payé</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in creancier.paiements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.mouvement_caisse.date_mouvement }}</td>
+                                                        <td>{{ i.mouvement_caisse.montant }}FC</td>
+
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total_row">
+                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
+                                                    <td><strong>{{ creancier.total_paiements|floatformat }}FC</strong></td>
                                                     <td></td>
                                                 </tr>
                                             </tfoot>

@@ -31,10 +31,47 @@
                     <div class="x_panel">
                         <div class="x_title">
                             <h2>Liste des débiteurs<small></small></h2>
+                            <button type="button" class="btn btn-link pull-right creer">
+                                <a href="{% url 'debiteur_create' %}">
+                                    <i class="fa fa-plus"></i>
+                                    NOUVEAU DEBITEUR
+                                </a>
+                            </button>
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            <div class="content table-responsive display">
+                            {% for debiteur in liste_debiteurs %}
+                                <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                    <div class="well profile_view">
+                                        <div class="col-sm-12">
+                                            <h4 class="brief"><i>Débiteur</i></h4>
+                                            <div class="left col-xs-7">
+                                                <h2>{{ debiteur.nom }}</h2>
+                                                <p><strong>Code: </strong> #{{ debiteur.code }} </p>
+                                                <ul class="list-unstyled">
+                                                  <li><i class="fa fa-map-marker"></i> Addresse: {{ debiteur.adresse }}</li>
+                                                  <li><i class="fa fa-phone"></i> Telephone #: {{ debiteur.telephone }}</li>
+                                                  <li><i class="fa fa-envelope"></i> Email: {{ debiteur.email }}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="right col-xs-5 text-center">
+                                                <img src="{{ debiteur.photo.url }}" alt="..." class="img-circle img-responsive">
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 bottom text-center">
+                                            <div class="col-xs-12 col-sm-6 emphasis">
+                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ debiteur.solde }}FC</h4>
+                                            </div>
+                                            <div class="col-xs-12 col-sm-6 emphasis">
+                                                <a  href="{% url 'debiteur_details' debiteur.pk %}" class="btn btn-primary btn-xs">
+                                                  <i class="fa fa-user"> </i> Voir les détails
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">
                                         <a href="{% url 'debiteur_create' %}">
@@ -86,7 +123,7 @@
 									    {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
+                            </div>-->
                         </div>
                     </div>
                 </div>

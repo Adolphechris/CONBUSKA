@@ -17,15 +17,6 @@ class CreancierDetailsView(LoginRequiredMixin, DetailView):
     context_object_name = 'creancier'
     template_name = 'creanciers/creancier_details.html'
 
-    def get_paiements(self):
-        paiements = ''
-        return paiements
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['paiements'] = self.get_paiements()
-        return context
-
 
 class CreancierCreateView(LoginRequiredMixin, CreateView):
     model = Creancier
@@ -63,15 +54,6 @@ class DebiteurDetailsView(LoginRequiredMixin, DetailView):
     model = Debiteur
     context_object_name = 'debiteur'
     template_name = 'creanciers/debiteur_details.html'
-
-    def get_paiements(self):
-        paiements = ''
-        return paiements
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['paiements'] = self.get_paiements()
-        return context
 
 
 class DebiteurCreateView(LoginRequiredMixin, CreateView):

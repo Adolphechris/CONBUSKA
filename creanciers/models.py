@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
-from django.db.models import Max
+from django.db.models import Max, Sum
+from django.db import transaction
+from caisse.models import MouvementCaisseCreancier, MouvementCaisseDebiteur
 
 
 class Creancier(models.Model):
@@ -17,15 +19,37 @@ class Creancier(models.Model):
     def __str__(self):
         return self.nom
 
+    def prets(self):
+        return (
+            MouvementCaisseCreancier.objects
+            .select_related("mouvement_caisse")
+            .filter(creancier=self, mouvement_caisse__type_mouvement="ENTREE")
+        )
+
+    def paiements(self):
+        return (
+            MouvementCaisseCreancier.objects
+            .select_related("mouvement_caisse")
+            .filter(creancier=self, mouvement_caisse__type_mouvement="SORTIE")
+        )
+
+    def total_prets(self):
+        return self.prets().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+    def total_paiements(self):
+        return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+    def solde(self):
+        return self.total_prets() - self.total_paiements()
+
     @classmethod
     def get_next_code(cls):
-        last_code = cls.objects.aggregate(Max('code'))['code__max']
-        if last_code:
-            return last_code + 1
-        return 4000
+        with transaction.atomic():
+            last = cls.objects.select_for_update().aggregate(Max("code"))["code__max"]
+            return (last + 1) if last else 4000
 
     def save(self, *args, **kwargs):
-        if self.code is None:
+        if not self.pk and not self.code:
             self.code = self.get_next_code()
 
         super(Creancier, self).save(*args, **kwargs)
@@ -45,18 +69,40 @@ class Debiteur(models.Model):
 
     objects = models.Manager()
 
+    def prets(self):
+        return (
+            MouvementCaisseDebiteur.objects
+            .select_related("mouvement_caisse")
+            .filter(debiteur=self, mouvement_caisse__type_mouvement="SORTIE")
+        )
+
+    def paiements(self):
+        return (
+            MouvementCaisseDebiteur.objects
+            .select_related("mouvement_caisse")
+            .filter(debiteur=self, mouvement_caisse__type_mouvement="ENTREE")
+        )
+
+    def total_prets(self):
+        return self.prets().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+    def total_paiements(self):
+        return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+    def solde(self):
+        return self.total_prets() - self.total_paiements()
+
     def __str__(self):
         return self.nom
 
     @classmethod
     def get_next_code(cls):
-        last_code = cls.objects.aggregate(Max('code'))['code__max']
-        if last_code:
-            return last_code + 1
-        return 5000
+        with transaction.atomic():
+            last = cls.objects.select_for_update().aggregate(Max("code"))["code__max"]
+            return (last + 1) if last else 5000
 
     def save(self, *args, **kwargs):
-        if self.code is None:
+        if not self.pk and not self.code:
             self.code = self.get_next_code()
 
         super(Debiteur, self).save(*args, **kwargs)
