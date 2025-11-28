@@ -1,5 +1,5 @@
 from django import forms
-from .models import Fournisseur, PaiementFournisseur
+from .models import Fournisseur
 
 
 class FournisseurCreateForm(forms.ModelForm):
@@ -19,15 +19,4 @@ class FournisseurCreateForm(forms.ModelForm):
             'id_nat': forms.TextInput(attrs={'class': 'form-control'}),
             'impot': forms.TextInput(attrs={'class': 'form-control'}),
             'tva': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-
-
-class PaiementFournisseurCreateForm(forms.ModelForm):
-    class Meta:
-        model = PaiementFournisseur
-        exclude = ['fournisseur', 'cree_par', 'modifie_par']
-        widgets = {
-            'date_paiement': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'Date de paiement'}),
-            'montant': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Montant'}),
-            'percepteur': forms.TextInput(attrs={'class': 'form-control'}),
         }

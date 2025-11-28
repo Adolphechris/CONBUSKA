@@ -1,5 +1,8 @@
 from django.db import models
 from django.urls import reverse
+from django.db.models import F, Sum
+from approvisionnements.models import DetailsApprovisionnement
+from caisse.models import MouvementCaisseFournisseur
 
 
 class Fournisseur(models.Model):
@@ -22,6 +25,26 @@ class Fournisseur(models.Model):
     def __str__(self):
         return self.nom
 
+    def mouvements(self):
+        return DetailsApprovisionnement.objects.filter(fournisseur=self)
+
+    def paiements(self):
+        return MouvementCaisseFournisseur.objects.filter(fournisseur=self)
+
+    def total_mouvements(self):
+        return (
+                self.mouvements()
+                .annotate(prix_total_db=F('qte') * F('prix'))
+                .aggregate(total=Sum('prix_total_db'))
+                ['total'] or 0
+        )
+
+    def total_paiements(self):
+        return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
+
+    def solde(self):
+        return self.total_mouvements() - self.total_paiements()
+
     @property
     def get_next_code(self):
         last_code = Fournisseur.objects.all().order_by('-code')[:1]
@@ -40,20 +63,3 @@ class Fournisseur(models.Model):
 
     def get_absolute_url(self):
         return reverse('fournisseur_details', args=[self.pk])
-
-
-class PaiementFournisseur(models.Model):
-    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT, null=False)
-    montant = models.DecimalField(max_digits=8, decimal_places=4)
-    percepteur = models.CharField(max_length=30)
-    date_paiement = models.DateField()
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_modification = models.DateTimeField(auto_now=True)
-    cree_par = models.ForeignKey('users.CustomUser',
-                                 related_name='paiementfournisseurcreepar',
-                                 on_delete=models.PROTECT)
-    modifie_par = models.ForeignKey('users.CustomUser',
-                                    blank=True, null=True,
-                                    related_name='paiementfournisseurmodpar',
-                                    on_delete=models.PROTECT)
-    objects = models.Manager()

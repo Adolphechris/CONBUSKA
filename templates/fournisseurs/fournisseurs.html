@@ -31,6 +31,12 @@
                     <div class="x_panel">
                         <div class="x_title">
                             <h2>Liste des fournisseurs<small></small></h2>
+                            <button type="button" class="btn btn-link pull-right creer">
+                                <a href="{% url 'fournisseur_create' %}">
+                                    <i class="fa fa-plus"></i>
+                                    NOUVEAU FOURNISSEUR
+                                </a>
+                            </button>
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
@@ -54,7 +60,7 @@
                                         </div>
                                         <div class="col-xs-12 bottom text-center">
                                             <div class="col-xs-12 col-sm-6 emphasis">
-                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ solde_fournisseur }}</h4>
+                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ fournisseur.solde }}FC</h4>
                                             </div>
                                             <div class="col-xs-12 col-sm-6 emphasis">
                                                 <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
