@@ -1,11 +1,10 @@
 import decimal
-
 from django.db import models, transaction
 from django.urls import reverse
+from django.core.validators import MinValueValidator
 from produits.models import Stock, Magasin
 from django.db.models import Max, Count, Sum, F, DecimalField
 from django.db.models.functions import TruncDate
-from clients.models import Client
 from django.utils import timezone
 import datetime
 
@@ -20,9 +19,9 @@ class Livreur(models.Model):
 class FactureManager(models.Manager):
     def ventes_journalieres(self):
         today = timezone.now().date()
-        premier_jour = today.replace(day=1)
+        # premier_jour = today.replace(day=1)
         return (self.get_queryset()
-                .filter(date_facture__range=(premier_jour, today))
+                .filter(date_facture__range=(today, today))
                 .annotate(date=TruncDate('date_facture'))
                 .values('date')
                 .annotate(
@@ -44,7 +43,7 @@ class Facture(models.Model):
     date_facture = models.DateField(default=datetime.date.today)
     devise = models.CharField(max_length=2, choices=DEVISES)
     taux = models.DecimalField(default=0.0, max_digits=6, decimal_places=2)
-    remise = models.DecimalField(default=0.0, max_digits=6, decimal_places=2)
+    remise = models.DecimalField(default=0, max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     client_comptoir = models.CharField(max_length=30, null=True, blank=True)
     livreur = models.ForeignKey(Livreur, on_delete=models.PROTECT, null=True, blank=True)
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -66,14 +65,15 @@ class Facture(models.Model):
 
     @property
     def sous_total(self):
-        get_details = DetailsFacture.objects.filter(facture=self.pk)
-        resultat = sum(i.qte * i.prix for i in get_details)
-        return resultat
+        result = DetailsFacture.objects.filter(facture=self) \
+            .annotate(sub=F("qte") * F("prix")) \
+            .aggregate(total=Sum("sub"))["total"]
+
+        return result or decimal.Decimal(0)
 
     @property
     def total(self):
-        sous_total = decimal.Decimal(self.sous_total)
-        return sous_total - self.remise
+        return self.sous_total - self.remise
 
     @property
     def total_devise(self):
@@ -265,4 +265,4 @@ class DetailsLigneFacture(models.Model):
 
 class FactureClient(models.Model):
     facture = models.OneToOneField(Facture, related_name='facture_client', on_delete=models.PROTECT)
-    client = models.ForeignKey(Client, on_delete=models.PROTECT)
+    client = models.ForeignKey('clients.Client', on_delete=models.PROTECT)
