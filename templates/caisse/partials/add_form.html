@@ -1,57 +1,64 @@
-<div class="add-form-container">
-    <h3 class="form-title">Ajouter une opération de caisse</h3>
-    <hr/>
-    <form id="addForm"
-          class="form-horizontal form-label-left"
-          method="POST"
-          hx-post="{% url 'caisse_details' caisse_courante.pk %}"
-          hx-target="#formTableContainer"
-          hx-swap="innerHTML">
-        {% csrf_token %}
-        <input type="hidden" name="form_type" value="add">
-        <div id="addFormFields">
-            <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12">
-                    {{ add_form.type_mouvement.label }}
-                </label>
-                <div class="col-md-9 col-sm-9 col-xs-12">
-                    {{ add_form.type_mouvement }}
+<div class="x_panel add-form-container">
+    <div class="x_title">
+        <h2><i class="fa fa-plus-circle"></i> Ajouter une opération de caisse</h2>
+        <div class="clearfix"></div>
+    </div>
+    <div class="x_content">
+        <form id="addForm"
+              class="form-horizontal form-label-left"
+              method="POST"
+              hx-post="{% url 'caisse_details' caisse_courante.pk %}"
+              hx-target="#formTableContainer"
+              hx-swap="innerHTML"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="add">
+            <div id="addFormFields">
+                <div class="form-group">
+                    <label class="control-label col-md-12 col-sm-12 col-xs-12">{{ add_form.type_mouvement.label }}:</label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.type_mouvement }}
+                    </div>
+                    <span style="color: red;">{{ add_form.type_mouvement.errors }}</span>
                 </div>
-                <span style="color: red;">{{ add_form.type_mouvement.errors }}</span>
-            </div>
-            <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12">
-                    {{ add_form.rubrique.label }}
-                </label>
-                <div class="col-md-9 col-sm-9 col-xs-12">
-                    {{ add_form.rubrique }}
+                <div class="form-group">
+                    <label class="control-label col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.rubrique.label }}:
+                    </label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.rubrique }}
+                    </div>
+                    <span style="color: red;">{{ add_form.rubrique.errors }}</span>
                 </div>
-                <span style="color: red;">{{ add_form.rubrique.errors }}</span>
-            </div>
-            <div class="form-group" id="rubrique-dependent-fields">
-            </div>
-            <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12">
-                    {{ add_form.montant.label }}
-                </label>
-                <div class="col-md-9 col-sm-9 col-xs-12">
-                    {{ add_form.montant }}
+                <div class="form-group rubrique-dependent-fields"></div>
+                <div class="form-group">
+                    <label class="control-label col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.montant.label }}:
+                    </label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.montant }}
+                    </div>
+                    <span style="color: red;">{{ add_form.montant.errors }}</span>
                 </div>
-                <span style="color: red;">{{ add_form.montant.errors }}</span>
-            </div>
-            <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12">
-                    {{ add_form.motif.label }}
-                </label>
-                <div class="col-md-9 col-sm-9 col-xs-12">
-                    {{ add_form.motif }}
+                <div class="form-group">
+                    <label class="control-label col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.motif.label }}:
+                    </label>
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        {{ add_form.motif }}
+                    </div>
+                    <span style="color: red;">{{ add_form.motif.errors }}</span>
                 </div>
-                <span style="color: red;">{{ add_form.motif.errors }}</span>
             </div>
+            <div class="ln_solid"></div>
 
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">
-            <i class="fa fa-plus-circle icon-space"></i> Ajouter
-        </button>
-    </form>
+            <div class="form-group">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa fa-plus-circle icon-space"></i> Ajouter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>

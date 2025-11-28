@@ -54,15 +54,15 @@
                                                 <td>{{ caisse.solde_final }}</td>
                                                 <td>
                                                     {% if caisse.est_ouverte %}
-                                                        <span class="badge badge-success">Ouverte</span>
+                                                        <span class="label label-primary"><i class="fa fa-unlock"></i> Ouverte</span>
                                                     {% else %}
-                                                        <span class="badge badge-danger">Clôturée</span>
+                                                        <span class="label label-success"><i class="fa fa-lock"></i> Clôturée</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>
                                                     <a href="{% url 'caisse_details' caisse.pk %}" class="btn btn-warning btn-xs">
                                                         <i class="fa fa-eye"></i>
-                                                        Details
+                                                        Détails
                                                     </a>
                                                 </td>
 										    </tr>

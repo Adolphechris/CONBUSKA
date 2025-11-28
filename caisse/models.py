@@ -53,7 +53,7 @@ class MouvementCaisse(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return f"{self.get_type_mouvement_display()} - {self.montant}"
+        return f"{self.type_mouvement} - {self.montant}"
 
     @property
     def solde_actuel(self):
@@ -76,3 +76,13 @@ class MouvementCaisseClient(models.Model):
 class MouvementCaisseCreancier(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_cr')
     creancier = models.ForeignKey('creanciers.Creancier', on_delete=models.CASCADE, related_name='creancier')
+
+
+class MouvementCaisseDebiteur(models.Model):
+    mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_db')
+    debiteur = models.ForeignKey('creanciers.Debiteur', on_delete=models.CASCADE, related_name='debiteur')
+
+
+class MouvementCaisseAgent(models.Model):
+    mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_ag')
+    agent = models.ForeignKey('paie.Agent', on_delete=models.CASCADE, related_name='agent')

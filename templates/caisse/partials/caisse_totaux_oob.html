@@ -1,20 +1,3 @@
-<div id="formTableContainer">
-    <!-- Formulaire à gauche -->
-    <div class="col-md-4" id="formContainer">
-        <div id="addFormContainer">
-            {% include "caisse/partials/add_form.html" %}
-        </div>
-        <div id="updateFormContainer"></div>
-    </div>
-
-    <!-- Tableau à droite -->
-    <div class="col-md-8">
-        <div class="content" id="mouvements-table">
-            {% include "caisse/partials/lines_table.html" %}
-        </div>
-    </div>
-</div>
-
 <div class="x_content" id="caisse-totaux" hx-swap-oob="true">
     <div class="row">
         <div class="col-sm-4 col-xs-6">

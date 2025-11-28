@@ -27,6 +27,6 @@ class CaisseForm(forms.ModelForm):
         self.fields['rubrique'].queryset = RubriqueCaisse.objects.filter(visible=True)
         self.fields['rubrique'].widget.attrs.update({
             'hx-get': reverse('rubrique_champ',  kwargs={'caisse_pk': self.caisse_pk}),
-            'hx-target': '#rubrique-dependent-fields',
-            'hx-trigger': 'change'
+            'hx-target': 'next .rubrique-dependent-fields',
+            'hx-trigger': 'load, change'
         })

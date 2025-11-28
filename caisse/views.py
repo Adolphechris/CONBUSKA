@@ -1,21 +1,26 @@
 import datetime
-
-from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView, TemplateView, RedirectView, FormView, DeleteView
+from django.views.generic import ListView, DetailView, FormView, DeleteView
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from .models import (Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse, MouvementCaisseFournisseur,
-                     MouvementCaisseClient, MouvementCaisseCreancier)
+                     MouvementCaisseClient, MouvementCaisseCreancier, MouvementCaisseAgent, MouvementCaisseDebiteur)
 from clients.models import Client
 from fournisseurs.models import Fournisseur
-from creanciers.models import Creancier
+from creanciers.models import Creancier, Debiteur
 from factures.models import Facture
 from users.models import Caissier
+from paie.models import Agent
 from .forms import OuvertureCaisseValidateForm, ClotureCaisseValidateForm, CaisseForm
+
+
+def get_total_ventes():
+    factures = Facture.objects.filter(date_creation__date=datetime.datetime.now().date())
+    total_factures = sum(i.total for i in factures)
+    return total_factures
 
 
 class OuvertureCaisseView(LoginRequiredMixin, FormView):
@@ -32,7 +37,7 @@ class OuvertureCaisseView(LoginRequiredMixin, FormView):
         """
         try:
             caisse = Caisse.objects.get(pk=self.kwargs['pk'])
-        except Caisse.DoesNotExists:
+        except (Caisse.DoesNotExist, KeyError):
             if self.request.user.type_profile.nom == 'Admin':
                 caisse = Caisse.objects.get(is_principal=True)
             else:
@@ -85,6 +90,7 @@ def get_update_caisse_form(request, pk):
 
 
 def rubrique_champ_view(request, caisse_pk):
+    print("************* ", request.GET)
     rubrique_id = request.GET.get('rubrique')
     champ_html = ""
 
@@ -106,10 +112,18 @@ def rubrique_champ_view(request, caisse_pk):
             champ_html = render_to_string("caisse/partials/field_creancier.html",
                                           context={'creanciers': Creancier.objects.all()})
 
+        elif rubrique.nom.lower() == "débiteurs":
+            champ_html = render_to_string("caisse/partials/field_debiteur.html",
+                                          context={'debiteurs': Debiteur.objects.all()})
+
         elif rubrique.nom.lower() == "transfert caisse":
             caisses = Caisse.objects.exclude(pk=caisse_pk)
             champ_html = render_to_string("caisse/partials/field_caisse.html",
                                           context={'caisses': caisses})
+
+        elif rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration", "assistance sociale"]:
+            champ_html = render_to_string("caisse/partials/field_agent.html",
+                                          context={'agents': Agent.objects.all()})
 
     return HttpResponse(champ_html)
 
@@ -131,51 +145,78 @@ class CaisseView(LoginRequiredMixin, DetailView):
         mouvements = MouvementCaisse.objects.filter(caisse=self.kwargs['pk'], type_mouvement='SORTIE')
         return mouvements
 
-    def get_total_ventes(self):
-        factures = Facture.objects.filter(date_creation__date=datetime.datetime.now().date())
-        total_factures = sum(i.total for i in factures)
-        return total_factures
+    def get_total_entrees(self):
+        solde_initial = self.get_object().solde_initial
+        entrees = sum(i.montant for i in self.get_mouvements_entree_caisse())
+        return solde_initial + get_total_ventes() + entrees
+
+    def get_total_sorties(self):
+        sorties = sum(i.montant for i in self.get_mouvements_sortie_caisse())
+        return sorties
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(object=self.object)
         context['add_form'] = CaisseForm(caisse_pk=self.get_caisse().pk)
-        context['update_form'] = CaisseForm(
-            caisse_pk=self.get_caisse().pk,
-            instance=MouvementCaisse.objects.filter(caisse=self.kwargs['pk']).first()
-        )
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         if request.headers.get('HX-Request') == 'true':
             form_type = request.POST.get('form_type')
+
             if form_type == 'add':
                 form = CaisseForm(request.POST, caisse_pk=self.get_caisse().pk)
                 if form.is_valid():
                     mouvement = form.save(commit=False)
                     mouvement.caisse = self.get_object()
                     mouvement.effectue_par = self.request.user
-
-                    print(mouvement)
-                    print(form)
+                    mouvement.save()
 
                     if mouvement.rubrique.nom.lower() == "fournisseurs":
+                        fournisseur_pk = request.POST.get('fournisseur')
+                        fournisseur = Fournisseur.objects.get(id=fournisseur_pk)
+
                         MouvementCaisseFournisseur.objects.create(
                             mouvement_caisse=mouvement,
-                            fournisseur=mouvement.fournisseur
+                            fournisseur=fournisseur
                         )
 
                     elif mouvement.rubrique.nom.lower() == "clients":
+                        client_pk = request.POST.get('client')
+                        client = Client.objects.get(id=client_pk)
+
                         MouvementCaisseClient.objects.create(
                             mouvement_caisse=mouvement,
-                            client=mouvement.client
+                            client=client
                         )
 
-                    elif mouvement.rubrique.nom.lower() == "creanciers":
+                    elif mouvement.rubrique.nom.lower() == "créanciers":
+                        creancier_pk = request.POST.get('creancier')
+                        creancier = Creancier.objects.get(id=creancier_pk)
+
                         MouvementCaisseCreancier.objects.create(
                             mouvement_caisse=mouvement,
-                            creancier=mouvement.creancier
+                            creancier=creancier
                         )
+
+                    elif mouvement.rubrique.nom.lower() == "débiteurs":
+                        debiteur_pk = request.POST.get('debiteur')
+                        debiteur = Debiteur.objects.get(id=debiteur_pk)
+
+                        MouvementCaisseDebiteur.objects.create(
+                            mouvement_caisse=mouvement,
+                            debiteur=debiteur
+                        )
+
+                    elif mouvement.rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration",
+                                                            "assistance sociale"]:
+                        agent_pk = request.POST.get('agent')
+                        if agent_pk:
+                            agent = Agent.objects.get(pk=agent_pk)
+                            MouvementCaisseAgent.objects.create(
+                                mouvement_caisse=mouvement,
+                                agent=agent
+                            )
 
                     elif mouvement.rubrique.nom.lower() == "transfert caisse":
                         get_caisse_ouverte = CaisseCourante.objects.filter(caisse=mouvement.caisse_destination,
@@ -190,32 +231,96 @@ class CaisseView(LoginRequiredMixin, DetailView):
                                 effectue_par=self.request.user
                             )
 
-                    mouvement.save()
+                    total_entrees = self.get_total_entrees()
+                    total_sorties = self.get_total_sorties()
 
                     html = render_to_string("caisse/partials/add_form_and_table.html", {
                         "add_form": CaisseForm(caisse_pk=self.get_caisse().pk),
+                        "caisse": self.get_caisse(),
                         "caisse_courante": self.get_object(),
                         "mouvements_entree": self.get_mouvements_entree_caisse(),
                         "mouvements_sortie": self.get_mouvements_sortie_caisse(),
+                        "total_entrees": total_entrees,
+                        "total_sorties": total_sorties,
                     }, request=request)
 
-                    return HttpResponse(html)
+                    html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
+                        "total_entrees": total_entrees,
+                        "total_sorties": total_sorties,
+                        "solde_caisse": total_entrees - total_sorties,
+                    })
+
+                    return HttpResponse(html + html_totaux)
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
             else:
-                instance = get_object_or_404(MouvementCaisse, pk=request.POST.get('id'))
-                form = CaisseForm(request.POST, instance=instance)
+                instance = get_object_or_404(MouvementCaisse, pk=int(request.POST.get('id')))
+                form = CaisseForm(request.POST, instance=instance, caisse_pk=self.get_caisse().pk)
                 if form.is_valid():
-                    form.save()
+                    mouvement = form.save(commit=False)
+                    # mouvement.caisse = self.get_object()
+                    mouvement.save()
+
+                    if mouvement.rubrique.nom.lower() == "fournisseurs":
+                        fournisseur_pk = request.POST.get('fournisseur')
+                        fournisseur = Fournisseur.objects.get(id=fournisseur_pk)
+
+                        get_mc_fournisseur = MouvementCaisseFournisseur.objects.get(mouvement_caisse=mouvement.pk)
+                        get_mc_fournisseur.fournisseur = fournisseur
+                        get_mc_fournisseur.save()
+
+                    elif mouvement.rubrique.nom.lower() == "clients":
+                        client_pk = request.POST.get('client')
+                        client = Client.objects.get(id=client_pk)
+
+                        get_mc_client = MouvementCaisseClient.objects.get(mouvement_caisse=mouvement.pk)
+                        get_mc_client.client = client
+                        get_mc_client.save()
+
+                    elif mouvement.rubrique.nom.lower() == "creanciers":
+                        creancier_pk = request.POST.get('creancier')
+                        creancier = Creancier.objects.get(id=creancier_pk)
+
+                        get_mc_creancier = MouvementCaisseCreancier.objects.get(mouvement_caisse=mouvement.pk)
+                        get_mc_creancier.creancier = creancier
+                        get_mc_creancier.save()
+
+                    elif mouvement.rubrique.nom.lower() == "debiteurs":
+                        debiteur_pk = request.POST.get('debiteur')
+                        debiteur = Debiteur.objects.get(id=debiteur_pk)
+
+                        get_mc_debiteur = MouvementCaisseDebiteur.objects.get(mouvement_caisse=mouvement.pk)
+                        get_mc_debiteur.debiteur = debiteur
+                        get_mc_debiteur.save()
+
+                    elif mouvement.rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration",
+                                                            "assistance sociale"]:
+                        agent_pk = request.POST.get('agent')
+                        if agent_pk:
+                            agent = Agent.objects.get(pk=agent_pk)
+                            get_mc_agent = MouvementCaisseAgent.objects.get(mouvement_caisse=mouvement.pk)
+                            get_mc_agent.agent = agent
+                            get_mc_agent.save()
+
+                    total_entrees = self.get_total_entrees()
+                    total_sorties = self.get_total_sorties()
 
                     html = render_to_string("caisse/partials/add_form_and_table.html", {
                         "add_form": CaisseForm(caisse_pk=self.get_caisse().pk),
                         "caisse_courante": self.get_object(),
                         "mouvements_entree": self.get_mouvements_entree_caisse(),
                         "mouvements_sortie": self.get_mouvements_sortie_caisse(),
+                        "total_entrees": total_entrees,
+                        "total_sorties": total_sorties,
                     }, request=request)
 
-                    return HttpResponse(html)
+                    html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
+                        "total_entrees": total_entrees,
+                        "total_sorties": total_sorties,
+                        "solde_caisse": total_entrees - total_sorties,
+                    })
+
+                    return HttpResponse(html + html_totaux)
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
         return JsonResponse({'error': 'Invalid request'}, status=400)
@@ -225,7 +330,10 @@ class CaisseView(LoginRequiredMixin, DetailView):
         context['caisse'] = self.get_caisse()
         context['mouvements_entree'] = self.get_mouvements_entree_caisse()
         context['mouvements_sortie'] = self.get_mouvements_sortie_caisse()
-        context['ventes'] = self.get_total_ventes()
+        context['ventes'] = get_total_ventes()
+        context['total_entrees'] = self.get_total_entrees()
+        context['total_sorties'] = self.get_total_sorties()
+        context['solde_caisse'] = self.get_total_entrees() - self.get_total_sorties()
         return context
 
 
@@ -270,56 +378,79 @@ class ClotureCaisseView(LoginRequiredMixin, FormView):
 
         if self.request.user.type_profile.nom == 'Admin':
             caisse = Caisse.objects.get(is_principal=True)
-            return redirect('historique_caisse', pk=caisse.pk)
+            # Redirection vers l'historique
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse('historique_caisse', kwargs={'pk': caisse.pk})
+            return response
+
         else:
-            return redirect('index')
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse('index')
+            return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Cloture caisse'
-        context['message'] = 'Voulez-vous cloturer la caisse ?'
+        context['title'] = 'Clôture caisse'
+        context['message'] = 'Êtes-vous sûr de vouloir clôturer cette caisse ? Cette action est irréversible.'
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Oui'
+        context['solde_final'] = self.solde_final()
+        context['caisse_courante'] = self.get_caisse_courante()
         return context
-
 
 
 class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
     model = MouvementCaisse
+    context_object_name = 'mouvement_caisse'
     template_name = 'caisse/mouvement_caisse_confirm_delete.html'
 
-    def get_caisse(self):
+    def get_caisse_courante(self):
         return get_object_or_404(CaisseCourante, pk=self.kwargs['caisse_pk'])
+
+    def get_caisse(self):
+        return get_object_or_404(Caisse, pk=self.get_caisse_courante().caisse.pk)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = "Supprimer un mouvement de caisse"
-        context['message'] = f"Voulez-vous supprimer le mouvement {self.get_object().motif} ?"
+        context['message'] = (f"Êtes-vous sûr de vouloir supprimer le mouvement : #{self.get_object().motif} ? "
+                              f"Cette action est irréversible.")
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Valider'
-        context['approvisionnement'] = self.get_caisse()
+        context['caisse'] = self.get_caisse_courante()
         return context
 
     def get_success_url(self):
         return reverse('caisse_details', kwargs={'pk': self.object.pk})
 
     def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        caisse = self.object.caisse
+        mouvement_caisse = self.get_object()
+        caisse_courante = mouvement_caisse.caisse
 
-        self.object.delete()
+        mouvement_caisse.delete()
 
-        if request.headers.get('HX-Request') == 'true':
-            mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse, type_mouvement='ENTREE')
-            mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse, type_mouvement='SORTIE')
-            context = {
-                "caisse": caisse,
-                "mouvements_entree": mouvements_entree,
-                "mouvements_sortie": mouvements_sortie,
-            }
-            return render(request, "caisse/partials/lines_table.html", context)
+        mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='ENTREE')
+        mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='SORTIE')
 
-        return redirect(self.get_success_url())
+        total_entrees = sum(i.montant for i in mouvements_entree) + get_total_ventes() + caisse_courante.solde_initial
+        total_sorties = sum(i.montant for i in mouvements_sortie)
+
+        html_table = render_to_string('caisse/partials/lines_table.html', {
+            "caisse": self.get_caisse(),
+            "caisse_courante": caisse_courante,
+            "mouvements_entree": mouvements_entree,
+            "mouvements_sortie": mouvements_sortie,
+        })
+
+        html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
+            "solde_caisse": total_entrees - total_sorties,
+            "total_entrees": total_entrees,
+            "total_sorties": total_sorties,
+        })
+
+        response = HttpResponse(html_table + html_totaux)
+        response["HX-Trigger"] = "closeModal"
+        return response
 
 
 class CaissesView(LoginRequiredMixin, ListView):

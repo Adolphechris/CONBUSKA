@@ -1,0 +1,10 @@
+<div class="form-group">
+    <label class="control-label col-md-3 col-sm-3 col-xs-12">Agent</label>
+    <div class="col-md-9 col-sm-9 col-xs-12">
+        <select name="agent" class="form-control" id="id_agent">
+            {% for agent in agents %}
+                <option value="{{ agent.pk }}">{{ agent.nom }}</option>0
+            {% endfor %}
+        </select>
+    </div>
+</div>
