@@ -5,6 +5,21 @@
 {% block stylesheets %}
 {{block.super}}
 <style>
+    :root {
+  --primary-dark: #2a3f54;
+  --primary-light: #73879c;
+  --accent-green: #1abb9c;
+  --success-green: #26b99a;
+  --danger-red: #e74c3c;
+  --warning-orange: #f39c12;
+  --info-blue: #3498db;
+  --light-bg: #f7f7f7;
+  --white: #ffffff;
+  --border-color: #e6e9ed;
+  --text-dark: #2a3f54;
+  --text-light: #73879c;
+}
+
     /* En-tête du produit */
     .product-header {
       margin-bottom: 30px;
@@ -117,6 +132,746 @@
   width: 60%;
 }
 
+    /* Product Header */
+.product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-title {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badge-dark {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+
+.badge-info {
+  background: var(--info-blue);
+  color: var(--white);
+}
+
+.badge-danger {
+  background: var(--danger-red);
+  color: var(--white);
+}
+
+.label-success {
+  background: var(--success-green);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Tabs */
+.nav-tabs.bar_tabs {
+  border-bottom: 2px solid var(--border-color);
+  margin: 0;
+}
+
+.nav-tabs.bar_tabs > li {
+  margin-bottom: -2px;
+}
+
+.nav-tabs.bar_tabs > li > a {
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-light);
+  padding: 12px 20px;
+  border-radius: 0;
+  font-size: 13px;
+}
+
+.nav-tabs.bar_tabs > li > a:hover {
+  background: transparent;
+  border-bottom-color: var(--accent-green);
+  color: var(--text-dark);
+}
+
+.nav-tabs.bar_tabs > li.active > a {
+  border: none;
+  border-bottom: 2px solid var(--accent-green);
+  background: transparent;
+  color: var(--accent-green);
+}
+
+.nav-tabs.bar_tabs > li > a i {
+  margin-right: 5px;
+}
+
+/* Product Image */
+.product-image-container {
+  text-align: center;
+  padding: 20px;
+  background: var(--light-bg);
+  border-radius: 3px;
+  margin-bottom: 15px;
+}
+
+.main-product-image {
+  max-height: 400px;
+  width: auto;
+  margin: 0 auto;
+}
+
+.product-thumbnails {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.thumbnail-item {
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.thumbnail-item:hover,
+.thumbnail-item.active {
+  border-color: var(--accent-green);
+}
+
+.thumbnail-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Product Details */
+.product-detail-section {
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent-green);
+  display: inline-block;
+}
+
+.product-description {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.info-item {
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 13px;
+}
+
+.info-label i {
+  margin-right: 8px;
+  width: 20px;
+  text-align: center;
+}
+
+.info-value {
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+/* Pricing Cards */
+.pricing-cards {
+  margin-top: 15px;
+}
+
+.pricing-card {
+  background: var(--light-bg);
+  border-radius: 3px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  margin-bottom: 15px;
+}
+
+.pricing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.purchase {
+  border-color: var(--info-blue);
+}
+
+.pricing-card.retail {
+  border-color: var(--success-green);
+}
+
+.pricing-card.wholesale {
+  border-color: var(--warning-orange);
+}
+
+.pricing-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.pricing-card.purchase .pricing-icon {
+  color: var(--info-blue);
+}
+
+.pricing-card.retail .pricing-icon {
+  color: var(--success-green);
+}
+
+.pricing-card.wholesale .pricing-icon {
+  color: var(--warning-orange);
+}
+
+.pricing-label {
+  font-size: 12px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.pricing-amount {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Margin Display */
+.margin-display {
+  background: var(--light-bg);
+  padding: 20px;
+  border-radius: 3px;
+  border-left: 4px solid var(--success-green);
+}
+
+.margin-label {
+  font-size: 14px;
+  color: var(--text-dark);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.margin-label i {
+  margin-right: 8px;
+  color: var(--success-green);
+}
+
+.margin-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--success-green);
+  margin-bottom: 15px;
+}
+
+.margin-progress {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--white);
+  margin: 0;
+}
+
+.margin-progress .progress-bar {
+  border-radius: 5px;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+
+.alert-warning {
+  background: #fcf8e3;
+  border-color: #faebcc;
+  color: #8a6d3b;
+}
+
+.alert-warning i {
+  margin-right: 5px;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.btn-lg {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: #17a085;
+  border-color: #17a085;
+}
+
+.btn-danger {
+  background: var(--danger-red);
+  border-color: var(--danger-red);
+  color: var(--white);
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+.btn i {
+  margin-right: 5px;
+}
+
+/* Footer */
+footer {
+  background: var(--white);
+  padding: 15px 20px;
+  margin-left: 230px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .left_col {
+    width: 0;
+    overflow: hidden;
+  }
+
+  .left_col.active {
+    width: 230px;
+  }
+
+  .top_nav {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .right_col {
+    margin-left: 0;
+  }
+
+  footer {
+    margin-left: 0;
+  }
+
+  .product-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .product-header .col-md-4 {
+    margin-top: 15px;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .right_col {
+    padding: 15px;
+  }
+
+  .product-title {
+    font-size: 22px;
+  }
+
+  .pricing-cards .col-md-4 {
+    margin-bottom: 15px;
+  }
+
+  .btn-lg {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+    /* Added styles for Stock & Mouvements tab */
+/* Info Boxes (Stock Summary Cards) */
+.info-box {
+  display: flex;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  min-height: 90px;
+}
+
+.info-box-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  font-size: 45px;
+  color: var(--white);
+  border-radius: 3px 0 0 3px;
+}
+
+.info-box-icon.bg-aqua {
+  background: var(--info-blue);
+}
+
+.info-box-icon.bg-green {
+  background: var(--success-green);
+}
+
+.info-box-icon.bg-red {
+  background: var(--danger-red);
+}
+
+.info-box-icon.bg-yellow {
+  background: var(--warning-orange);
+}
+
+.info-box-content {
+  padding: 15px 15px 15px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.info-box-text {
+  font-size: 12px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.info-box-number {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-dark);
+  display: block;
+}
+
+/* Tables */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.jambo_table {
+  margin-bottom: 0;
+}
+
+.jambo_table thead tr.headings {
+  background: var(--light-bg);
+}
+
+.jambo_table thead tr.headings th {
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-dark);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+.jambo_table thead tr.headings th i {
+  margin-right: 5px;
+  color: var(--accent-green);
+}
+
+.jambo_table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.jambo_table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.jambo_table tbody tr.warning {
+  background: #fcf8e3;
+}
+
+.jambo_table tbody tr.warning:hover {
+  background: #faf2cc;
+}
+
+.jambo_table tbody td {
+  padding: 12px 15px;
+  vertical-align: middle;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.jambo_table tfoot tr {
+  background: var(--light-bg);
+  font-weight: 600;
+}
+
+.jambo_table tfoot th {
+  padding: 12px 15px;
+  border-top: 2px solid var(--border-color);
+}
+
+/* Badge Variants */
+.badge-primary {
+  background: var(--info-blue);
+  color: var(--white);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: var(--success-green);
+  color: var(--white);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background: var(--warning-orange);
+  color: var(--white);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Label Variants */
+.label {
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.label-success {
+  background: var(--success-green);
+  color: var(--white);
+}
+
+.label-warning {
+  background: var(--warning-orange);
+  color: var(--white);
+}
+
+.label-danger {
+  background: var(--danger-red);
+  color: var(--white);
+}
+
+.label i {
+  margin-right: 3px;
+}
+
+/* Text Colors */
+.text-primary {
+  color: var(--info-blue) !important;
+}
+
+.text-success {
+  color: var(--success-green) !important;
+}
+
+.text-danger {
+  color: var(--danger-red) !important;
+}
+
+.text-warning {
+  color: var(--warning-orange) !important;
+}
+
+.text-info {
+  color: var(--info-blue) !important;
+}
+
+.text-muted {
+  color: var(--text-light) !important;
+}
+
+/* Button Groups in Panel Toolbox */
+.panel_toolbox .btn-group {
+  display: inline-flex;
+}
+
+.panel_toolbox .btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.panel_toolbox .btn-sm:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.panel_toolbox .btn-sm:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+.btn-default {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  color: var(--text-dark);
+}
+
+.btn-default:hover {
+  background: var(--light-bg);
+  border-color: var(--border-color);
+}
+
+.btn-success {
+  background: var(--success-green);
+  border-color: var(--success-green);
+  color: var(--white);
+}
+
+.btn-success:hover {
+  background: #22a188;
+  border-color: #22a188;
+}
+
+/* Pagination */
+.dataTables_info {
+  padding: 15px 0;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.dataTables_paginate {
+  padding: 15px 0;
+  text-align: right;
+}
+
+.pagination {
+  margin: 0;
+  display: inline-flex;
+  list-style: none;
+  padding: 0;
+}
+
+.pagination li {
+  margin: 0 2px;
+}
+
+.pagination li a {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  background: var(--white);
+  color: var(--text-dark);
+  text-decoration: none;
+  border-radius: 3px;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.pagination li a:hover {
+  background: var(--light-bg);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.pagination li.active a {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: var(--white);
+}
+
+.pagination li.disabled a {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Tab Content */
+.tab-content {
+  margin-top: 0;
+}
+
+.tab-pane {
+  padding: 0;
+}
+
+/* Responsive Tables */
+@media (max-width: 768px) {
+  .info-box {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .info-box-icon {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    padding: 20px;
+  }
+
+  .info-box-content {
+    padding: 15px;
+  }
+
+  .jambo_table {
+    font-size: 11px;
+  }
+
+  .jambo_table thead tr.headings th,
+  .jambo_table tbody td {
+    padding: 8px 10px;
+  }
+
+  .dataTables_paginate {
+    text-align: center;
+  }
+
+  .dataTables_info {
+    text-align: center;
+  }
+}
 </style>
 {% endblock stylesheets %}
 
@@ -125,135 +880,225 @@
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5>Détails Article </h5>
+                    <h5><a href="{% url 'articles' %}">Articles</a> / Détails Article</h5>
                 </div>
             </div>
             <div class="row">
-                <!-- En-tête du produit -->
-                <div class="x_panel">
-                    <div class="x_content">
-                <div class="product-header">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h1>{{ article.designation }}
-                                {% if article.actif %}
-                                    <span class="label label-success">Actif</span>
-                                {% else %}
-                                    <span class="label label-danger">Inactif</span>
-                                {% endif %}
-                            </h1>
-                            <div class="product-badges">
-                                <span class="badge">Code: {{ article.code }}</span>
-                                <span class="label label-primary">{{ article.categorie }}</span>
-                                {% if article.stock < article.seuil %}
-                                    <span class="label label-danger">Stock critique</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-right">
-                            <div class="btn-group">
-                                <button class="btn btn-default"><i class="fa fa-shopping-cart"></i> Commander l'article</button>
-                                {% if article.actif %}
-                                    <button class="btn btn-danger"><i class="fa fa-toggle-off"></i> Desactiver l'article</button>
-                                {% else %}
-                                    <button class="btn btn-success"><i class="fa fa-toggle-on"></i> Activer l'article</button>
-                                {% endif %}
+                <div class="col-md-12">
+                    <!-- En-tête du produit -->
+                    <div class="x_panel">
+                        <div class="x_content">
+                            <div class="row product-header">
+                                <div class="col-md-8">
+                                    <h1>{{ article.designation }}
+                                        {% if article.actif %}
+                                            <span class="label label-success">Actif</span>
+                                        {% else %}
+                                            <span class="label label-danger">Inactif</span>
+                                        {% endif %}
+                                    </h1>
+                                    <div class="product-badges">
+                                        <span class="badge badge-dark"><i class="fa fa-barcode"></i> Code: {{ article.code }}</span>
+                                        <span class="badge badge-info"><i class="fa fa-tag"></i> {{ article.categorie }}</span>
+                                        {% if article.stock < article.seuil %}
+                                            <span class="badge badge-danger"><i class="fa fa-exclamation-triangle"></i> Stock critique</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <button class="btn btn-default"><i class="fa fa-shopping-cart"></i> Commander l'article</button>
+                                    {% if article.actif %}
+                                        <button class="btn btn-danger"><i class="fa fa-toggle-off"></i> Desactiver l'article</button>
+                                    {% else %}
+                                        <button class="btn btn-success"><i class="fa fa-toggle-on"></i> Activer l'article</button>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="product-tabs">
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li role="presentation" class="active"><a href="#details" aria-controls="details" role="tab" data-toggle="tab">Détails</a></li>
-                        <li role="presentation"><a href="#stock" aria-controls="stock" role="tab" data-toggle="tab">Stock & Mouvements</a></li>
-                        <li role="presentation"><a href="#stats" aria-controls="stats" role="tab" data-toggle="tab">Statistiques</a></li>
-                        <li role="presentation"><a href="#suppliers" aria-controls="suppliers" role="tab" data-toggle="tab">Fournisseurs</a></li>
-                    </ul>
-                    <!-- Contenu des onglets -->
-                    <div class="tab-content">
-                        <!-- Onglet Détails -->
-                        <div role="tabpanel" class="tab-pane active" id="details">
-                            <div class="row">
-                                <!-- Galerie d'images -->
-                                <div class="col-lg-4">
-                                    <div class="image-gallery">
-                                        <div class="main-image">
-                                            <img src="{{ article.photo1.url }}" alt="{{ article.designation }} - Vue principale" class="img-responsive">
-                                            <div class="image-controls">
-                                                <button class="btn btn-default btn-sm image-prev"><i class="fa fa-chevron-left"></i></button>
-                                                <button class="btn btn-default btn-sm image-next"><i class="fa fa-chevron-right"></i></button>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_content">
+                            <ul class="nav nav-tabs bar_tabs" role="tablist">
+                                <li role="presentation" class="active">
+                                    <a href="#details" aria-controls="details" role="tab" data-toggle="tab" aria-expanded="true">
+                                        <i class="fa fa-info-circle"></i> Détails
+                                    </a>
+                                </li>
+                                <li role="presentation" class="">
+                                    <a href="#stock" aria-controls="stock" role="tab" data-toggle="tab" aria-expanded="false">
+                                        <i class="fa fa-cubes"></i> Stock & Mouvements
+                                    </a>
+                                </li>
+                                <li role="presentation" class="">
+                                    <a href="#stats" aria-controls="stats" role="tab" data-toggle="tab" aria-expanded="false">
+                                        <i class="fa fa-line-chart"></i> Statistiques
+                                    </a>
+                                </li>
+                                <li role="presentation" class="">
+                                    <a href="#suppliers" aria-controls="suppliers" role="tab" data-toggle="tab" aria-expanded="false">
+                                        <i class="fa fa-truck"></i> Fournisseurs
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="product-tabs">
+                <!-- Contenu des onglets -->
+                <div class="tab-content">
+                    <!-- Onglet Détails -->
+                    <div role="tabpanel" class="tab-pane active" id="details">
+                        <div class="row">
+                            <!-- Galerie d'images -->
+                            <div class="col-lg-5">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h3><i class="fa fa-image"></i> Image(s) du produit</h3>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <div class="image-gallery">
+                                            <div class="main-image product-image-container">
+                                                <img src="{{ article.photo1.url }}" alt="{{ article.designation }} - Vue principale" class="img-responsive main-product-image">
+                                                <div class="image-controls">
+                                                    <button class="btn btn-default btn-sm image-prev"><i class="fa fa-chevron-left"></i></button>
+                                                    <button class="btn btn-default btn-sm image-next"><i class="fa fa-chevron-right"></i></button>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="thumbnails">
-                                            <div class="thumbnail active">
-                                                <img src="{{ article.photo1.url }}" alt="Miniature 1" class="img-responsive">
-                                            </div>
-                                            <div class="thumbnail">
-                                                <img src="{{ article.photo2.url }}" alt="Miniature 2" class="img-responsive">
+                                            <div class="thumbnails product-thumbnails">
+                                                <div class="thumbnail active">
+                                                    <img src="{{ article.photo1.url }}" alt="Miniature 1" class="img-responsive">
+                                                </div>
+                                                <div class="thumbnail">
+                                                    <img src="{{ article.photo2.url }}" alt="Miniature 2" class="img-responsive">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Informations produit -->
-                                <div class="col-lg-8">
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                          <h3 class="panel-title">Détails du produit</h3>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h3><i class="fa fa-list-alt"></i> Détails du produit</h3>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <!-- Alert Stock Critique -->
+                                        {% if article.stock < article.seuil %}
+                                            <div class="alert alert-warning alert-dismissible fade in" role="alert">
+                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                    <span aria-hidden="true">×</span>
+                                                </button>
+                                                <strong><i class="fa fa-exclamation-triangle"></i> Attention!</strong> Stock sous le seuil critique
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Description -->
+                                        <div class="product-detail-section">
+                                            <h4 class="section-title">Description</h4>
+                                            <p class="product-description">{{ article.description }}</p>
                                         </div>
-                                        <div class="panel-body">
+
+                                        <hr>
+
+                                        <!-- Informations principales -->
+                                        <div class="product-detail-section">
+                                            <h4 class="section-title">Informations principales</h4>
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <div class="product-description">
-                                                        <h4>Description</h4>
-                                                        <p>{{ article.description }}</p>
+                                                    <div class="info-item">
+                                                        <span class="info-label">
+                                                            <i class="fa fa-truck text-primary"></i> Fournisseur:
+                                                        </span>
+                                                        <span class="info-value">{{ article.fournisseur.nom }}</span>
                                                     </div>
                                                 </div>
-
                                                 <div class="col-md-6">
-                                                    <div class="product-details-table">
-                                                        <table class="table table-condensed table-striped jambo_table bulk_action">
-                                                            <tbody>
-                                                                <tr>
-                                                                    <th>Fournisseur:</th>
-                                                                    <td>{{ article.fournisseur.nom }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Unité de vente:</th>
-                                                                    <td>{{ article.unite }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Prix d'achat:</th>
-                                                                    <td>{{ article.prix_achat }} {{ article.devise }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Prix de vente:</th>
-                                                                    <td>{{ article.prix_vente }} {{ article.devise }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Prix de vente gros:</th>
-                                                                    <td>{{ article.prix_vente_gros }} {{ article.devise }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Seuil critique:</th>
-                                                                    <td>{{ article.seuil }} {{ article.unite }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Emplacement:</th>
-                                                                    <td>{{ article.emplacement }}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>Marge:</th>
-                                                                    <td class="text-success">39.99%</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                    <div class="info-item">
+                                                        <span class="info-label">
+                                                            <i class="fa fa-cube text-info"></i> Unité de vente:
+                                                        </span>
+                                                        <span class="info-value">{{ article.unite }}</span>
                                                     </div>
-                                                    {% if article.stock < article.seuil %}
-                                                        <!-- Alerte de stock -->
-                                                        <div class="alert alert-warning">
-                                                            <i class="fa fa-exclamation-triangle"></i> Stock sous le seuil critique
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="info-item">
+                                                        <span class="info-label">
+                                                            <i class="fa fa-map-marker text-danger"></i> Emplacement:
+                                                        </span>
+                                                        <span class="info-value">{{ article.emplacement }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="info-item">
+                                                        <span class="info-label">
+                                                            <i class="fa fa-exclamation-circle text-warning"></i> Seuil critique:
+                                                        </span>
+                                                        <span class="info-value">{{ article.seuil }} {{ article.unite }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <!-- Tarification -->
+                                        <div class="product-detail-section">
+                                            <h4 class="section-title">Tarification</h4>
+                                            <div class="row pricing-cards">
+                                                <div class="col-md-4">
+                                                    <div class="pricing-card purchase">
+                                                        <div class="pricing-icon">
+                                                            <i class="fa fa-download"></i>
                                                         </div>
-                                                    {% endif %}
+                                                        <div class="pricing-label">Prix d'achat</div>
+                                                        <div class="pricing-amount">{{ article.prix_achat }} {{ article.devise }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="pricing-card retail">
+                                                        <div class="pricing-icon">
+                                                            <i class="fa fa-shopping-cart"></i>
+                                                        </div>
+                                                        <div class="pricing-label">Prix de vente</div>
+                                                        <div class="pricing-amount">{{ article.prix_vente }} {{ article.devise }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="pricing-card wholesale">
+                                                        <div class="pricing-icon">
+                                                            <i class="fa fa-cubes"></i>
+                                                        </div>
+                                                        <div class="pricing-label">Prix de vente gros</div>
+                                                        <div class="pricing-amount">{{ article.prix_vente_gros }} {{ article.devise }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <!-- Marge -->
+                                        <div class="product-detail-section">
+                                            <h4 class="section-title">Rentabilité</h4>
+                                            <div class="margin-display">
+                                                <div class="margin-label">
+                                                    <i class="fa fa-percent"></i> Marge bénéficiaire
+                                                </div>
+                                                <div class="margin-value">39.99%</div>
+                                                <div class="progress margin-progress">
+                                                    <div class="progress-bar progress-bar-success" role="progressbar"
+                                                         aria-valuenow="39.99" aria-valuemin="0" aria-valuemax="100"
+                                                         style="width: 39.99%">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -262,7 +1107,273 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    <div role="tabpanel" class="tab-pane" id="stock">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-aqua"><i class="fa fa-cubes"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Stock Total</span>
+                                        <span class="info-box-number">{{ article.stock }} {{ article.unite }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-green"><i class="fa fa-arrow-up"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Entrées (30j)</span>
+                                        <span class="info-box-number">500 Pce</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-red"><i class="fa fa-arrow-down"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Sorties (30j)</span>
+                                        <span class="info-box-number">255 Pce</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-yellow"><i class="fa fa-line-chart"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Conso. Mensuelle</span>
+                                        <span class="info-box-number">255 Pce</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stock Détaillé -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-warehouse"></i> Stock Détaillé par Magasin</h2>
+                                        <ul class="nav navbar-right panel_toolbox">
+                                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                                            <li class="dropdown">
+                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                                                    <i class="fa fa-wrench"></i>
+                                                </a>
+                                                <ul class="dropdown-menu" role="menu">
+                                                    <li><a href="#"><i class="fa fa-download"></i> Exporter</a></li>
+                                                    <li><a href="#"><i class="fa fa-print"></i> Imprimer</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-bordered jambo_table bulk_action">
+                                                <thead>
+                                                    <tr class="headings">
+                                                        <th class="column-title"><i class="fa fa-building"></i> Magasin</th>
+                                                        <th class="column-title"><i class="fa fa-cubes"></i> Quantité</th>
+                                                        <th class="column-title"><i class="fa fa-calendar"></i> Date de Péremption</th>
+                                                        <th class="column-title"><i class="fa fa-info-circle"></i> Statut</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for stock in article_stocks %}
+                                                    <tr>
+                                                        <td><i class="fa fa-map-marker text-primary"></i> {{ stock.magasin }}</td>
+                                                        <td><span class="badge badge-primary">{{ stock.qte }} {{ article.unite }}</span></td>
+                                                        <td>{{ stock.date_peremption }}</td>
+                                                        <td><span class="label label-success">Bon</span></td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <th class="text-right"><strong>Total:</strong></th>
+                                                        <th><strong>{{ article.stock }} {{ article.unite }}</strong></th>
+                                                        <th colspan="2"></th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mouvements de Stock -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-exchange"></i> Historique des Mouvements</h2>
+                                        <ul class="nav navbar-right panel_toolbox">
+                                            <li>
+                                                <div class="btn-group" style="margin-right: 10px;">
+                                                    <button type="button" class="btn btn-sm btn-default">Tous</button>
+                                                    <button type="button" class="btn btn-sm btn-success">Entrées</button>
+                                                    <button type="button" class="btn btn-sm btn-danger">Sorties</button>
+                                                </div>
+                                            </li>
+                                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                                            <li class="dropdown">
+                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                                                    <i class="fa fa-wrench"></i>
+                                                </a>
+                                                <ul class="dropdown-menu" role="menu">
+                                                    <li><a href="#"><i class="fa fa-download"></i> Exporter</a></li>
+                                                    <li><a href="#"><i class="fa fa-print"></i> Imprimer</a></li>
+                                                    <li><a href="#"><i class="fa fa-filter"></i> Filtrer</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-bordered jambo_table">
+                                                <thead>
+                                                    <tr class="headings">
+                                                        <th class="column-title"><i class="fa fa-calendar"></i> Date</th>
+                                                        <th class="column-title"><i class="fa fa-exchange"></i> Type</th>
+                                                        <th class="column-title"><i class="fa fa-cubes"></i> Quantité</th>
+                                                        <th class="column-title"><i class="fa fa-cube"></i> Unité</th>
+                                                        <th class="column-title"><i class="fa fa-money"></i> Prix</th>
+                                                        <th class="column-title"><i class="fa fa-percent"></i> Taux</th>
+                                                        <th class="column-title"><i class="fa fa-database"></i> Solde</th>
+                                                        <th class="column-title"><i class="fa fa-line-chart"></i> Moy. Conso.</th>
+                                                        <th class="column-title"><i class="fa fa-file-text"></i> Origine/Dest.</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>28/10/2025 14:30</td>
+                                                        <td><span class="label label-danger"><i class="fa fa-arrow-down"></i> Sortie</span></td>
+                                                        <td class="text-danger"><strong>-50</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>2000.0000 FC</td>
+                                                        <td>-</td>
+                                                        <td><span class="badge badge-warning">245</span></td>
+                                                        <td>255 Pce/mois</td>
+                                                        <td><i class="fa fa-file-text-o"></i> Facture #F-2025-1234</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>27/10/2025 09:15</td>
+                                                        <td><span class="label label-success"><i class="fa fa-arrow-up"></i> Entrée</span></td>
+                                                        <td class="text-success"><strong>+200</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>1200.0000 FC</td>
+                                                        <td>1.0</td>
+                                                        <td><span class="badge badge-success">295</span></td>
+                                                        <td>260 Pce/mois</td>
+                                                        <td><i class="fa fa-truck"></i> Arrivage #A-2025-0089</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>25/10/2025 16:45</td>
+                                                        <td><span class="label label-danger"><i class="fa fa-arrow-down"></i> Sortie</span></td>
+                                                        <td class="text-danger"><strong>-30</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>2000.0000 FC</td>
+                                                        <td>-</td>
+                                                        <td><span class="badge badge-warning">95</span></td>
+                                                        <td>265 Pce/mois</td>
+                                                        <td><i class="fa fa-file-text-o"></i> Facture #F-2025-1233</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>24/10/2025 11:20</td>
+                                                        <td><span class="label label-danger"><i class="fa fa-arrow-down"></i> Sortie</span></td>
+                                                        <td class="text-danger"><strong>-75</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>1800.0000 FC</td>
+                                                        <td>-</td>
+                                                        <td><span class="badge badge-warning">125</span></td>
+                                                        <td>270 Pce/mois</td>
+                                                        <td><i class="fa fa-file-text-o"></i> Facture Gros #FG-2025-0456</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>20/10/2025 08:00</td>
+                                                        <td><span class="label label-success"><i class="fa fa-arrow-up"></i> Entrée</span></td>
+                                                        <td class="text-success"><strong>+300</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>1200.0000 FC</td>
+                                                        <td>1.0</td>
+                                                        <td><span class="badge badge-success">200</span></td>
+                                                        <td>275 Pce/mois</td>
+                                                        <td><i class="fa fa-truck"></i> Arrivage #A-2025-0088</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>18/10/2025 15:30</td>
+                                                        <td><span class="label label-danger"><i class="fa fa-arrow-down"></i> Sortie</span></td>
+                                                        <td class="text-danger"><strong>-100</strong></td>
+                                                        <td>Pce</td>
+                                                        <td>2000.0000 FC</td>
+                                                        <td>-</td>
+                                                        <td><span class="badge badge-danger">50</span></td>
+                                                        <td>280 Pce/mois</td>
+                                                        <td><i class="fa fa-file-text-o"></i> Facture #F-2025-1232</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Pagination -->
+                                        <div class="row">
+                                            <div class="col-sm-5">
+                                                <div class="dataTables_info">Affichage de 1 à 6 sur 156 entrées</div>
+                                            </div>
+                                            <div class="col-sm-7">
+                                                <div class="dataTables_paginate paging_simple_numbers">
+                                                    <ul class="pagination">
+                                                        <li class="paginate_button previous disabled"><a href="#">Précédent</a></li>
+                                                        <li class="paginate_button active"><a href="#">1</a></li>
+                                                        <li class="paginate_button"><a href="#">2</a></li>
+                                                        <li class="paginate_button"><a href="#">3</a></li>
+                                                        <li class="paginate_button"><a href="#">4</a></li>
+                                                        <li class="paginate_button"><a href="#">5</a></li>
+                                                        <li class="paginate_button next"><a href="#">Suivant</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistiques Tab -->
+                    <div role="tabpanel" class="tab-pane fade" id="stats">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-line-chart"></i> Statistiques</h2>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <p class="text-muted">Les statistiques seront affichées ici...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fournisseurs Tab -->
+                    <div role="tabpanel" class="tab-pane fade" id="suppliers">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-truck"></i> Fournisseurs</h2>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <p class="text-muted">Les informations sur les fournisseurs seront affichées ici...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -285,8 +1396,8 @@
                 updateMainImage()
             })
 
-              // Clic sur les miniatures
-              $(".thumbnail").click(function () {
+            // Clic sur les miniatures
+            $(".thumbnail").click(function () {
                 var index = $(this).index()
                 currentImageIndex = index
                 updateMainImage()
@@ -294,13 +1405,18 @@
                 // Mettre à jour la classe active
                 $(".thumbnail").removeClass("active")
                 $(this).addClass("active")
-              })
+            })
 
-              function updateMainImage() {
+            function updateMainImage() {
                 $(".main-image img").attr("src", images[currentImageIndex])
                 $(".thumbnail").removeClass("active")
                 $(".thumbnail").eq(currentImageIndex).addClass("active")
-              }
+            }
+
+            $('#liste_articles').addClass('current-page');
+            $('#articles').addClass('active');
+            let parent = document.getElementById('articles');
+            parent.childNodes[2].style.display = 'block';
         })
     </script>
 {% endblock content %}

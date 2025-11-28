@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from produits.models import Article
+from produits.models import Article, Stock
 from produits.forms import ArticleCreateForm
 
 
@@ -16,6 +16,14 @@ class ArticleDetailsView(LoginRequiredMixin, DetailView):
     model = Article
     context_object_name = 'article'
     template_name = 'produits/article/article_details.html'
+
+    def get_stocks(self):
+        return Stock.objects.filter(article=self.get_object().pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['article_stocks'] = self.get_stocks()
+        return context
 
 
 class ArticleCreateView(LoginRequiredMixin, CreateView):
