@@ -105,7 +105,7 @@ class DetailsFacture(models.Model):
     facture = models.ForeignKey(Facture, related_name='facture_details', on_delete=models.PROTECT, null=True)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
-    prix = models.DecimalField(max_digits=8, decimal_places=4)
+    prix = models.DecimalField(max_digits=12, decimal_places=2)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     objects = models.Manager()
