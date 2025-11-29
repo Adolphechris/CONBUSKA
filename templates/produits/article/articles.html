@@ -28,7 +28,7 @@
                                         </a>
                                     </button>
                                 </div>
-                                <table id="Articles" class="table table-striped jambo_table bulk_action">
+                                <table id="tableArticles" class="table table-striped jambo_table bulk_action">
                                     <thead>
                                         <tr class="headings">
                                             <th class="column-title"> Code</th>
@@ -90,4 +90,35 @@
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableArticles').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+        });
+    </script>
 {% endblock content %}
