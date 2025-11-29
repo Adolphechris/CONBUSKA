@@ -5,16 +5,9 @@
 {% block stylesheets %}
 {{block.super}}
 <style>
-    .img_container {
-        width: 20px;
-        height: 12px;
-    }
-
-    /* Resize images */
-    .img_container img {
-        width: 100%;
-        height: auto;
-    }
+    .profile_details:nth-child(3n) {
+    clear: none !important;
+}
 </style>
 {% endblock stylesheets %}
 
@@ -40,6 +33,7 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
+                            <div class="row">
                             {% for fournisseur in liste_fournisseurs %}
                                 <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
                                     <div class="well profile_view">
@@ -71,6 +65,7 @@
                                     </div>
                                 </div>
                             {% endfor %}
+                                </div>
 
                             <!--<div class="content table-responsive display">
                                 <div class="row">
