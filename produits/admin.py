@@ -1,3 +1,13 @@
 from django.contrib import admin
+from parametres.models import Magasin
 
-# Register your models here.
+@admin.register(Magasin)
+class MagasinAdmin(admin.ModelAdmin):
+    model = Magasin
+    list_display = (
+        "id",
+        "nom",
+        "description",
+        "is_principal",
+        "localisation",
+    )
