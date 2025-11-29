@@ -6,328 +6,329 @@
 {{block.super}}
 <style>
     /* Statistics Cards */
-.stat-card {
-  background: #fff;
-  border-radius: 4px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
+    .stat-card {
+      background: #fff;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
 
-.stat-card:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
+    .stat-card:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
 
-.stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-}
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
 
-.stat-card-blue::before {
-  background: #3498db;
-}
-.stat-card-green::before {
-  background: #1abb9c;
-}
-.stat-card-orange::before {
-  background: #f39c12;
-}
-.stat-card-red::before {
-  background: #e74c3c;
-}
-.stat-card-purple::before {
-  background: #9b59b6;
-}
-.stat-card-teal::before {
-  background: #16a085;
-}
-.stat-card-pink::before {
-  background: #e91e63;
-}
-.stat-card-cyan::before {
-  background: #00bcd4;
-}
+    .stat-card-blue::before {
+      background: #3498db;
+    }
+    .stat-card-green::before {
+      background: #1abb9c;
+    }
+    .stat-card-orange::before {
+      background: #f39c12;
+    }
+    .stat-card-red::before {
+      background: #e74c3c;
+    }
+    .stat-card-purple::before {
+      background: #9b59b6;
+    }
+    .stat-card-teal::before {
+      background: #16a085;
+    }
+    .stat-card-pink::before {
+      background: #e91e63;
+    }
+    .stat-card-cyan::before {
+      background: #00bcd4;
+    }
 
-.stat-icon {
-  float: left;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: #fff;
-  margin-right: 15px;
-}
+    .stat-icon {
+      float: left;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #fff;
+      margin-right: 15px;
+    }
 
-.stat-card-blue .stat-icon {
-  background: linear-gradient(135deg, #667eea 0%, #3498db 100%);
-}
-.stat-card-green .stat-icon {
-  background: linear-gradient(135deg, #1abb9c 0%, #16a085 100%);
-}
-.stat-card-orange .stat-icon {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-}
-.stat-card-red .stat-icon {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-}
-.stat-card-purple .stat-icon {
-  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-}
-.stat-card-teal .stat-icon {
-  background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);
-}
-.stat-card-pink .stat-icon {
-  background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
-}
-.stat-card-cyan .stat-icon {
-  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
-}
+    .stat-card-blue .stat-icon {
+      background: linear-gradient(135deg, #667eea 0%, #3498db 100%);
+    }
+    .stat-card-green .stat-icon {
+      background: linear-gradient(135deg, #1abb9c 0%, #16a085 100%);
+    }
+    .stat-card-orange .stat-icon {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+    .stat-card-red .stat-icon {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+    .stat-card-purple .stat-icon {
+      background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    }
+    .stat-card-teal .stat-icon {
+      background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);
+    }
+    .stat-card-pink .stat-icon {
+      background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+    }
+    .stat-card-cyan .stat-icon {
+      background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    }
 
-.stat-content {
-  overflow: hidden;
-  padding-top: 5px;
-}
+    .stat-content {
+      overflow: hidden;
+      padding-top: 5px;
+    }
 
-.stat-number {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2a3f54;
-  line-height: 1;
-  margin-bottom: 5px;
-}
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2a3f54;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
 
-.stat-label {
-  font-size: 13px;
-  color: #73879c;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+    .stat-label {
+      font-size: 13px;
+      color: #73879c;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-.stat-footer {
-  clear: both;
-  padding-top: 15px;
-  margin-top: 15px;
-  border-top: 1px solid #f0f0f0;
-  font-size: 12px;
-  color: #73879c;
-}
+    .stat-footer {
+      clear: both;
+      padding-top: 15px;
+      margin-top: 15px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 12px;
+      color: #73879c;
+    }
 
-.stat-footer .fa-arrow-up {
-  color: #1abb9c;
-}
+    .stat-footer .fa-arrow-up {
+      color: #1abb9c;
+    }
 
-.stat-footer .fa-arrow-down {
-  color: #e74c3c;
-}
+    .stat-footer .fa-arrow-down {
+      color: #e74c3c;
+    }
 
-/* Panel Styles */
-.panel {
-  border: none;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  margin-bottom: 20px;
-}
+    /* Panel Styles */
+    .panel {
+      border: none;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      margin-bottom: 20px;
+    }
 
-.panel-heading {
-  background-color: #fff;
-  border-bottom: 1px solid #e6e9ed;
-  border-radius: 4px 4px 0 0;
-  padding: 15px 20px;
-}
+    .panel-heading {
+      background-color: #fff;
+      border-bottom: 1px solid #e6e9ed;
+      border-radius: 4px 4px 0 0;
+      padding: 15px 20px;
+    }
 
-.panel-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2a3f54;
-}
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2a3f54;
+    }
 
-.panel-title .fa {
-  margin-right: 8px;
-  color: #1abb9c;
-}
+    .panel-title .fa {
+      margin-right: 8px;
+      color: #1abb9c;
+    }
 
-.panel-body {
-  padding: 20px;
-}
+    .panel-body {
+      padding: 20px;
+    }
 
-/* Top Products List */
-.top-products-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+    /* Top Products List */
+    .top-products-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-.top-products-list li {
-  margin-bottom: 20px;
-}
+    .top-products-list li {
+      margin-bottom: 20px;
+    }
 
-.top-products-list li:last-child {
-  margin-bottom: 0;
-}
+    .top-products-list li:last-child {
+      margin-bottom: 0;
+    }
 
-.product-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
+    .product-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
 
-.product-name {
-  font-weight: 600;
-  color: #2a3f54;
-  font-size: 13px;
-}
+    .product-name {
+      font-weight: 600;
+      color: #2a3f54;
+      font-size: 13px;
+    }
 
-.product-sales {
-  color: #73879c;
-  font-size: 12px;
-}
+    .product-sales {
+      color: #73879c;
+      font-size: 12px;
+    }
 
-.progress {
-  height: 8px;
-  margin-bottom: 0;
-  border-radius: 4px;
-}
+    .ca_articles {
+      height: 8px;
+      margin-bottom: 0;
+      border-radius: 4px;
+    }
 
-/* Table Styles */
-.table-responsive {
-  border: none;
-}
+    /* Table Styles */
+    .table-responsive {
+      border: none;
+    }
 
-.table > thead > tr > th {
-  border-bottom: 2px solid #e6e9ed;
-  color: #2a3f54;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+    .table > thead > tr > th {
+      border-bottom: 2px solid #e6e9ed;
+      color: #2a3f54;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-.table > tbody > tr > td {
-  color: #73879c;
-  vertical-align: middle;
-  font-size: 13px;
-}
+    .table > tbody > tr > td {
+      color: #73879c;
+      vertical-align: middle;
+      font-size: 13px;
+    }
 
-.table-hover > tbody > tr:hover {
-  background-color: #f9fafb;
-}
+    .table-hover > tbody > tr:hover {
+      background-color: #f9fafb;
+    }
 
-/* Activity List */
-.activity-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+    /* Activity List */
+    .activity-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-.activity-list li {
-  display: flex;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e6e9ed;
-}
+    .activity-list li {
+      display: flex;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e6e9ed;
+    }
 
-.activity-list li:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
+    .activity-list li:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
 
-.activity-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 16px;
-  flex-shrink: 0;
-  margin-right: 15px;
-}
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-right: 15px;
+    }
 
-.activity-success {
-  background: #1abb9c;
-}
-.activity-info {
-  background: #3498db;
-}
-.activity-warning {
-  background: #f39c12;
-}
-.activity-primary {
-  background: #9b59b6;
-}
-.activity-danger {
-  background: #e74c3c;
-}
+    .activity-success {
+      background: #1abb9c;
+    }
+    .activity-info {
+      background: #3498db;
+    }
+    .activity-warning {
+      background: #f39c12;
+    }
+    .activity-primary {
+      background: #9b59b6;
+    }
+    .activity-danger {
+      background: #e74c3c;
+    }
 
-.activity-content {
-  flex: 1;
-}
+    .activity-content {
+      flex: 1;
+    }
 
-.activity-content strong {
-  color: #2a3f54;
-  font-size: 14px;
-  display: block;
-  margin-bottom: 3px;
-}
+    .activity-content strong {
+      color: #2a3f54;
+      font-size: 14px;
+      display: block;
+      margin-bottom: 3px;
+    }
 
-.activity-content p {
-  color: #73879c;
-  font-size: 13px;
-  margin: 0 0 5px 0;
-}
+    .activity-content p {
+      color: #73879c;
+      font-size: 13px;
+      margin: 0 0 5px 0;
+    }
 
-.activity-time {
-  color: #95a5a6;
-  font-size: 11px;
-}
+    .activity-time {
+      color: #95a5a6;
+      font-size: 11px;
+    }
 
-/* Labels */
-.label {
-  font-weight: 600;
-  padding: 4px 8px;
-  font-size: 11px;
-  border-radius: 3px;
-}
+    /* Labels */
+    .label {
+      font-weight: 600;
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 3px;
+    }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .main-content {
-    padding-top: 70px;
-  }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        padding-top: 70px;
+      }
 
-  .page-title h1 {
-    font-size: 24px;
-  }
+      .page-title h1 {
+        font-size: 24px;
+      }
 
-  .stat-number {
-    font-size: 24px;
-  }
+      .stat-number {
+        font-size: 24px;
+      }
 
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-  }
-}
+      .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+      }
+    }
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
     <div class="right_col" role="main">
         <div class="">
+            <div class="clearfix"></div>
             <!-- Statistics Cards -->
             <div class="row">
                 <div class="col-md-3 col-sm-6">
@@ -336,7 +337,7 @@
                             <i class="fa fa-users"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">50</div>
+                            <div class="stat-number">{{ clients }}</div>
                             <div class="stat-label">Clients</div>
                         </div>
                         <div class="stat-footer">
@@ -351,7 +352,7 @@
                             <i class="fa fa-truck"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">32</div>
+                            <div class="stat-number">{{ fournisseurs }}</div>
                             <div class="stat-label">Fournisseurs</div>
                         </div>
                         <div class="stat-footer">
@@ -366,7 +367,7 @@
                             <i class="fa fa-money"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">15</div>
+                            <div class="stat-number">{{ creanciers }}</div>
                             <div class="stat-label">Créanciers</div>
                         </div>
                         <div class="stat-footer">
@@ -381,7 +382,7 @@
                             <i class="fa fa-exclamation-triangle"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">16</div>
+                            <div class="stat-number">{{ debiteurs }}</div>
                             <div class="stat-label">Débiteurs</div>
                         </div>
                         <div class="stat-footer">
@@ -398,7 +399,7 @@
                             <i class="fa fa-cubes"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">600</div>
+                            <div class="stat-number">{{ articles }}</div>
                             <div class="stat-label">Articles</div>
                         </div>
                         <div class="stat-footer">
@@ -413,7 +414,7 @@
                             <i class="fa fa-shopping-cart"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">256</div>
+                            <div class="stat-number">{{ commandes }}</div>
                             <div class="stat-label">Commandes</div>
                         </div>
                         <div class="stat-footer">
@@ -428,7 +429,7 @@
                             <i class="fa fa-file-text"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">887</div>
+                            <div class="stat-number">{{ factures }}</div>
                             <div class="stat-label">Factures</div>
                         </div>
                         <div class="stat-footer">
@@ -443,25 +444,28 @@
                             <i class="fa fa-line-chart"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">$45.2K</div>
-                            <div class="stat-label">FR</div>
+                            <div class="stat-number">{{ ca }}FC</div>
+                            <div class="stat-label">CA</div>
                         </div>
                         <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 25% ce mois
+                            {% if stat_ca > 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stat_ca }}% Aujourd'hui
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stat_ca }}% Aujourd'hui
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="clearfix"></div>
             <!-- Charts Section -->
             <div class="row">
                 <div class="col-md-8">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title"><i class="fa fa-bar-chart"></i> Ventes Mensuelles 2025</h3>
+                            <h3 class="panel-title"><i class="fa fa-bar-chart"></i> Ventes Mensuelles {{ current_year }}</h3>
                         </div>
                         <div class="panel-body">
-                            <canvas id="salesChart" height="80"></canvas>
+                            <canvas id="ventesChart" height="80"></canvas>
                         </div>
                     </div>
                 </div>
@@ -473,51 +477,17 @@
                         </div>
                         <div class="panel-body">
                             <ul class="top-products-list">
-                                <li>
-                                    <div class="product-info">
-                                        <span class="product-name">Farine</span>
-                                        <span class="product-sales">245 ventes</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-success" style="width: 85%"></div>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="product-info">
-                                        <span class="product-name">Sardines à huile</span>
-                                        <span class="product-sales">198 ventes</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-info" style="width: 70%"></div>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="product-info">
-                                        <span class="product-name">Allumettes</span>
-                                        <span class="product-sales">167 ventes</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-warning" style="width: 60%"></div>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="product-info">
-                                        <span class="product-name">Lames de rasoir</span>
-                                        <span class="product-sales">143 ventes</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-primary" style="width: 50%"></div>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="product-info">
-                                        <span class="product-name">Mosquitto</span>
-                                        <span class="product-sales">128 ventes</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-danger" style="width: 45%"></div>
-                                    </div>
-                                </li>
+                                {% for article in top_articles %}
+                                    <li>
+                                        <div class="product-info">
+                                            <span class="product-name">{{ article.article__designation }}</span>
+                                            <span class="product-sales">{{ article.total_ca }}</span>
+                                        </div>
+                                        <div class="ca_articles">
+                                            <div class="" style="width: 85%"></div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
@@ -539,40 +509,20 @@
                                             <th>Article</th>
                                             <th>Quantité</th>
                                             <th>Date d'Expiration</th>
+                                            <th>Magasin</th>
                                             <th>Statut</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>Coca-Cola</td>
-                                            <td>45</td>
-                                            <td>15/11/2025</td>
-                                            <td><span class="label label-danger">Urgent</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Savon Boom</td>
-                                            <td>120</td>
-                                            <td>22/11/2025</td>
-                                            <td><span class="label label-warning">Attention</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Eau Zongo</td>
-                                            <td>78</td>
-                                            <td>30/11/2025</td>
-                                            <td><span class="label label-warning">Attention</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Maheu</td>
-                                            <td>34</td>
-                                            <td>05/12/2025</td>
-                                            <td><span class="label label-info">Surveiller</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Chips yoyo</td>
-                                            <td>92</td>
-                                            <td>12/12/2025</td>
-                                            <td><span class="label label-info">Surveiller</span></td>
-                                        </tr>
+                                        {% for stock in articles_expiration %}
+                                            <tr>
+                                                <td>{{ stock.article.designation }}</td>
+                                                <td>{{ stock.qte }}</td>
+                                                <td>{{ stock.date_peremption }}</td>
+                                                <td>{{ stock.magasin.nom }}</td>
+                                                <td><span class="label label-danger">Urgent</span></td>
+                                            </tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
@@ -646,8 +596,31 @@
     </div>
     <script>
         $(document).ready(() => {
-          // Graphique Ventes
-          const ctx = document.getElementById('salesChart').getContext('2d');
+            // Graphique Ventes
+            var ctx = document.getElementById('ventesChart').getContext('2d');
+            var ventesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ mois_labels|safe }},
+                    datasets: [{
+                       label: "Chiffre d'affaires (FC)",
+                       data: {{ chart_data|safe }},
+                       borderColor: '#26B99A',
+                       backgroundColor: 'rgba(38,185,154,0.2)',
+                       tension: 0.3,
+                       fill: true
+                    }]
+                },
+                options: {
+                  responsive: true,
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }
+            });
+
+
+          /*const ctx = document.getElementById('salesChart').getContext('2d');
           new Chart(ctx, {
             type: 'line',
             data: {
@@ -665,7 +638,7 @@
               responsive: true,
               plugins: { legend: { display: false } }
             }
-          });
+          });*/
 
           // Graphique Stock
           const stockCtx = document.getElementById('stockPieChart').getContext('2d');
