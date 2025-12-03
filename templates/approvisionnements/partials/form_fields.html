@@ -59,16 +59,44 @@
         <div class="col-sm-6">
             <div class="form-group">
                 <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
-                    {{ form.autre_frais }}
-                </div>
+                    <span class="input-group-addon"><i class="fa fa-level-up"></i></span>
+                    {{ form.chargement }}
+              </div>
             </div>
         </div>
         <div class="col-sm-6">
             <div class="form-group">
                 <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-cubes"></i></span>
-                    {{ form.manutention }}
+                    <span class="input-group-addon"><i class="fa fa-level-down"></i>&nbsp;</span>
+                    {{ form.dechargement }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-exchange"></i></span>
+                    {{ form.services }}
+              </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-building-o"></i>&nbsp;</span>
+                    {{ form.entreposage }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
+                    {{ form.autre_frais }}
                 </div>
             </div>
         </div>

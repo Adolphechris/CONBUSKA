@@ -29,7 +29,8 @@ class ArticleApprovisionnementAddForm(forms.ModelForm):
     )
     class Meta:
         model = DetailsApprovisionnement
-        fields = ['qte', 'prix', 'date_peremption', 'facture', 'declaration', 'transport', 'manutention', 'autre_frais']
+        fields = ['qte', 'prix', 'date_peremption', 'facture', 'declaration', 'transport', 'chargement', 'dechargement',
+                  'services', 'entreposage', 'autre_frais']
         widgets = {
             'qte': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantité'}),
             'prix': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Prix'}),
@@ -37,7 +38,10 @@ class ArticleApprovisionnementAddForm(forms.ModelForm):
             'facture': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Numero facture'}),
             'declaration': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Déclaration'}),
             'transport': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Transport'}),
-            'manutention': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Manutention'}),
+            'chargement': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Chargement'}),
+            'dechargement': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Déchargement'}),
+            'services': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Services'}),
+            'entreposage': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Entreposage'}),
             'autre_frais': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Autres frais'}),
         }
 
@@ -46,7 +50,7 @@ class ArticleApprovisionnementUpdateForm(forms.ModelForm):
     class Meta:
         model = DetailsApprovisionnement
         fields = ['article', 'fournisseur', 'qte', 'prix', 'date_peremption', 'facture', 'declaration', 'transport',
-                  'manutention', 'autre_frais']
+                  'chargement', 'dechargement', 'services', 'entreposage', 'autre_frais']
         widgets = {
             'article': forms.Select(attrs={'class': 'form-control js-simple-select'}),
             'fournisseur': forms.Select(attrs={'class': 'form-control js-simple-select'}),
@@ -56,7 +60,10 @@ class ArticleApprovisionnementUpdateForm(forms.ModelForm):
             'facture': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Numero facture'}),
             'declaration': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Déclaration'}),
             'transport': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Transport'}),
-            'manutention': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Manutention'}),
+            'chargement': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Chargement'}),
+            'dechargement': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Déchargement'}),
+            'services': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Services'}),
+            'entreposage': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Entreposage'}),
             'autre_frais': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Autres frais'}),
         }
 

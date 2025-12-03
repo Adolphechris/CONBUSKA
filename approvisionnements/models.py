@@ -64,9 +64,12 @@ class DetailsApprovisionnement(models.Model):
     approvisionnement = models.ForeignKey(Approvisionnement, on_delete=models.PROTECT, null=True)
     fournisseur = models.ForeignKey('fournisseurs.Fournisseur', on_delete=models.PROTECT, null=False)
     facture = models.CharField(max_length=15)
-    declaration = models.DecimalField(max_digits=8, decimal_places=4)
     transport = models.DecimalField(max_digits=8, decimal_places=4)
-    manutention = models.DecimalField(max_digits=8, decimal_places=4)
+    chargement = models.DecimalField(max_digits=8, decimal_places=4)
+    dechargement = models.DecimalField(max_digits=8, decimal_places=4)
+    services = models.DecimalField(max_digits=8, decimal_places=4)
+    entreposage = models.DecimalField(max_digits=8, decimal_places=4)
+    declaration = models.DecimalField(max_digits=8, decimal_places=4)
     autre_frais = models.DecimalField(max_digits=8, decimal_places=4)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
@@ -82,7 +85,8 @@ class DetailsApprovisionnement(models.Model):
 
     @property
     def frais_achat(self):
-        total = self.declaration + self.transport + self.manutention + self.autre_frais
+        total = (self.declaration + self.transport + self.chargement + self.dechargement + self.services +
+                 self.entreposage + self.autre_frais)
         return total
 
     @property
@@ -125,7 +129,10 @@ class DetailsApprovisionnement(models.Model):
             defaults={
                 'declaration': self.declaration,
                 'transport': self.transport,
-                'manutention': self.manutention,
+                'chargement': self.chargement,
+                'dechargement': self.dechargement,
+                'services': self.services,
+                'entreposage': self.entreposage,
                 'autre_frais': self.autre_frais,
                 'qte': self.qte,
                 'prix': self.prix,
