@@ -1370,27 +1370,12 @@
             // MODAL CLIENT -> Géstion fermeture manuelle modale
             document.body.addEventListener("closeModalClient", function () {
                 $('#modalSearchClient').modal('hide');
-
-                const modal = $('#modalSearchClient');
-                modal.modal('hide');
-
-                $('.modal-backdrop').remove();
-                $('body').removeClass('modal-open');
-                $('body').css('padding-right', '');
             });
 
-            // Imagerie -> Quand HTMX injecte le contenu de la modale
+            // MODAL CLIENT -> Ouverture de la modale
             document.body.addEventListener("htmx:afterSwap", function (e) {
                 if (e.target.id === "modal-client") {
                     $('#modalSearchClient').modal('show');
-                }
-            });
-
-            document.body.addEventListener('htmx:beforeSwap', function(e) {
-                if (e.target.id === 'modal-client') {
-                    $('#modalSearchClient').modal('hide');
-                    $('.modal-backdrop').remove();
-                    $('body').removeClass('modal-open');
                 }
             });
 
