@@ -1,9 +1,9 @@
-<form method="post"
+<form method="POST"
       hx-post="{% if facture.facture_client.pk %}{% url 'update_facture_client' facture.pk facture.facture_client.pk %}{% else %}{% url 'create_facture_client' facture.pk %}{% endif %}"
-      hx-target="#modal-client"
+      hx-target="#client-partial"
       hx-swap="innerHTML">
     {% csrf_token %}
-    <div class="row">
+    <div class="row form-group">
         {{ form.as_p }}
     </div>
 

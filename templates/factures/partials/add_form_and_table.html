@@ -2,7 +2,9 @@
 <div class="content-sidebar">
     <!-- Information Card -->
     {% if facture.facture_client %}
-        {% include "factures/partials/facture_client_partial.html" %}
+        <div id="client-partial" hx-swap-oob="true">
+            {% include "factures/partials/facture_client_partial.html" %}
+        </div>
     {% else %}
         {% include "factures/partials/info_form.html" %}
     {% endif %}

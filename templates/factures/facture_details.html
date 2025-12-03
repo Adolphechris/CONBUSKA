@@ -1369,7 +1369,14 @@
 
             // MODAL CLIENT -> Géstion fermeture manuelle modale
             document.body.addEventListener("closeModalClient", function () {
-                $('#modalSearchClient').modal('hide');
+                // $('#modalSearchClient').modal('hide');
+                let modal = $('#modalSearchClient');
+
+                modal.modal('hide');
+
+                // FIX : supprime le backdrop fantôme
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
             });
 
             // MODAL CLIENT -> Ouverture de la modale
