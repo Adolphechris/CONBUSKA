@@ -63,3 +63,7 @@ class ArticleCreateForm(forms.ModelForm):
             'photo1': forms.FileInput(attrs={'class': 'form-control'}),
             'photo2': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+
+class ArticleActivateOrDeactivateForm(forms.Form):
+    pass

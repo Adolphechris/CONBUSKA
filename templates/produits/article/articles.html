@@ -32,11 +32,9 @@
                                     <thead>
                                         <tr class="headings">
                                             <th class="column-title"> Code</th>
-                                            <th class="column-title"> Designation</th>
-                                            <th class="column-title"> Description</th>
-                                            <th class="column-title"> Code barre</th>
-                                            <th class="column-title"> Unite</th>
-                                            <th class="column-title"> Categorie</th>
+                                            <th class="column-title"> Désignation</th>
+                                            <th class="column-title"> Unité</th>
+                                            <th class="column-title"> Catégorie</th>
                                             <th class="column-title"> Fournisseur</th>
                                             <th class="column-title"> Prix achat</th>
                                             <th class="column-title"> Prix vente</th>
@@ -45,6 +43,7 @@
                                             <th class="column-title"> Seuil</th>
                                             <th class="column-title"> Seuil gros</th>
                                             <th class="column-title"> Emplacement</th>
+                                            <th class="column-title"> Statut</th>
                                             <th class="column-title"> Action</th>
                                         </tr>
                                     </thead>
@@ -53,8 +52,6 @@
 										    <tr>
                                                 <td>{{ article.code }}</td>
                                                 <td>{{ article.designation }}</td>
-                                                <td>{{ article.description }}</td>
-                                                <td>{{ article.code_barre }}</td>
                                                 <td>{{ article.unite }}</td>
                                                 <td>{{ article.categorie }}</td>
                                                 <td>{{ article.fournisseur }}</td>
@@ -66,18 +63,29 @@
                                                 <td>{{ article.seuil_gros }}</td>
                                                 <td>{{ article.emplacement }}</td>
                                                 <td>
+                                                    {% if article.actif %}
+                                                        <span class="label label-success">Actif</span>
+                                                    {% else %}
+                                                        <span class="label label-danger">Inactif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
                                                     <a href="{{ article.get_absolute_url }}" class="btn btn-warning btn-xs">
                                                         <i class="fa fa-eye"></i>
-                                                        Details
                                                     </a>
                                                     <a href="{% url 'article_update' article.pk %}" class="btn btn-info btn-xs">
                                                         <i class="fa fa-edit"></i>
-                                                        Modifier
                                                     </a>
-                                                    <a href="{% url 'article_delete' article.pk %}" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-trash-alt"></i>
-                                                        Supprimer
-                                                    </a>
+
+                                                    {% if article.actif %}
+                                                        <a href="{% url 'article_delete' article.pk %}" class="btn btn-danger btn-xs">
+                                                            <i class="fa fa-toggle-off"></i>
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{% url 'article_delete' article.pk %}" class="btn btn-danger btn-xs">
+                                                            <i class="fa fa-toggle-on"></i>
+                                                        </a>
+                                                    {% endif %}
                                                 </td>
 										    </tr>
 									    {% endfor %}
@@ -96,6 +104,8 @@
                 dom: '<"top">rflt<"bottom"p><"clear">',
                 paging: true,
 			    autoWidth: true,
+			    order: [[2, 'desc']],
+			    "pageLength": 100,
                 columnDefs: [
 
                 ],

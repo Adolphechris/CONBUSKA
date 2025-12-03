@@ -1,9 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+from django.shortcuts import redirect, get_object_or_404, HttpResponse
 from produits.models import Article, Stock
-from produits.forms import ArticleCreateForm
+from produits.forms import ArticleCreateForm, ArticleActivateOrDeactivateForm
 from approvisionnements.models import DetailsApprovisionnement
 from factures.models import DetailsFacture
 from django.db.models import Sum
@@ -15,6 +16,9 @@ class ArticleView(LoginRequiredMixin, ListView):
     model = Article
     context_object_name = 'liste_articles'
     template_name = 'produits/article/articles.html'
+
+    def get_queryset(self):
+        return Article.objects.all().order_by('designation')
 
 
 class ArticleDetailsView(LoginRequiredMixin, DetailView):
@@ -153,4 +157,37 @@ class ArticleDeleteView(LoginRequiredMixin, DeleteView):
         context['message'] = "Voulez-vous supprimer l'article {} ?".format(self.get_object())
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Valider'
+        return context
+
+
+class ArticleActivateOrDeactivateView(LoginRequiredMixin, FormView):
+    form_class = ArticleActivateOrDeactivateForm
+    template_name = 'produits/article/activate_deactivate.html'
+
+    def get_article(self):
+        return get_object_or_404(Article, pk=self.kwargs["pk"])
+
+    def post(self, request, *args, **kwargs):
+        article = self.get_article()
+        if article.actif:
+            article.actif = False
+        else:
+            article.actif = True
+        article.save(update_fields=['actif'])
+
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse('articles')
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        article = self.get_article()
+        title = 'Désactiver' if article.actif else 'Activer'
+
+
+        context['title'] = f'{title} article'
+        context['message'] = f"Êtes-vous sûr de vouloir {title.lower()} l'article #{article.designation} ?"
+        context['submit_icon'] = 'fa fa-check'
+        context['submit_label'] = 'Oui'
+        context['article'] = article
         return context
