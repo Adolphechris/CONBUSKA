@@ -15,6 +15,41 @@
         width: 100%;
         height: auto;
     }
+
+    .info-box {
+        display: flex;
+        background: #f7f7f7;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .info-box-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        border-radius: 8px;
+    }
+
+    .info-box-content {
+        margin-left: 10px;
+    }
+
+    .info-box-number {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .uniform-img {
+        width: 150px;      /* largeur fixe */
+        height: 150px;     /* hauteur fixe */
+        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
+    }
 </style>
 {% endblock stylesheets %}
 
@@ -40,38 +75,76 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            {% for creancier in liste_creanciers %}
-                                <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
-                                    <div class="well profile_view">
-                                        <div class="col-sm-12">
-                                            <h4 class="brief"><i>Créancier</i></h4>
-                                            <div class="left col-xs-7">
-                                                <h2>{{ creancier.nom }}</h2>
-                                                <p><strong>Code: </strong> #{{ creancier.code }} </p>
-                                                <ul class="list-unstyled">
-                                                  <li><i class="fa fa-map-marker"></i> Addresse: {{ creancier.adresse }}</li>
-                                                  <li><i class="fa fa-phone"></i> Telephone #: {{ creancier.telephone }}</li>
-                                                  <li><i class="fa fa-envelope"></i> Email: {{ creancier.email }}</li>
-                                                </ul>
+                            <div class="row">
+                                <div class="col-md-8 col-sm-4 col-xs-12">
+                                    <form class="form-horizontal" action="" method="get">
+                                        {% for field in filter.form %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">
+                                                    {{ field.label }}
+                                                </label>
+                                                <div class="col-md-6">
+                                                    {{ field }}
+                                                </div>
                                             </div>
-                                            <div class="right col-xs-5 text-center">
-                                                <img src="{{ creancier.photo.url }}" alt="..." class="img-circle img-responsive">
+                                        {% endfor %}
+
+                                        <!-- Bouton aligné avec les champs -->
+                                        <div class="form-group">
+                                            <div class="col-md-offset-3 col-md-6">
+                                                <button type="submit" class="btn btn-info">
+                                                    Valider
+                                                </button>
                                             </div>
                                         </div>
-                                        <div class="col-xs-12 bottom text-center">
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ creancier.solde }}FC</h4>
-                                            </div>
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <a  href="{% url 'creancier_details' creancier.pk %}" class="btn btn-primary btn-xs">
-                                                  <i class="fa fa-user"> </i> Voir les détails
-                                                </a>
-                                            </div>
+                                    </form>
+                                </div>
+                                <div class="col-md-4 col-sm-4 col-xs-12 pull-right">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-green"><i class="fa fa-money"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">TOTAL SOLDES CREANCIERS:</span><br>
+                                            <span class="info-box-number">{{ total_solde|floatformat:0 }} FC</span>
                                         </div>
                                     </div>
                                 </div>
-                            {% endfor %}
+                            </div>
 
+                            <br>
+
+                            <div class="row">
+                                {% for creancier in liste_creanciers %}
+                                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                        <div class="well profile_view">
+                                            <div class="col-sm-12">
+                                                <h4 class="brief"><i>Créancier</i></h4>
+                                                <div class="left col-xs-7">
+                                                    <h2>{{ creancier.nom }}</h2>
+                                                    <p><strong>Code: </strong> #{{ creancier.code }} </p>
+                                                    <ul class="list-unstyled">
+                                                      <li><i class="fa fa-map-marker"></i> Addresse: {{ creancier.adresse }}</li>
+                                                      <li><i class="fa fa-phone"></i> Telephone #: {{ creancier.telephone }}</li>
+                                                      <li><i class="fa fa-envelope"></i> Email: {{ creancier.email }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="right col-xs-5 text-center">
+                                                    <img src="{{ creancier.photo.url }}" alt="..." class="img-circle img-responsive uniform-img">
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-12 bottom text-center">
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <h4 class="ratings"><i class="fa fa-usd"></i> {{ creancier.solde }}FC</h4>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <a  href="{% url 'creancier_details' creancier.pk %}" class="btn btn-primary btn-xs">
+                                                      <i class="fa fa-user"> </i> Voir les détails
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
                             <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">

@@ -5,15 +5,41 @@
 {% block stylesheets %}
 {{block.super}}
 <style>
-    .img_container {
-        width: 20px;
-        height: 12px;
+
+
+    .info-box {
+        display: flex;
+        background: #f7f7f7;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
     }
 
-    /* Resize images */
-    .img_container img {
-        width: 100%;
-        height: auto;
+    .info-box-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        border-radius: 8px;
+    }
+
+    .info-box-content {
+        margin-left: 10px;
+    }
+
+    .info-box-number {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .uniform-img {
+        width: 150px;      /* largeur fixe */
+        height: 150px;     /* hauteur fixe */
+        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
     }
 </style>
 {% endblock stylesheets %}
@@ -42,40 +68,67 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
-                            {% for agent in liste_agents %}
-                                <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
-                                    <div class="well profile_view">
-                                        <div class="col-sm-12">
-                                            <h4 class="brief"><i>Agent</i></h4>
-                                            <div class="left col-xs-7">
-                                                <h2>{{ agent.nom }}</h2>
-                                                <p>{{ agent.matricule }} </p>
-                                                <ul class="list-unstyled">
-                                                  <li><i class="fa fa-birthday-cake"></i> Date de naissance: 01/08/1992</li>
-                                                  <li><i class="fa fa-calendar"></i> Date d'engagement: 12/01/2022</li>
-                                                  <li><i class="fa fa-map-marker"></i> Addresse: {{ agent.adresse }}</li>
-                                                  <li><i class="fa fa-phone"></i> Telephone #: {{ agent.telephone }}</li>
-                                                  <li><i class="fa fa-envelope"></i> Email: {{ agent.email }}</li>
-                                                </ul>
+                            <div class="row">
+                                <div class="col-md-12 col-sm-4 col-xs-12">
+                                    <form class="form-horizontal" action="" method="get">
+                                        {% for field in filter.form %}
+                                            <div class="form-group">
+                                                <label class="col-md-2 control-label">
+                                                    {{ field.label }}
+                                                </label>
+                                                <div class="col-md-4">
+                                                    {{ field }}
+                                                </div>
                                             </div>
-                                            <div class="right col-xs-5 text-center">
-                                                <img src="{{ agent.photo.url }}" alt="..." class="img-circle img-responsive">
+                                        {% endfor %}
+
+                                        <!-- Bouton aligné avec les champs -->
+                                        <div class="form-group">
+                                            <div class="col-md-offset-3 col-md-6">
+                                                <button type="submit" class="btn btn-info">
+                                                    Valider
+                                                </button>
                                             </div>
                                         </div>
-                                        <div class="col-xs-12 bottom text-center">
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <h4 class="ratings"><i class="fa fa-money"></i>Salaire: {{ agent.salaire }} FC</h4>
+                                    </form>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                {% for agent in liste_agents %}
+                                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                        <div class="well profile_view">
+                                            <div class="col-sm-12">
+                                                <h4 class="brief"><i>Agent</i></h4>
+                                                <div class="left col-xs-7">
+                                                    <h2>{{ agent.nom }}</h2>
+                                                    <p>{{ agent.matricule }} </p>
+                                                    <ul class="list-unstyled">
+                                                      <li><i class="fa fa-birthday-cake"></i> Date de naissance: 01/08/1992</li>
+                                                      <li><i class="fa fa-calendar"></i> Date d'engagement: 12/01/2022</li>
+                                                      <li><i class="fa fa-map-marker"></i> Addresse: {{ agent.adresse }}</li>
+                                                      <li><i class="fa fa-phone"></i> Telephone #: {{ agent.telephone }}</li>
+                                                      <li><i class="fa fa-envelope"></i> Email: {{ agent.email }}</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="right col-xs-5 text-center">
+                                                    <img src="{{ agent.photo.url }}" alt="..." class="img-circle img-responsive uniform-img">
+                                                </div>
                                             </div>
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <a  href="{% url 'agent_details' agent.pk %}" class="btn btn-primary btn-xs">
-                                                  <i class="fa fa-user"> </i> Voir le profil
-                                                </a>
+                                            <div class="col-xs-12 bottom text-center">
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <h4 class="ratings"><i class="fa fa-money"></i>Salaire: {{ agent.salaire }} FC</h4>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-6 emphasis">
+                                                    <a  href="{% url 'agent_details' agent.pk %}" class="btn btn-primary btn-xs">
+                                                      <i class="fa fa-user"> </i> Voir le profil
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            {% endfor %}
-
+                                {% endfor %}
+                            </div>
                             <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">

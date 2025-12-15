@@ -176,7 +176,7 @@ class ArticleFactureDeleteView(LoginRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = "Supprimer un article de la facture"
-        context['message'] = f"Voulez-vous supprimer l'article {self.get_object().article} de la facture ?"
+        context['message'] = f"Voulez-vous supprimer l'article {self.object.article.designation} de la facture ?"
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Valider'
         context['facture'] = self.get_facture()
@@ -187,8 +187,8 @@ class ArticleFactureDeleteView(LoginRequiredMixin, DeleteView):
 
     @transaction.atomic
     def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
         facture = self.object.facture
+        print('*** Called ')
 
         # Mettre à jour le stock
         self.object.delete_facture()

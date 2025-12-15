@@ -14,6 +14,18 @@ class CustomUserAdmin(admin.ModelAdmin):
     model = CustomUser
     list_display = ['username', 'email', 'photo', 'telephone']
 
+    fieldsets = UserAdmin.fieldsets + (
+        ('Informations supplémentaires', {
+            'fields': ('profile', 'telephone', 'photo', 'force_password_change'),
+        }),
+    )
+
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {
+            'fields': ('profile',),
+        }),
+    )
+
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(TypeProfile)

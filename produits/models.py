@@ -38,7 +38,7 @@ class Article(models.Model):
     code = models.IntegerField(unique=True, blank=False)
     designation = models.CharField(max_length=250, unique=True)
     description = models.TextField()
-    code_barre = models.CharField(max_length=35)
+    # code_barre = models.CharField(max_length=35)
     categorie = models.ForeignKey(Categorie, on_delete=models.PROTECT)
     unite = models.ForeignKey(Unite, on_delete=models.PROTECT)
     fournisseur = models.ForeignKey('fournisseurs.Fournisseur', on_delete=models.PROTECT, null=True)

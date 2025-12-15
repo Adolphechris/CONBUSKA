@@ -241,6 +241,7 @@ class DetailsFacture(models.Model):
         magasin = Magasin.objects.get(nom="Alimentation")
         get_lignes_facture = DetailsLigneFacture.objects.filter(detail_facture=self.pk)
         for i in get_lignes_facture:
+            print(i)
             stock, stock_created = Stock.objects.get_or_create(
                 magasin=magasin,
                 article=i.article,
@@ -253,6 +254,7 @@ class DetailsFacture(models.Model):
                 stock.save()
 
             i.delete()
+        print('Finished')
         self.delete()
 
 

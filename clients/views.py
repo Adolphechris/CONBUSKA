@@ -2,16 +2,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
+from django_filters.views import FilterView
 from .models import Client
-from factures.models import FactureClient
 from caisse.models import MouvementCaisseClient
 from .forms import ClientCreateForm
+from .filters import ClientFilter
 
 
-class ClientsView(LoginRequiredMixin, ListView):
+class ClientsView(LoginRequiredMixin, FilterView):
     model = Client
     context_object_name = 'liste_clients'
     template_name = 'clients/clients.html'
+    filterset_class = ClientFilter
+
+    def get_queryset(self):
+        return Client.objects.all().order_by('nom')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

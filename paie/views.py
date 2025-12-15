@@ -4,17 +4,23 @@ from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django_filters.views import FilterView
 from .models import Agent, Paie
 from caisse.models import RubriqueCaisse, MouvementCaisseAgent
 from django.db.models import Sum
 from .forms import AgentCreateForm, PaieCreateForm
 import datetime
+from .filters import AgentFilter
 
 
-class AgentsView(LoginRequiredMixin, ListView):
+class AgentsView(LoginRequiredMixin, FilterView):
     model = Agent
     context_object_name = 'liste_agents'
     template_name = 'paie/agents.html'
+    filterset_class = AgentFilter
+
+    def get_queryset(self):
+        return Agent.objects.all().order_by('nom')
 
 
 class AgentDetailsView(LoginRequiredMixin, DetailView):

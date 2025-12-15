@@ -155,7 +155,6 @@ class CaisseView(LoginRequiredMixin, DetailView):
         return sorties
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
         context = self.get_context_data(object=self.object)
         context['add_form'] = CaisseForm(caisse_pk=self.get_caisse().pk)
         return self.render_to_response(context)

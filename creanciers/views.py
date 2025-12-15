@@ -2,14 +2,26 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
+from django_filters.views import FilterView
 from .models import Creancier, Debiteur
 from .forms import CreancierCreateForm, DebiteurCreateForm
+from .filters import CreancierFilter, DebiteurFilter
 
 
-class CreanciersView(LoginRequiredMixin, ListView):
+class CreanciersView(LoginRequiredMixin, FilterView):
     model = Creancier
     context_object_name = 'liste_creanciers'
     template_name = 'creanciers/creanciers.html'
+    filterset_class = CreancierFilter
+
+    def get_queryset(self):
+        return Creancier.objects.all().order_by('nom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        creanciers = self.get_queryset()
+        context['total_solde'] = sum(creancier.solde() for creancier in creanciers)
+        return context
 
 
 class CreancierDetailsView(LoginRequiredMixin, DetailView):
@@ -44,10 +56,20 @@ class CreancierDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class DebiteursView(LoginRequiredMixin, ListView):
+class DebiteursView(LoginRequiredMixin, FilterView):
     model = Debiteur
     context_object_name = 'liste_debiteurs'
     template_name = 'creanciers/debiteurs.html'
+    filterset_class = DebiteurFilter
+
+    def get_queryset(self):
+        return Debiteur.objects.all().order_by('nom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        debiteurs = self.get_queryset()
+        context['total_solde'] = sum(debiteur.solde() for debiteur in debiteurs)
+        return context
 
 
 class DebiteurDetailsView(LoginRequiredMixin, DetailView):
