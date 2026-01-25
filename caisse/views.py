@@ -6,8 +6,8 @@ from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
-from .models import (Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse, MouvementCaisseFournisseur,
-                     MouvementCaisseClient, MouvementCaisseCreancier, MouvementCaisseAgent, MouvementCaisseDebiteur)
+from django.core.exceptions import ValidationError
+from .models import (Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse, SousRubriqueCaisse)
 from clients.models import Client
 from fournisseurs.models import Fournisseur
 from creanciers.models import Creancier, Debiteur
@@ -15,6 +15,7 @@ from factures.models import Facture
 from users.models import Caissier
 from paie.models import Agent
 from .forms import OuvertureCaisseValidateForm, ClotureCaisseValidateForm, CaisseForm
+from .services.mouvement_caisse import MouvementCaisseService
 
 
 def get_total_ventes():
@@ -125,9 +126,152 @@ def rubrique_champ_view(request, caisse_pk):
             champ_html = render_to_string("caisse/partials/field_agent.html",
                                           context={'agents': Agent.objects.all()})
 
+        elif rubrique.nom.lower() == "charges exploitation":
+            print("******* HERE")
+            champ_html = render_to_string("caisse/partials/field_sous_rubrique.html",
+                                          context={'sous_rubriques': SousRubriqueCaisse.objects.filter(rubrique__nom="Charges exploitation")})
+
+        elif rubrique.nom.lower() == "charges personnelles":
+            champ_html = render_to_string("caisse/partials/field_sous_rubrique.html",
+                                          context={'sous_rubriques': SousRubriqueCaisse.objects.filter(rubrique__nom="Charges personnelles")})
+
+
     return HttpResponse(champ_html)
 
 
+class CaisseView(LoginRequiredMixin, DetailView):
+    model = CaisseCourante
+    context_object_name = "caisse_courante"
+    template_name = "caisse/caisse.html"
+    success_url = reverse_lazy("historique_caisse")
+
+    # ---------- helpers vue ----------
+
+    def mouvements(self, type_mouvement):
+        return (
+            MouvementCaisse.objects
+            .filter(caisse=self.object, type_mouvement=type_mouvement)
+            .select_related("rubrique", "effectue_par")
+        )
+
+    def total_entrees(self):
+        return (
+            self.object.solde_initial
+            + get_total_ventes()
+            + MouvementCaisseService.total_par_type(self.object, "ENTREE")
+        )
+
+    def total_sorties(self):
+        return MouvementCaisseService.total_par_type(self.object, "SORTIE")
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+
+        # formulaire affiché au chargement
+        context["add_form"] = CaisseForm(
+            caisse_pk=self.object.caisse.pk
+        )
+
+        return self.render_to_response(context)
+
+    def render_state(self, request):
+        total_entrees = self.total_entrees()
+        total_sorties = self.total_sorties()
+
+        html = render_to_string(
+            "caisse/partials/add_form_and_table.html",
+            {
+                "add_form": CaisseForm(caisse_pk=self.object.caisse.pk),
+                "caisse": self.object.caisse,
+                "caisse_courante": self.object,
+                "mouvements_entree": self.mouvements("ENTREE"),
+                "mouvements_sortie": self.mouvements("SORTIE"),
+                "total_entrees": total_entrees,
+                "total_sorties": total_sorties,
+            },
+            request=request,
+        )
+
+        html_totaux = render_to_string(
+            "caisse/partials/caisse_totaux_oob.html",
+            {
+                "total_entrees": total_entrees,
+                "total_sorties": total_sorties,
+                "solde_caisse": total_entrees - total_sorties,
+            },
+        )
+
+        return HttpResponse(html + html_totaux)
+
+    def _ids_from_post(self, post):
+        return {
+            "fournisseur_id": post.get("fournisseur"),
+            "client_id": post.get("client"),
+            "creancier_id": post.get("creancier"),
+            "debiteur_id": post.get("debiteur"),
+            "agent_id": post.get("agent"),
+            "sous_rubrique_id": post.get("sous_rubrique"),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if request.headers.get("HX-Request") != "true":
+            return JsonResponse({"error": "Invalid request"}, status=400)
+
+        self.object = self.get_object()
+        form_type = request.POST.get("form_type")
+
+        if form_type == "add":
+            form = CaisseForm(request.POST, caisse_pk=self.object.caisse.pk)
+            if not form.is_valid():
+                return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+            MouvementCaisseService.create(
+                form=form,
+                caisse_courante=self.object,
+                user=request.user,
+                **self._ids_from_post(request.POST),
+            )
+
+            return self.render_state(request)
+
+        mouvement = get_object_or_404(MouvementCaisse, pk=request.POST.get("id"))
+        form = CaisseForm(
+            request.POST,
+            instance=mouvement,
+            caisse_pk=self.object.caisse.pk,
+        )
+        if not form.is_valid():
+            return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+        MouvementCaisseService.update(
+            form=form,
+            user=request.user,
+            **self._ids_from_post(request.POST),
+        )
+
+        return self.render_state(request)
+
+    def get_context_data(self, **kwargs):
+        self.object = self.get_object()
+        ctx = super().get_context_data(**kwargs)
+
+        total_entrees = self.total_entrees()
+        total_sorties = self.total_sorties()
+
+        ctx.update({
+            "caisse": self.object.caisse,
+            "mouvements_entree": self.mouvements("ENTREE"),
+            "mouvements_sortie": self.mouvements("SORTIE"),
+            "ventes": get_total_ventes(),
+            "total_entrees": total_entrees,
+            "total_sorties": total_sorties,
+            "solde_caisse": total_entrees - total_sorties,
+        })
+        return ctx
+
+
+'''
 class CaisseView(LoginRequiredMixin, DetailView):
     model = CaisseCourante
     context_object_name = 'caisse_courante'
@@ -335,6 +479,7 @@ class CaisseView(LoginRequiredMixin, DetailView):
         context['total_sorties'] = self.get_total_sorties()
         context['solde_caisse'] = self.get_total_entrees() - self.get_total_sorties()
         return context
+'''
 
 
 class ClotureCaisseView(LoginRequiredMixin, FormView):
@@ -401,6 +546,81 @@ class ClotureCaisseView(LoginRequiredMixin, FormView):
 
 class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
     model = MouvementCaisse
+    context_object_name = "mouvement_caisse"
+    template_name = "caisse/mouvement_caisse_confirm_delete.html"
+
+    def get_caisse_courante(self):
+        return get_object_or_404(CaisseCourante, pk=self.kwargs["caisse_pk"])
+
+    def get_caisse(self):
+        return self.get_caisse_courante().caisse
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "title": "Supprimer un mouvement de caisse",
+            "message": (
+                f"Êtes-vous sûr de vouloir supprimer le mouvement : "
+                f"#{self.object.motif} ? Cette action est irréversible."
+            ),
+            "submit_icon": "fa fa-check",
+            "submit_label": "Valider",
+            "caisse": self.get_caisse_courante(),
+        })
+        return ctx
+
+    def delete(self, request, *args, **kwargs):
+        mouvement = self.get_object()
+        caisse_courante = mouvement.caisse
+
+        try:
+            MouvementCaisseService.delete(mouvement=mouvement)
+        except ValidationError as e:
+            return HttpResponse(
+                f"<div class='alert alert-danger'>{e.message}</div>",
+                status=400,
+            )
+
+        # Re-render UI from DB state (source of truth)
+        mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='ENTREE')
+        mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='SORTIE')
+
+        total_entrees = (
+                caisse_courante.solde_initial
+                + get_total_ventes()
+                + sum(m.montant for m in mouvements_entree)
+        )
+        total_sorties = sum(m.montant for m in mouvements_sortie)
+
+        html_table = render_to_string(
+            "caisse/partials/lines_table.html",
+            {
+                "caisse": self.get_caisse(),
+                "caisse_courante": caisse_courante,
+                "mouvements_entree": mouvements_entree,
+                "mouvements_sortie": mouvements_sortie,
+            },
+            request=request,
+        )
+
+        html_totaux = render_to_string(
+            "caisse/partials/caisse_totaux_oob.html",
+            {
+                "solde_caisse": total_entrees - total_sorties,
+                "total_entrees": total_entrees,
+                "total_sorties": total_sorties,
+            },
+            request=request,
+        )
+
+        response = HttpResponse(html_table + html_totaux)
+        response["HX-Trigger"] = "closeModal"
+        return response
+
+
+'''
+class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
+    model = MouvementCaisse
     context_object_name = 'mouvement_caisse'
     template_name = 'caisse/mouvement_caisse_confirm_delete.html'
 
@@ -451,6 +671,7 @@ class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
         response = HttpResponse(html_table + html_totaux)
         response["HX-Trigger"] = "closeModal"
         return response
+'''
 
 
 class CaissesView(LoginRequiredMixin, ListView):

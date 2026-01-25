@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import RubriqueCaisse, Caisse
+from .models import RubriqueCaisse, Caisse, SousRubriqueCaisse
 
 @admin.register(RubriqueCaisse)
 class RubriqueCaisseAdmin(admin.ModelAdmin):
@@ -9,6 +9,17 @@ class RubriqueCaisseAdmin(admin.ModelAdmin):
         "nom",
         "description",
         "visible",
+    )
+
+
+@admin.register(SousRubriqueCaisse)
+class SousRubriqueCaisseAdmin(admin.ModelAdmin):
+    model = SousRubriqueCaisse
+    list_display = (
+        "id",
+        "rubrique",
+        "nom",
+        "description",
     )
 
 

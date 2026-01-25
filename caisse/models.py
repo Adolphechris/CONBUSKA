@@ -36,6 +36,16 @@ class RubriqueCaisse(models.Model):
         return f"{self.nom}"
 
 
+class SousRubriqueCaisse(models.Model):
+    rubrique = models.ForeignKey(RubriqueCaisse, on_delete=models.CASCADE, related_name='sous_rubriques')
+    nom = models.CharField(max_length=45)
+    description = models.TextField()
+    objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.nom}"
+
+
 class MouvementCaisse(models.Model):
     TYPE_CHOICES = [
         ('ENTREE', 'Entrée'),
@@ -52,6 +62,13 @@ class MouvementCaisse(models.Model):
     date_mouvement = models.DateTimeField(auto_now_add=True)
     objects = models.Manager()
 
+    class Meta:
+        ordering = ['date_mouvement']
+        indexes = [
+            models.Index(fields=['date_mouvement']),
+            models.Index(fields=['type_mouvement']),
+        ]
+
     def __str__(self):
         return f"{self.type_mouvement} - {self.montant}"
 
@@ -62,27 +79,42 @@ class MouvementCaisse(models.Model):
         return self.solde_initial + entrees - sorties
 
 
-
 class MouvementCaisseFournisseur(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_f')
     fournisseur = models.ForeignKey('fournisseurs.Fournisseur', on_delete=models.CASCADE, related_name='fournisseur')
+    objects = models.Manager()
 
 
 class MouvementCaisseClient(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_c')
     client = models.ForeignKey('clients.Client', on_delete=models.CASCADE, related_name='client')
+    objects = models.Manager()
 
 
 class MouvementCaisseCreancier(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_cr')
     creancier = models.ForeignKey('creanciers.Creancier', on_delete=models.CASCADE, related_name='creancier')
+    objects = models.Manager()
 
 
 class MouvementCaisseDebiteur(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_db')
     debiteur = models.ForeignKey('creanciers.Debiteur', on_delete=models.CASCADE, related_name='debiteur')
+    objects = models.Manager()
 
 
 class MouvementCaisseAgent(models.Model):
     mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_ag')
     agent = models.ForeignKey('paie.Agent', on_delete=models.CASCADE, related_name='agent')
+    objects = models.Manager()
+
+
+class MouvementCaisseChargesExploitation(models.Model):
+    mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_ce')
+    sous_rubrique = models.ForeignKey(SousRubriqueCaisse, on_delete=models.CASCADE, related_name='sous_rubrique_ce')
+    objects = models.Manager()
+
+class MouvementCaisseChargesPersonnelles(models.Model):
+    mouvement_caisse = models.ForeignKey(MouvementCaisse, on_delete=models.CASCADE, related_name='mouvements_caisse_cp')
+    sous_rubrique = models.ForeignKey(SousRubriqueCaisse, on_delete=models.CASCADE, related_name='sous_rubrique_cp')
+    objects = models.Manager()
