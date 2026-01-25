@@ -1,0 +1,490 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Journal des transactions{% endblock %}
+
+{% block stylesheets %}
+{{block.super}}
+<style>
+    /* Gentelela Panel/Card Style */
+        .x_panel {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px 17px;
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #E6E9ED;
+            -webkit-column-break-inside: avoid;
+            -moz-column-break-inside: avoid;
+            column-break-inside: avoid;
+            opacity: 1;
+            transition: all .2s ease;
+        }
+
+        .x_title {
+            border-bottom: 2px solid #E6E9ED;
+            padding: 1px 5px 6px;
+            margin-bottom: 10px;
+        }
+
+        .x_title h2 {
+            margin: 5px 0 6px;
+            float: left;
+            display: block;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 16px;
+            font-weight: 400;
+            color: #2A3F54;
+        }
+
+        .x_title h2 small {
+            margin-left: 10px;
+            font-size: 12px;
+            font-weight: 300;
+        }
+
+        .x_title .filter {
+            width: 40%;
+            float: right;
+        }
+
+        .x_content {
+            padding: 0 5px 6px;
+            position: relative;
+            width: 100%;
+            float: left;
+            clear: both;
+            margin-top: 5px;
+        }
+
+        /* Stats Cards */
+        .tile-stats {
+            position: relative;
+            display: block;
+            margin-bottom: 20px;
+            border: 1px solid #E4E4E4;
+            border-radius: 5px;
+            background: #fff;
+            padding: 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .tile-stats:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .tile-stats .icon {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 50px;
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .tile-stats:hover .icon {
+            opacity: 0.15;
+            transform: scale(1.1);
+        }
+
+        .tile-stats .count {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .tile-stats h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 400;
+            color: #BAB8B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tile-stats.success-stat .count { color: #26B99A; }
+        .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+
+        .tile-stats.danger-stat .count { color: #E74C3C; }
+        .tile-stats.danger-stat { border-left: 4px solid #E74C3C; }
+
+        .tile-stats.info-stat .count { color: #3498DB; }
+        .tile-stats.info-stat { border-left: 4px solid #3498DB; }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: #F5F7FA;
+            padding: 12px 15px;
+            margin: -10px -17px 15px -17px;
+            border-bottom: 1px solid #E6E9ED;
+        }
+
+        .filter-bar .form-control {
+            height: 32px;
+            font-size: 12px;
+        }
+
+        .filter-bar .btn {
+            height: 32px;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Transaction Columns */
+        .transaction-column {
+            background: #fff;
+            border: 1px solid #E6E9ED;
+            border-radius: 3px;
+            padding: 0;
+            margin-bottom: 10px;
+        }
+
+        .transaction-header {
+            padding: 12px 15px;
+            background: #F5F7FA;
+            border-bottom: 2px solid #E6E9ED;
+            font-weight: 500;
+            color: #2A3F54;
+            font-size: 14px;
+        }
+
+        .transaction-header i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .transaction-header.entree {
+            border-bottom-color: #1ABB9C;
+        }
+
+        .transaction-header.sortie {
+            border-bottom-color: #E74C3C;
+        }
+
+        .transaction-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #F0F0F0;
+            transition: background 0.2s;
+        }
+
+        .transaction-item:hover {
+            background: #F9F9F9;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-date {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 3px;
+        }
+
+        .transaction-caisse {
+            font-size: 11px;
+            color: #73879C;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .transaction-motif {
+            font-size: 13px;
+            color: #2A3F54;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .transaction-ref {
+            font-size: 11px;
+            color: #AAA;
+            font-style: italic;
+        }
+
+        .transaction-montant {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .transaction-montant.entree {
+            color: #1ABB9C;
+        }
+
+        .transaction-montant.sortie {
+            color: #E74C3C;
+        }
+
+        .transaction-actions {
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        .transaction-actions .btn {
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-left: 3px;
+        }
+
+        /* Buttons Gentelela Style */
+        .btn {
+            border-radius: 3px;
+            -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background-color: #2A3F54;
+            border-color: #2A3F54;
+        }
+
+        .btn-primary:hover {
+            background-color: #1f2e3e;
+            border-color: #1a252f;
+        }
+
+        .btn-success {
+            background-color: #26B99A;
+            border-color: #169F85;
+        }
+
+        .btn-success:hover {
+            background-color: #1a9479;
+            border-color: #14785e;
+        }
+
+        .btn-danger {
+            background-color: #E74C3C;
+            border-color: #E43725;
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) {
+            .transaction-column {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Scroll container */
+        .transaction-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .transaction-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transaction-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .transaction-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .transaction-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+</style>
+{% endblock stylesheets %}
+
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="container-fluid">
+        <!-- Page title -->
+        <div class="page-title">
+            <div class="title_left">
+                <h3>Journal des Transactions – {{ mois }}/{{ annee }} <small>Suivi détaillé des flux</small></h3>
+            </div>
+            <div class="title_right">
+                <div class="pull-right">
+                    <button class="btn btn-default btn-sm">
+                        <i class="fa fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- Stats Row -->
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats success-stat">
+                    <i class="fa fa-arrow-down icon text-success-gentelela"></i>
+                    <h3>Total Entrées</h3>
+                    <div class="count">{{ total_entrees }}FC</div>
+                    <p class="text-muted"><i class="fa fa-arrow-up"></i> +8.5% par rapport au mois dernier</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats danger-stat">
+                    <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
+                    <h3>Total Sorties</h3>
+                    <div class="count">{{ total_sorties }}FC</div>
+                    <p class="text-muted"><i class="fa fa-arrow-up"></i> +3.2% par rapport au mois dernier</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-12 col-xs-12">
+                <div class="tile-stats info-stat">
+                    <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
+                    <h3>Solde</h3>
+                    <div class="count" style="color: #26B99A;">{{ solde }}FC</div>
+                    <p class="text-muted"><i class="fa fa-check-circle"></i> Budget respecté</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des Mouvements <small>Mois en cours</small></h2>
+                        <ul class="nav navbar-right panel_toolbox" style="min-width: 0;">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                            <li><a><i class="fa fa-wrench"></i></a></li>
+                        </ul>
+                        <div class="clearfix"></div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <select class="form-control">
+                                        <option>Ce mois (Janvier 2026)</option>
+                                        <option>Mois dernier</option>
+                                        <option>Ce trimestre</option>
+                                        <option>Cette année</option>
+                                        <option>Période personnalisée</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <select class="form-control">
+                                        <option>Toutes les caisses</option>
+                                        <option>Caisse Principale</option>
+                                        <option>Banque A</option>
+                                        <option>Banque B</option>
+                                        <option>Petite Caisse</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <select class="form-control">
+                                        <option>Tous les types</option>
+                                        <option>Entrées uniquement</option>
+                                        <option>Sorties uniquement</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Rechercher...">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="x_content">
+                        <div class="row">
+                            <!-- Colonne Entrées -->
+                            <div class="col-md-6 col-sm-12">
+                                <div class="transaction-column">
+                                    <div class="transaction-header entree">
+                                        <i class="fa fa-arrow-circle-up green"></i>
+                                        ENTRÉES
+                                        <span class="pull-right badge bg-green">{{ total_entrees }}FC</span>
+                                    </div>
+                                    <div class="transaction-scroll">
+                                        <!-- Transaction Entrée 1 -->
+                                        {% for i in entrees %}
+                                            <div class="transaction-item">
+                                                <div class="transaction-date">
+                                                    <i class="fa fa-calendar"></i> {{ i.date_mouvement|date:"d/m H:i" }}
+                                                </div>
+                                                <div class="transaction-caisse">
+                                                    <i class="fa fa-building"></i> {{ i.caisse }}
+                                                </div>
+                                                <div class="transaction-motif">
+                                                    {{ i.motif }}
+                                                </div>
+                                                <div class="transaction-ref">
+                                                    {{ i.rubrique.nom }}
+                                                </div>
+                                                <div class="transaction-montant entree">
+                                                    {{ i.montant }} FC
+                                                </div>
+                                                <div class="transaction-actions">
+                                                    <button class="btn btn-xs btn-primary">
+                                                        <i class="fa fa-eye"></i> Détails
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Colonne Sorties -->
+                            <div class="col-md-6 col-sm-12">
+                                <div class="transaction-column">
+                                    <div class="transaction-header sortie">
+                                        <i class="fa fa-arrow-circle-down red"></i>
+                                        SORTIES
+                                        <span class="pull-right badge bg-red">{{ total_sorties }}FC</span>
+                                    </div>
+                                    <div class="transaction-scroll">
+                                         {% for i in sorties %}
+                                            <div class="transaction-item">
+                                                <div class="transaction-date">
+                                                    <i class="fa fa-calendar"></i> {{ i.date_mouvement|date:"d/m H:i" }}
+                                                </div>
+                                                <div class="transaction-caisse">
+                                                    <i class="fa fa-building"></i> {{ i.caisse }}
+                                                </div>
+                                                <div class="transaction-motif">
+                                                    {{ i.motif }}
+                                                </div>
+                                                <div class="transaction-ref">
+                                                    {{ i.rubrique.nom }}
+                                                </div>
+                                                <div class="transaction-montant sortie">
+                                                    - {{ i.montant }} FC
+                                                </div>
+                                                <div class="transaction-actions">
+                                                    <button class="btn btn-xs btn-primary">
+                                                        <i class="fa fa-eye"></i> Détails
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

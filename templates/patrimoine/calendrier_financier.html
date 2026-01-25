@@ -1,0 +1,368 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Journal des transactions{% endblock %}
+
+{% block stylesheets %}
+{{block.super}}
+<style>
+  /* Stats Cards */
+        .tile-stats {
+            position: relative;
+            display: block;
+            margin-bottom: 20px;
+            border: 1px solid #E4E4E4;
+            border-radius: 5px;
+            background: #fff;
+            padding: 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .tile-stats:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .tile-stats .icon {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 50px;
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .tile-stats:hover .icon {
+            opacity: 0.15;
+            transform: scale(1.1);
+        }
+
+        .tile-stats .count {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .tile-stats h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 400;
+            color: #BAB8B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tile-stats.success-stat .count { color: #26B99A; }
+        .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+
+        .tile-stats.danger-stat .count { color: #E74C3C; }
+        .tile-stats.danger-stat { border-left: 4px solid #E74C3C; }
+
+        .tile-stats.info-stat .count { color: #3498DB; }
+        .tile-stats.info-stat { border-left: 4px solid #3498DB; }
+
+        /* Calendar Container */
+        .calendar-container {
+            background: #fff;
+            border: 1px solid #E6E9ED;
+            border-radius: 5px;
+            padding: 25px;
+        }
+
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #E6E9ED;
+        }
+
+        .calendar-header h2 {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 26px;
+            color: #2A3F54;
+            font-weight: 500;
+        }
+
+        .calendar-header .btn {
+            padding: 8px 15px;
+            background: #2A3F54;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-header .btn:hover {
+            background: #1c2e40;
+        }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: table;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
+        }
+
+        .calendar-week {
+            display: table-row;
+        }
+
+        .calendar-day-header {
+            display: table-cell;
+            text-align: center;
+            font-weight: 600;
+            color: #2A3F54;
+            padding: 10px 5px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-day {
+            display: table-cell;
+            vertical-align: top;
+            width: 14.28%;
+            border: 1px solid #E6E9ED;
+            border-radius: 5px;
+            background: #FAFAFA;
+            padding: 12px;
+            min-height: 120px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border-color: #2A3F54;
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            border: none;
+        }
+
+        .calendar-day.empty:hover {
+            box-shadow: none;
+        }
+
+        .day-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2A3F54;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #3498DB;
+            background: #EBF5FB;
+        }
+
+        .calendar-day.today .day-number {
+            color: #3498DB;
+        }
+
+        .day-transactions {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .transaction-line {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #73879C;
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .amount-positive {
+            color: #26B99A;
+        }
+
+        .amount-negative {
+            color: #E74C3C;
+        }
+
+        .day-balance {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #E6E9ED;
+            text-align: center;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #BAB8B8;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-amount {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+
+        /* Icons */
+        .fa-arrow-down { color: #26B99A; }
+        .fa-arrow-up { color: #E74C3C; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .calendar-grid {
+                display: block;
+            }
+
+            .calendar-week {
+                display: block;
+            }
+
+            .calendar-day {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .calendar-day-header {
+                display: none;
+            }
+        }
+</style>
+{% endblock stylesheets %}
+
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="container-fluid">
+        <!-- Page title -->
+        <div class="page-title">
+            <div class="title_left">
+                <h3>Calendrier financier</h3>
+            </div>
+            <div class="title_right">
+                <div class="pull-right">
+                    <button class="btn btn-default btn-sm">
+                        <i class="fa fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- Monthly Statistics -->
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats success-stat">
+                    <i class="fa fa-arrow-down icon text-success-gentelela"></i>
+                    <h3>Total Entrées Mensuelles</h3>
+                    <div class="count">{{ total_entrees_mois }}FC</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats danger-stat">
+                    <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
+                    <h3>Total Sorties Mensuelles</h3>
+                    <div class="count">{{ total_sorties_mois }}FC</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-12 col-xs-12">
+                <div class="tile-stats info-stat">
+                    <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
+                    <h3>Solde Mensuel</h3>
+                    <div class="count" style="color: #26B99A;">{{ solde_mois }}FC</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-12">
+                <div class="calendar-container">
+
+                    <div class="calendar-header d-flex justify-content-between align-items-center">
+                        <a class="btn btn-sm"
+                           href="?mois={{ prev.mois }}&annee={{ prev.annee }}">
+                            <i class="fa fa-chevron-left"></i>
+                        </a>
+
+                        <h2>{{ mois_label }}</h2>
+
+                        <a class="btn btn-sm"
+                           href="?mois={{ next.mois }}&annee={{ next.annee }}">
+                            <i class="fa fa-chevron-right"></i>
+                        </a>
+                    </div>
+
+                    <div class="calendar-grid">
+
+                        <!-- En-têtes jours -->
+                        <div class="calendar-week">
+                            {% for d in days %}
+                                <div class="calendar-day-header">{{ d }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Semaines -->
+                        {% for week in weeks %}
+                            <div class="calendar-week">
+                                {% for day in week %}
+                                    {% if day %}
+                                        <div class="calendar-day {% if day.is_today %}today{% endif %}">
+                                            <span class="day-number">{{ day.numero }}</span>
+
+                                            <div class="day-transactions">
+                                                <div class="transaction-line">
+                                                    <span class="transaction-label">
+                                                        <i class="fa fa-arrow-down"></i> Entrées
+                                                    </span>
+                                                    <span class="transaction-amount amount-positive">
+                                                        {{ day.entrees|floatformat:2 }}
+                                                    </span>
+                                                </div>
+                                                <div class="transaction-line">
+                                                    <span class="transaction-label">
+                                                        <i class="fa fa-arrow-up"></i> Sorties
+                                                    </span>
+                                                    <span class="transaction-amount amount-negative">
+                                                        -{{ day.sorties|floatformat:2 }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="day-balance">
+                                                <div class="balance-label">Solde Jour</div>
+                                                <div class="balance-amount {% if day.solde >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                                                    {{ day.solde|floatformat:2 }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="calendar-day empty"></div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,15 +1,17 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic import ListView, DetailView, TemplateView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, View
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
 from .models import Approvisionnement, DetailsApprovisionnement
 from produits.models import Stock
 from .forms import ApprovisionnementCreateForm, ArticleApprovisionnementAddForm, ArticleApprovisionnementUpdateForm
+from .services import ApprovisionnementService
 
 
 class ApprovisionnementsView(LoginRequiredMixin, ListView):
@@ -63,6 +65,11 @@ class ApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
         context['submit_label'] = 'Valider'
         return context
 
+    def delete(self, request, *args, **kwargs):
+        approvisionnement = self.get_object()
+        ApprovisionnementService.supprimer(approvisionnement)
+        return redirect(self.success_url)
+
 
 class ApprovisionnementSaveView(LoginRequiredMixin, TemplateView):
     model = Approvisionnement
@@ -82,9 +89,11 @@ class ApprovisionnementSaveView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         approvisionnement = self.get_approvisionnement()
-        approvisionnement.actif = False
-        approvisionnement.save()
-        return redirect('approvisionnements')
+        ApprovisionnementService.valider(
+            approvisionnement=approvisionnement,
+            user=request.user
+        )
+        return redirect(self.success_url)
 
 
 @require_GET
@@ -97,12 +106,125 @@ def get_update_form(request, pk):
 
 class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
     model = Approvisionnement
+    context_object_name = "approvisionnement"
+    template_name = "approvisionnements/approvisionnement_details.html"
+
+    @cached_property
+    def details_approvisionnement(self):
+        return (
+            DetailsApprovisionnement.objects
+            .filter(approvisionnement=self.object)
+            .select_related("article", "fournisseur")
+            .order_by("pk")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["details_approvisionnement"] = self.details_approvisionnement
+        context["add_form"] = ArticleApprovisionnementAddForm()
+        return context
+
+def is_htmx(request):
+    return request.headers.get("HX-Request", "").lower() == "true"
+
+
+class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
+
+    def post(self, request, pk):
+        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'),
+              request.POST.get('form_type'), request.headers.get("HX-Request"))
+        test = is_htmx(request)
+        print(test)
+        if not is_htmx(request):
+            print("******* ")
+            return JsonResponse({"error": "HTMX required"}, status=400)
+
+        approvisionnement = get_object_or_404(Approvisionnement, pk=pk)
+        form = ArticleApprovisionnementAddForm(request.POST)
+
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors}, status=400)
+
+        with transaction.atomic():
+            detail = form.save(commit=False)
+            detail.approvisionnement = approvisionnement
+            detail.article = form.cleaned_data['article']
+            detail.fournisseur = form.cleaned_data['fournisseur']
+            detail.add()
+
+        return self._render_table(request, approvisionnement)
+
+    def _render_table(self, request, approvisionnement):
+        html = render_to_string(
+            "approvisionnements/partials/lines_table.html",
+            {
+                # "add_form": ArticleApprovisionnementAddForm(),
+                "approvisionnement": approvisionnement,
+                "details_approvisionnement": (
+                    DetailsApprovisionnement.objects
+                    .filter(approvisionnement=approvisionnement)
+                    .select_related("article", "fournisseur")
+                ),
+            },
+            request=request,
+        )
+        return HttpResponse(html)
+
+
+class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
+
+    def post(self, request, pk):
+        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'),
+              request.POST.get('form_type'))
+        if not request.headers.get("HX-Request"):
+            return JsonResponse({"error": "HTMX required"}, status=400)
+
+        detail = get_object_or_404(
+            DetailsApprovisionnement,
+            pk=request.POST.get('id')
+        )
+
+        approvisionnement = detail.approvisionnement
+
+        form = ArticleApprovisionnementUpdateForm(
+            request.POST,
+            instance=detail
+        )
+
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors}, status=400)
+
+        with transaction.atomic():
+            detail = form.save(commit=False)
+            detail.update_appro()
+
+        return self._render_table(request, approvisionnement)
+
+    def _render_table(self, request, approvisionnement):
+        html = render_to_string(
+            "approvisionnements/partials/lines_table.html",
+            {
+                # "add_form": ArticleApprovisionnementAddForm(),
+                "approvisionnement": approvisionnement,
+                "details_approvisionnement": (
+                    DetailsApprovisionnement.objects
+                    .filter(approvisionnement=approvisionnement)
+                    .select_related("article", "fournisseur")
+                ),
+            },
+            request=request,
+        )
+        return HttpResponse(html)
+
+
+"""
+class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
+    model = Approvisionnement
     context_object_name = 'approvisionnement'
     template_name = 'approvisionnements/approvisionnement_details.html'
 
     def get_details_approvisionnement(self):
-        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.kwargs['pk'])
-        return details_approvisionnement
+        return DetailsApprovisionnement.objects.filter(approvisionnement=self.get_object())
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -110,13 +232,13 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
         # context['details_approvisionnement'] = self.get_details_approvisionnement()
         context['add_form'] = ArticleApprovisionnementAddForm()
         context['update_form'] = ArticleApprovisionnementUpdateForm(
-            instance=DetailsApprovisionnement.objects.filter(approvisionnement=self.kwargs['pk']).first()
+            instance=DetailsApprovisionnement.objects.filter(approvisionnement=self.get_object())
         )  # ou autre instance logique
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
-        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'), request.POST.get('form_type'))
-        if request.headers.get('HX-Request') == 'true':
+        # print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'), request.POST.get('form_type'))
+        if request.headers.get('HX-Request'):
             form_type = request.POST.get('form_type')
             if form_type == 'add':
                 form = ArticleApprovisionnementAddForm(request.POST)
@@ -158,6 +280,7 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['details_approvisionnement'] = self.get_details_approvisionnement()
         return context
+"""
 
 
 class ArticleApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):

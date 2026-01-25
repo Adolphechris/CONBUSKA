@@ -33,15 +33,23 @@ class Approvisionnement(models.Model):
 
     @property
     def total_approvisionnement(self):
-        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.pk)
-        total = sum(i.prix_total for i in details_approvisionnement)
-        return total
+        return sum(i.prix_total for i in self.detailsapprovisionnement_set.all())
+
+    @property
+    def frais_achat_total(self):
+        return sum(i.frais_achat for i in self.detailsapprovisionnement_set.all())
 
     @property
     def cout_achat(self):
-        details_approvisionnement = DetailsApprovisionnement.objects.filter(approvisionnement=self.pk)
-        total = sum(i.cout_achat for i in details_approvisionnement)
-        return total
+        return sum(i.cout_achat for i in self.detailsapprovisionnement_set.all())
+
+    @property
+    def resultat_total(self):
+        return sum(i.resultat for i in self.detailsapprovisionnement_set.all())
+
+    @property
+    def chiffre_affaires(self):
+        return sum(i.prix_vente * i.qte for i in self.detailsapprovisionnement_set.all())
 
     @classmethod
     def get_next_num(cls):
@@ -64,16 +72,16 @@ class DetailsApprovisionnement(models.Model):
     approvisionnement = models.ForeignKey(Approvisionnement, on_delete=models.PROTECT, null=True)
     fournisseur = models.ForeignKey('fournisseurs.Fournisseur', on_delete=models.PROTECT, null=False)
     facture = models.CharField(max_length=15)
-    transport = models.DecimalField(max_digits=8, decimal_places=4)
-    chargement = models.DecimalField(max_digits=8, decimal_places=4)
-    dechargement = models.DecimalField(max_digits=8, decimal_places=4)
-    services = models.DecimalField(max_digits=8, decimal_places=4)
-    entreposage = models.DecimalField(max_digits=8, decimal_places=4)
-    declaration = models.DecimalField(max_digits=8, decimal_places=4)
-    autre_frais = models.DecimalField(max_digits=8, decimal_places=4)
+    transport = models.DecimalField(max_digits=8, decimal_places=2)
+    chargement = models.DecimalField(max_digits=8, decimal_places=2)
+    dechargement = models.DecimalField(max_digits=8, decimal_places=2)
+    services = models.DecimalField(max_digits=8, decimal_places=2)
+    entreposage = models.DecimalField(max_digits=8, decimal_places=2)
+    declaration = models.DecimalField(max_digits=8, decimal_places=2)
+    autre_frais = models.DecimalField(max_digits=8, decimal_places=2)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
-    prix = models.DecimalField(max_digits=8, decimal_places=4)
+    prix = models.DecimalField(max_digits=12, decimal_places=2)
     date_peremption = models.DateField(null=True, blank=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
@@ -91,8 +99,7 @@ class DetailsApprovisionnement(models.Model):
 
     @property
     def cout_achat(self):
-        total = self.prix + self.frais_achat
-        return total
+        return self.prix + self.frais_achat
 
     @property
     def prix_vente(self):

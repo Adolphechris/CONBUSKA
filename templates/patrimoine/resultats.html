@@ -1,0 +1,606 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{% endblock %}
+
+{% block stylesheets %}
+{{block.super}}
+<style>
+    /* Panel Styles */
+    .x_panel {
+        background: white;
+        border: 1px solid #E6E9ED;
+        border-radius: 0;
+        margin-bottom: 25px;
+        padding: 0;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        position: relative;
+    }
+
+    .x_title {
+        border-bottom: 2px solid #E6E9ED;
+        padding: 25px 20px;
+        margin-bottom: 0;
+        background: #f9f9f9;
+    }
+
+    .x_title h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: #2A3F54;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .x_content {
+        padding: 20px;
+    }
+
+    /* Result Cards */
+    .result-card {
+        height: 65%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-card.niveau-1 {
+        border-top: 4px solid #1ABB9C;
+    }
+
+    .result-card.niveau-1 .x_title {
+        background: linear-gradient(to bottom, #1ABB9C15, #ffffff);
+    }
+
+    .result-card.niveau-1 .x_title h2 {
+        color: #1ABB9C;
+    }
+
+    .result-card.niveau-2 {
+        border-top: 4px solid #F39C12;
+    }
+
+    .result-card.niveau-2 .x_title {
+        background: linear-gradient(to bottom, #F39C1215, #ffffff);
+    }
+
+    .result-card.niveau-2 .x_title h2 {
+        color: #F39C12;
+    }
+
+    .result-card.niveau-3 {
+        border-top: 4px solid #26B99A;
+        border-left: 3px solid #26B99A;
+        border-right: 3px solid #26B99A;
+        border-bottom: 3px solid #26B99A;
+    }
+
+    .result-card.niveau-3 .x_title {
+        background: #26B99A;
+    }
+
+    .result-card.niveau-3 .x_title h2 {
+        color: white;
+    }
+
+    /* Metrics */
+    .metric-value {
+        font-size: 36px;
+        font-weight: 300;
+        color: #2A3F54;
+        margin: 10px 0;
+    }
+
+    .metric-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #73879C;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .metric-highlight {
+        font-size: 28px;
+        font-weight: 500;
+        margin: 15px 0;
+    }
+
+    .metric-highlight.positive {
+        color: #1ABB9C;
+    }
+
+    .metric-highlight.neutral {
+        color: #F39C12;
+    }
+
+    .metric-highlight.final {
+        color: #26B99A;
+        font-size: 42px;
+        font-weight: 300;
+    }
+
+    /* Breakdown Items */
+    .breakdown-section {
+        background: #f9f9f9;
+        padding: 15px;
+        border-left: 3px solid #E74C3C;
+        margin: 15px 0;
+    }
+
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e8e8e8;
+        font-size: 14px;
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .breakdown-item .label {
+        color: #73879C;
+    }
+
+    .breakdown-item .value {
+        font-weight: 600;
+        color: #E74C3C;
+    }
+
+    .breakdown-total {
+        background: #F39C12;
+        color: white;
+        padding: 12px 15px;
+        margin: 15px 0;
+        border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .breakdown-total .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .breakdown-total .value {
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    /* Result Summary */
+    .result-summary {
+        border-top: 2px solid #E6E9ED;
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+
+    .result-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #73879C;
+        margin-left: 10px;
+    }
+
+    .result-badge.success {
+        background: #1ABB9C;
+        color: white;
+    }
+
+    /* Details Table */
+    .details-table {
+        background: white;
+    }
+
+    .details-table table {
+        margin-bottom: 0;
+    }
+
+    .details-table thead {
+        background: #2A3F54;
+        color: white;
+    }
+
+    .details-table thead th {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 600;
+        padding: 12px 15px;
+        border: none;
+    }
+
+    .details-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .details-table tbody tr:hover {
+        background: #f9f9f9;
+    }
+
+    .details-table tbody td {
+        padding: 12px 15px;
+        font-size: 14px;
+        border-top: 1px solid #E6E9ED;
+    }
+
+    .details-table tfoot {
+        background: #f9f9f9;
+        font-weight: 700;
+    }
+
+    .details-table tfoot td {
+        padding: 15px;
+        border-top: 2px solid #2A3F54;
+    }
+
+    .text-success-custom {
+        color: #1ABB9C;
+        font-weight: 600;
+    }
+
+    .text-primary-custom {
+        color: #26B99A;
+        font-weight: 700;
+    }
+
+    /* Additional Info Boxes */
+    .info-box {
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        padding: 10px 15px;
+        margin: 10px 0;
+        border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .info-box .info-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #73879C;
+        font-weight: 600;
+    }
+
+    .info-box .info-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: #2A3F54;
+    }
+
+    /* Centered result for niveau 3 */
+    .centered-result {
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    .centered-result .metric-label {
+        font-size: 12px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: #26B99A;
+        color: white;
+        border-radius: 20px;
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    /* Icon styling */
+    .fa-icon-large {
+        opacity: 0.1;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 80px;
+    }
+
+    @media (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .period-selector {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="container-fluid">
+        <!-- Page title -->
+        <div class="page-title">
+            <div class="title_left">
+                <h3>Analyse de la Rentabilité</h3>
+                <p style="color: #73879C; margin: 5px 0;">
+                <i class="fa fa-calendar"></i> Période : <strong>01 Janvier au 31 Janvier 2026</strong>
+            </p>
+            </div>
+            <div class="title_right">
+                <div class="pull-right">
+                    <button class="btn btn-default btn-sm">
+                        <i class="fa fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row">
+            <!-- Niveau 1: Résultat Brut -->
+            <div class="col-md-4">
+                <div class="x_panel result-card niveau-1">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-bar-chart"></i>
+                            1. RÉSULTAT BRUT
+                        </h2>
+                    </div>
+                    <div class="x_content">
+                        <div class="metric-label">Chiffre d'Affaires Mensuel</div>
+                        <div class="metric-value">{{ chiffre_affaires }} FC</div>
+
+                        <div class="breakdown-section">
+                            <div class="metric-label" style="color: #E74C3C;">
+                                <i class="fa fa-minus-circle"></i> COÛT D'ACHAT DES MARCHANDISES
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="label">Prix d'achat de marchandises</span>
+                                <span class="value">- {{ cout_achat }}FC</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="label">Frais de livraison</span>
+                                <span class="value">- {{ frais_achat }}FC</span>
+                            </div>
+                            <div style="text-align: right; margin-top: 10px; padding-top: 10px; border-top: 2px solid #E74C3C;">
+                                <strong style="color: #E74C3C; font-size: 16px;">Total : - FC</strong>
+                            </div>
+                        </div>
+
+                        <div class="result-summary">
+                            <div class="metric-label">MARGE BRUTE</div>
+                            <div class="metric-highlight positive">
+                                {{ resultat_brut }} FC
+                                <span class="result-badge success">0%</span>
+                            </div>
+                        </div>
+
+                        <i class="fa fa-shopping-cart fa-icon-large" style="color: #1ABB9C;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Niveau 2: Résultat Net d'Exploitation -->
+            <div class="col-md-4">
+                <div class="x_panel result-card niveau-2">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-building"></i>
+                            2. RÉSULTAT NET D'EXPLOITATION
+                        </h2>
+                    </div>
+                    <div class="x_content">
+                        <div class="metric-label">Charges d'exploitation mensuelles</div>
+
+                        <!--<div style="margin: 15px 0;">
+                            {% for rubrique in sous_rubriques %}
+                                <div class="breakdown-item">
+                                    <span class="label">{{ rubrique.nom }}</span>
+                                    <span class="value">- 0 FC</span>
+                                </div>
+                            {% endfor %}
+                        </div>-->
+
+                         <div style="margin: 15px 0;">
+                            {% for item in charges_exploitation %}
+                                <div class="breakdown-item">
+                                    <span class="label">{{ item.sous_rubrique__nom }}</span>
+                                    <span class="value">- {{ item.total|floatformat:0 }} FC</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="breakdown-total">
+                            <span class="label">Total Frais d'Exploitation</span>
+                            <span class="value">- {{ total_charges_exploitation|floatformat:0 }} FC</span>
+                        </div>
+
+                        <div class="result-summary">
+                            <div class="metric-label">RNE DU MOIS</div>
+                            <div class="metric-highlight neutral">
+                                {{ resultat_net_exploitation|floatformat:0 }} FC
+                                <span class="result-badge">0%</span>
+                            </div>
+                        </div>
+
+                        <i class="fa fa-line-chart fa-icon-large" style="color: #F39C12;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Niveau 3: Résultat Net -->
+            <div class="col-md-4">
+                <div class="x_panel result-card niveau-3">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-check-circle"></i>
+                            3. RÉSULTAT NET
+                        </h2>
+                    </div>
+                    <div class="x_content">
+                        <div class="centered-result">
+                            <div class="metric-label">BÉNÉFICE NET</div>
+                            <div class="metric-highlight final">{{ resultat_net }} FC</div>
+                            <span class="status-badge">
+                                <i class="fa fa-arrow-up"></i> Performance Positive
+                            </span>
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <div class="metric-label">DÉDUCTIONS SUPPLÉMENTAIRES</div>
+
+                            <div class="row" style="margin-top: 15px;">
+                                <div class="col-xs-6">
+                                    <div class="info-box">
+                                        <div>
+                                            <div class="info-label">Charges Personnelles</div>
+                                            <div class="info-value">- 0 FC</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <i class="fa fa-trophy fa-icon-large" style="color: #26B99A;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Daily Breakdown -->
+        <!--<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel details-table">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-table"></i>
+                            Détail Journalier - Janvier 2026
+                        </h2>
+                    </div>
+                    <div class="x_content">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>JOUR</th>
+                                        <th class="text-right">CA JOURNÉE</th>
+                                        <th class="text-right">COÛT VENTES</th>
+                                        <th class="text-right">MARGE BRUTE</th>
+                                        <th class="text-center">% MARGE</th>
+                                        <th class="text-center">ACTIVITÉS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>31/10/2023</strong></td>
+                                        <td class="text-right">1 420,00 €</td>
+                                        <td class="text-right" style="color: #E74C3C;">- 525,00 €</td>
+                                        <td class="text-right text-success-custom">895,00 €</td>
+                                        <td class="text-center"><span class="label label-success">63%</span></td>
+                                        <td class="text-center"><span class="label label-info">12 ventes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>30/10/2023</strong></td>
+                                        <td class="text-right">1 150,00 €</td>
+                                        <td class="text-right" style="color: #E74C3C;">- 440,00 €</td>
+                                        <td class="text-right text-success-custom">710,00 €</td>
+                                        <td class="text-center"><span class="label label-success">62%</span></td>
+                                        <td class="text-center"><span class="label label-info">8 ventes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>29/10/2023</strong></td>
+                                        <td class="text-right">950,00 €</td>
+                                        <td class="text-right" style="color: #E74C3C;">- 345,00 €</td>
+                                        <td class="text-right text-success-custom">605,00 €</td>
+                                        <td class="text-center"><span class="label label-success">64%</span></td>
+                                        <td class="text-center"><span class="label label-default">Dimanche</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>28/10/2023</strong></td>
+                                        <td class="text-right">1 680,00 €</td>
+                                        <td class="text-right" style="color: #E74C3C;">- 620,00 €</td>
+                                        <td class="text-right text-success-custom">1 060,00 €</td>
+                                        <td class="text-center"><span class="label label-success">63%</span></td>
+                                        <td class="text-center"><span class="label label-info">15 ventes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>27/10/2023</strong></td>
+                                        <td class="text-right">1 320,00 €</td>
+                                        <td class="text-right" style="color: #E74C3C;">- 485,00 €</td>
+                                        <td class="text-right text-success-custom">835,00 €</td>
+                                        <td class="text-center"><span class="label label-success">63%</span></td>
+                                        <td class="text-center"><span class="label label-info">11 ventes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="6" class="text-center" style="background: #f0f0f0; padding: 8px;">
+                                            <em style="color: #73879C;">... 21 jours supplémentaires ...</em>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><strong>TOTAL MENSUEL</strong></td>
+                                        <td class="text-right"><strong>38 450,00 €</strong></td>
+                                        <td class="text-right" style="color: #E74C3C;"><strong>- 14 200,00 €</strong></td>
+                                        <td class="text-right text-primary-custom"><strong>24 250,00 €</strong></td>
+                                        <td class="text-center"><span class="label label-success" style="font-size: 12px;">63%</span></td>
+                                        <td class="text-center"><span class="label label-info" style="font-size: 12px;">285 ventes</span></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+
+        <!-- Summary Formula -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="x_panel" style="border-left: 4px solid #26B99A;">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-calculator"></i>
+                            Formules de Calcul
+                        </h2>
+                    </div>
+                    <div class="x_content">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div style="background: #1ABB9C15; padding: 15px; border-left: 3px solid #1ABB9C;">
+                                    <strong style="color: #1ABB9C;">Résultat Brut (RB)</strong>
+                                    <p style="margin: 10px 0 0 0; color: #73879C;">
+                                        RB = ∑ résultats<br>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="background: #F39C1215; padding: 15px; border-left: 3px solid #F39C12;">
+                                    <strong style="color: #F39C12;">Résultat Net d'Exploitation (RNE)</strong>
+                                    <p style="margin: 10px 0 0 0; color: #73879C;">
+                                        RNE = RB - Frais de fonctionnement<br>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="background: #26B99A15; padding: 15px; border-left: 3px solid #26B99A;">
+                                    <strong style="color: #26B99A;">Résultat Net (RN)</strong>
+                                    <p style="margin: 10px 0 0 0; color: #73879C;">
+                                        RN = RNE - Charges personnelles<br>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

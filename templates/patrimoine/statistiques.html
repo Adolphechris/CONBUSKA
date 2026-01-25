@@ -1,0 +1,583 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Journal des transactions{% endblock %}
+
+{% block stylesheets %}
+{{block.super}}
+
+<style>
+    /* Stats Cards */
+    .tile-stats {
+        position: relative;
+        display: block;
+        margin-bottom: 20px;
+        border: 1px solid #E4E4E4;
+        border-radius: 5px;
+        background: #fff;
+        padding: 20px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .tile-stats:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .tile-stats .icon {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 50px;
+        opacity: 0.1;
+        transition: all 0.3s ease;
+    }
+
+    .tile-stats:hover .icon {
+        opacity: 0.15;
+        transform: scale(1.1);
+    }
+
+    .tile-stats .count {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+
+    .tile-stats h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 400;
+        color: #BAB8B8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .tile-stats.success-stat .count { color: #26B99A; }
+    .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+
+    .tile-stats.danger-stat .count { color: #E74C3C; }
+    .tile-stats.danger-stat { border-left: 4px solid #E74C3C; }
+
+    .tile-stats.info-stat .count { color: #3498DB; }
+    .tile-stats.info-stat { border-left: 4px solid #3498DB; }
+
+    /* Panel Styles */
+    .x_panel {
+        background: #fff;
+        border: 1px solid #E6E9ED;
+        border-radius: 3px;
+        padding: 0;
+        margin-bottom: 25px;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    }
+
+    .x_title {
+        border-bottom: 2px solid #E6E9ED;
+        padding: 15px 20px;
+        position: relative;
+    }
+
+    .x_title h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 400;
+        color: #2A3F54;
+        display: inline-block;
+    }
+
+    .x_title h2 small {
+        font-size: 12px;
+        color: #73879C;
+        margin-left: 8px;
+    }
+
+    .x_title .badge {
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+
+    .badge-success { background-color: #26B99A; }
+    .badge-danger { background-color: #E74C3C; }
+
+    .x_content {
+        padding: 20px;
+    }
+
+    /* Chart Container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 20px 0;
+    }
+
+    /* Table Styles */
+    .stats-table {
+        margin-top: 20px;
+    }
+
+    .stats-table table {
+        margin-bottom: 0;
+    }
+
+    .stats-table th {
+        background: #F5F7FA;
+        color: #2A3F54;
+        font-weight: 500;
+        font-size: 13px;
+        border-bottom: 2px solid #E6E9ED !important;
+        padding: 12px 15px;
+    }
+
+    .stats-table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        color: #73879C;
+        font-size: 14px;
+        border-bottom: 1px solid #F0F0F0 !important;
+    }
+
+    .stats-table tr:hover {
+        background: #F9FAFB;
+    }
+
+    .category-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    .amount {
+        font-weight: 500;
+        color: #2A3F54;
+        font-family: 'Courier New', monospace;
+    }
+
+    .percentage-badge {
+        background: #ECF0F1;
+        color: #2A3F54;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Filters */
+    .filter-bar {
+        background: #fff;
+        padding: 15px 20px;
+        border-radius: 3px;
+        margin-bottom: 25px;
+        border: 1px solid #E6E9ED;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    }
+
+    .filter-bar .form-control {
+        height: 38px;
+        border-color: #D9DEE4;
+        font-size: 14px;
+    }
+
+    .filter-bar .btn {
+        height: 38px;
+        padding: 8px 16px;
+    }
+
+    /* Summary Section */
+    .summary-row {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 2px solid #E6E9ED;
+    }
+
+    .summary-row td {
+        font-weight: 600;
+        font-size: 15px;
+        color: #2A3F54 !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 250px;
+        }
+
+        .tile-stats .count {
+            font-size: 24px;
+        }
+
+        .tile-stats .icon {
+            font-size: 36px;
+        }
+    }
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="container-fluid">
+        <!-- Page title -->
+        <div class="page-title">
+            <div class="title_left">
+                <h3>Statistiques financières</h3>
+            </div>
+            <div class="title_right">
+                <div class="pull-right">
+                    <button class="btn btn-default btn-sm">
+                        <i class="fa fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <!-- Stats Row -->
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats success-stat">
+                    <i class="fa fa-arrow-down icon text-success-gentelela"></i>
+                    <h3>Total Entrées</h3>
+                    <div class="count">{{ total_entrees|floatformat:0 }}FC</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats danger-stat">
+                    <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
+                    <h3>Total Sorties</h3>
+                    <div class="count">{{ total_sorties|floatformat:0 }}FC</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-12 col-xs-12">
+                <div class="tile-stats info-stat">
+                    <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
+                    <h3>Solde</h3>
+                    <div class="count" style="color: #26B99A;">{{ solde|floatformat:0 }}FC</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Tables -->
+        <div class="row">
+            <!-- Entrées Section -->
+            <div class="col-md-6">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-arrow-circle-up" style="color: #26B99A;"></i>
+                            Répartition des Entrées
+                            <span class="badge badge-success" style="color: white;">{{ total_entrees|floatformat:0 }}FC</span>
+                        </h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- Chart -->
+                        <div class="chart-container">
+                            <canvas id="entreesChart"></canvas>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="stats-table">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Catégorie</th>
+                                        <th class="text-right">Montant</th>
+                                        <th class="text-center">Pourcentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in repartition_entrees %}
+                                        <tr>
+                                            <td>
+                                                <span class="category-indicator" style="background: #1ABB9C;"></span>
+                                                {{ r.label }}
+                                            </td>
+                                            <td class="text-right">{{ r.montant|floatformat:0 }} {{ devise }}</td>
+                                            <td class="text-center">{{ r.pourcentage }}%</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">Aucune donnée</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="summary-row">
+                                    <tr>
+                                        <td><strong>TOTAL</strong></td>
+                                        <td class="text-right">
+                                            <span class="amount" style="color: #26B99A;">{{ total_entrees }}FC</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="percentage-badge" style="background: #26B99A; color: white;">100%</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sorties Section -->
+            <div class="col-md-6">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-arrow-circle-down" style="color: #E74C3C;"></i>
+                            Répartition des Sorties
+                            <span class="badge badge-danger" style="color: white;">{{ total_sorties|floatformat:0 }}FC</span>
+                        </h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- Chart -->
+                        <div class="chart-container">
+                            <canvas id="sortiesChart"></canvas>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="stats-table">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Catégorie</th>
+                                        <th class="text-right">Montant</th>
+                                        <th class="text-center">Pourcentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in repartition_sorties %}
+                                        <tr>
+                                            <td>
+                                                <span class="category-indicator" style="background: #E74C3C;"></span>
+                                                {{ r.label }}
+                                            </td>
+                                            <td class="text-right">{{ r.montant|floatformat:0 }} {{ devise }}</td>
+                                            <td class="text-center">{{ r.pourcentage }}%</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">Aucune donnée</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="summary-row">
+                                    <tr>
+                                        <td><strong>TOTAL</strong></td>
+                                        <td class="text-right">
+                                            <span class="amount" style="color: #E74C3C;">{{ total_sorties }}FC</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="percentage-badge" style="background: #E74C3C; color: white;">100%</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>
+                            <i class="fa fa-line-chart"></i>
+                            Analyse Comparative
+                            <small>Entrées vs Sorties par catégorie</small>
+                        </h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <div style="height: 350px;">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ repartition_entrees|json_script:"entrees-data" }}
+{{ repartition_sorties|json_script:"sorties-data" }}
+
+<script>
+    const entreesDataParsed = JSON.parse(
+        document.getElementById("entrees-data").textContent
+    );
+
+    const sortiesDataParsed = JSON.parse(
+        document.getElementById("sorties-data").textContent
+    );
+
+    // Entrées Pie Chart
+    const entreesCtx = document.getElementById('entreesChart').getContext('2d');
+    new Chart(entreesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: entreesDataParsed.map(i => i.label),
+            datasets: [{
+                data: entreesDataParsed.map(i => i.montant),
+                backgroundColor: ['#1ABB9C', '#3498DB', '#9B59B6'],
+                borderWidth: 3,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            family: 'Roboto'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' € (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Sorties Pie Chart
+    const sortiesCtx = document.getElementById('sortiesChart').getContext('2d');
+    new Chart(sortiesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: sortiesDataParsed.map(i => i.label),
+            datasets: [{
+                data: sortiesDataParsed.map(i => i.montant),
+                backgroundColor: ['#E74C3C', '#F39C12', '#F1C40F', '#E67E22'],
+                borderWidth: 3,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            family: 'Roboto'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' € (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    function labelsFrom(...lists) {
+        return [...new Set(
+            lists.flatMap(l => l.map(i => i.label))
+        )];
+    }
+
+    function datasetFrom(labels, list) {
+        const map = Object.fromEntries(
+            list.map(i => [i.label, Number(i.montant)])
+        );
+        return labels.map(l => map[l] || 0);
+    }
+
+    const labelsComp = labelsFrom(entreesDataParsed, sortiesDataParsed);
+
+    // Comparison Bar Chart
+    const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+    new Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: labelsComp,
+            datasets: [{
+                label: 'Entrées',
+                data: datasetFrom(labelsComp, entreesDataParsed),
+                backgroundColor: '#26B99A',
+                borderRadius: 4
+            }, {
+                label: 'Sorties',
+                data: datasetFrom(labelsComp, sortiesDataParsed),
+                backgroundColor: '#E74C3C',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' FC';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 13,
+                            family: 'Roboto'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' FC';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
