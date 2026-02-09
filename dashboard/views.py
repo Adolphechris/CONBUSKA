@@ -11,9 +11,10 @@ from clients.models import Client
 from fournisseurs.models import Fournisseur
 from creanciers.models import Creancier, Debiteur
 from factures.models import Facture, DetailsFacture
-from produits.models import Article, Stock
+from parametres.models import Magasin
+from produits.models import Article, Stock, MouvementStock
 from commandes.models import Commande
-from django.db.models import Sum, F, DecimalField, Value, Prefetch
+from django.db.models import Sum, F, DecimalField, Value, Prefetch, Case, When, IntegerField, Q
 from django.db.models.functions import ExtractMonth, Coalesce
 from django.utils import timezone
 from decimal import Decimal
@@ -120,6 +121,37 @@ class DashboardAdminView(LoginRequiredMixin, TemplateView):
                 .order_by('date_peremption')
         )
 
+    @staticmethod
+    def articles_critiques():
+        magasin = Magasin.objects.filter(is_principal=True).first()
+        if not magasin:
+            return 0
+
+        return (
+            Article.objects
+            .annotate(
+                stock_actuel=Coalesce(
+                    Sum(
+                        Case(
+                            When(
+                                mouvementstock__type=MouvementStock.IN,
+                                then=F("mouvementstock__qte")
+                            ),
+                            When(
+                                mouvementstock__type=MouvementStock.OUT,
+                                then=-F("mouvementstock__qte")
+                            ),
+                            filter=Q(mouvementstock__magasin=magasin),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    0
+                )
+            )
+            .filter(stock_actuel__lt=F("seuil"))
+            .count()
+        )
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data['clients'] = Client.objects.count()
@@ -127,7 +159,7 @@ class DashboardAdminView(LoginRequiredMixin, TemplateView):
         context_data['creanciers'] = Creancier.objects.count()
         context_data['debiteurs'] = Debiteur.objects.count()
         context_data['factures'] = Facture.objects.count()
-        context_data['articles'] = Article.objects.count()
+        context_data['articles'] = self.articles_critiques()
         context_data['commandes'] = Commande.objects.count()
         context_data['current_year'] = datetime.now().year
 
