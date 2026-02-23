@@ -8,10 +8,10 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
-from .models import Approvisionnement, DetailsApprovisionnement
-from produits.models import Stock
+from .models import Approvisionnement, DetailsApprovisionnement, FraisApprovisionnement
+from fournisseurs.models import Fournisseur
 from .forms import ApprovisionnementCreateForm, ArticleApprovisionnementAddForm, ArticleApprovisionnementUpdateForm
-from .services import ApprovisionnementService
+from .services import ApprovisionnementService, FraisService
 
 
 class ApprovisionnementsView(LoginRequiredMixin, ListView):
@@ -131,12 +131,7 @@ def is_htmx(request):
 class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
-        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'),
-              request.POST.get('form_type'), request.headers.get("HX-Request"))
-        test = is_htmx(request)
-        print(test)
         if not is_htmx(request):
-            print("******* ")
             return JsonResponse({"error": "HTMX required"}, status=400)
 
         approvisionnement = get_object_or_404(Approvisionnement, pk=pk)
@@ -150,7 +145,8 @@ class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
             detail.approvisionnement = approvisionnement
             detail.article = form.cleaned_data['article']
             detail.fournisseur = form.cleaned_data['fournisseur']
-            detail.add()
+            detail = detail.add()
+            FraisService.save_frais(detail, form.cleaned_data)
 
         return self._render_table(request, approvisionnement)
 
@@ -174,8 +170,6 @@ class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
 class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
-        print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'),
-              request.POST.get('form_type'))
         if not request.headers.get("HX-Request"):
             return JsonResponse({"error": "HTMX required"}, status=400)
 
@@ -197,6 +191,7 @@ class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
         with transaction.atomic():
             detail = form.save(commit=False)
             detail.update_appro()
+            FraisService.save_frais(detail, form.cleaned_data)
 
         return self._render_table(request, approvisionnement)
 
@@ -300,29 +295,21 @@ class ArticleApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
     def get_success_url(self):
-        return reverse('approvisionnement_details', kwargs={'pk': self.object.pk})
+        return reverse('approvisionnement_details', kwargs={'pk': self.object.approvisionnement.pk})
 
     @transaction.atomic
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         appro = self.object.approvisionnement
 
-        # Supprimer ou mettre à jour le stock
-        stock = Stock.objects.get(
-            magasin=appro.magasin,
-            article=self.object.article,
-            date_peremption=self.object.date_peremption
-        )
-        stock.qte -= self.object.qte
-        if stock.qte <= 0:
-            stock.delete()
-        else:
-            stock.save()
-
         self.object.delete()
 
         if request.headers.get('HX-Request') == 'true':
-            details = DetailsApprovisionnement.objects.filter(approvisionnement=appro)
+            details = (
+                DetailsApprovisionnement.objects
+                .filter(approvisionnement=appro)
+                .prefetch_related("frais__type_frais")
+            )
             context = {
                 'details_approvisionnement': details,
                 'approvisionnement': appro

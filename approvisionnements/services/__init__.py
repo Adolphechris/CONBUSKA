@@ -1,1 +1,2 @@
 from .approvisionnement_service import ApprovisionnementService
+from .frais_service import FraisService

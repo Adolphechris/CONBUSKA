@@ -35,70 +35,23 @@
     </div>
 </div>
 
-<div class="cost-fields">
-    <h6 class="form-subtitle">Frais d'achat</h6>
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-file-text-o"></i></span>
-                    {{ form.declaration }}
-              </div>
-            </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-truck"></i>&nbsp;</span>
-                    {{ form.transport }}
+{% if form.dynamic_frais_fields %}
+    <div class="cost-fields">
+        <h6 class="form-subtitle">Frais d'achat</h6>
+        <div class="row">
+            {% for field in form.frais_fields %}
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <i class="fa {{ field.field.widget.attrs.data_icon }}"></i>
+                            </span>
+                            {{ field }}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-level-up"></i></span>
-                    {{ form.chargement }}
-              </div>
-            </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-level-down"></i>&nbsp;</span>
-                    {{ form.dechargement }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-exchange"></i></span>
-                    {{ form.services }}
-              </div>
-            </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-building-o"></i>&nbsp;</span>
-                    {{ form.entreposage }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-addon"><i class="fa fa-plus-circle"></i></span>
-                    {{ form.autre_frais }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endif %}
+

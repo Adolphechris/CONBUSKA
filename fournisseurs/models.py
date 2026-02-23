@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.db.models import F, Sum
-from approvisionnements.models import DetailsApprovisionnement
+from approvisionnements.models import DetailsApprovisionnement, TypeFrais, FraisApprovisionnement
 from caisse.models import MouvementCaisseFournisseur
 
 
@@ -19,6 +19,9 @@ class Fournisseur(models.Model):
     id_nat = models.CharField(max_length=30)
     impot = models.CharField(max_length=30)
     tva = models.CharField(max_length=30)
+    is_system = models.BooleanField(default=False)
+    actif = models.BooleanField(default=True)
+    type_frais = models.ForeignKey(TypeFrais, null=True, blank=True, on_delete=models.PROTECT)
 
     objects = models.Manager()
 
@@ -26,6 +29,8 @@ class Fournisseur(models.Model):
         return self.nom
 
     def mouvements(self):
+        if self.is_system:
+            return FraisApprovisionnement.objects.filter(fournisseur=self)
         return DetailsApprovisionnement.objects.filter(fournisseur=self)
 
     def paiements(self):

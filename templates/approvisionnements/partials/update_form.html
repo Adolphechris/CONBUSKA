@@ -1,11 +1,10 @@
 <div class="add-form-container">
     <h6 class="form-title">Modifier une ligne d'approvisionnement</h6>
     <form id="updateForm"
-          method="POST"
-          hx-post="{% url 'approvisionnement_details' appro_pk %}"
-          hx-target="#formTableContainer"
+          hx-post="{% url 'approvisionnement_line_update' appro_pk %}"
+          hx-target="#linesTableContainer"
           hx-swap="innerHTML"
-          hx-on="htmx:afterRequest: resetForms()">
+          hx-on:htmx:after-request="resetForms(event.target)">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="update">
         <input type="hidden" name="id" value="{{ detail_appro_pk  }}">
@@ -21,3 +20,35 @@
         </button>
     </form>
 </div>
+<script>
+    function initSimpleSelect(root = document) {
+        $(root).find('.js-simple-select').each(function () {
+            const $el = $(this);
+
+            if ($el.hasClass('select2-hidden-accessible')) {
+                // Déjà initialisé → on force un recalcul
+                $el.trigger('change.select2');
+                return;
+            }
+
+            $el.select2({ width: '100%' });
+        });
+    }
+
+     function resetForms(target) {
+        alert('RESET FORM EN COURS 2');
+        // Supprimer uniquement le formulaire update
+        $('#updateFormContainer').empty();
+
+        // Réafficher le formulaire add
+        const addContainer = document.getElementById('addFormContainer');
+        addContainer.style.display = 'block';
+
+        // Reset des champs
+        const form = document.getElementById('addForm');
+        if (form) form.reset();
+
+        // 🔑 Re-synchroniser Select2 sur le formulaire ADD
+        initSimpleSelect(addContainer);
+    }
+</script>

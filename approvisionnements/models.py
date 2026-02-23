@@ -1,9 +1,17 @@
 from django.db import models
 from django.urls import reverse
 from django.db import transaction
-from produits.models import Stock
-from django.db.models import Max
+from django.db.models import Max, Sum
 import datetime
+
+
+class TypeFrais(models.Model):
+    nom = models.CharField(max_length=100)
+    icon = models.CharField(max_length=50, default="fa-money")
+    actif = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nom
 
 
 class Approvisionnement(models.Model):
@@ -25,7 +33,7 @@ class Approvisionnement(models.Model):
                                     related_name='approvisionnementmodpar',
                                     on_delete=models.PROTECT)
     actif = models.BooleanField(default=True)
-
+    valide = models.BooleanField(default=False)
     objects = models.Manager()
 
     def __str__(self):
@@ -72,13 +80,6 @@ class DetailsApprovisionnement(models.Model):
     approvisionnement = models.ForeignKey(Approvisionnement, on_delete=models.PROTECT, null=True)
     fournisseur = models.ForeignKey('fournisseurs.Fournisseur', on_delete=models.PROTECT, null=False)
     facture = models.CharField(max_length=15)
-    transport = models.DecimalField(max_digits=8, decimal_places=2)
-    chargement = models.DecimalField(max_digits=8, decimal_places=2)
-    dechargement = models.DecimalField(max_digits=8, decimal_places=2)
-    services = models.DecimalField(max_digits=8, decimal_places=2)
-    entreposage = models.DecimalField(max_digits=8, decimal_places=2)
-    declaration = models.DecimalField(max_digits=8, decimal_places=2)
-    autre_frais = models.DecimalField(max_digits=8, decimal_places=2)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
     prix = models.DecimalField(max_digits=12, decimal_places=2)
@@ -93,9 +94,9 @@ class DetailsApprovisionnement(models.Model):
 
     @property
     def frais_achat(self):
-        total = (self.declaration + self.transport + self.chargement + self.dechargement + self.services +
-                 self.entreposage + self.autre_frais)
-        return total
+        return self.frais.aggregate(
+            total=Sum("montant")
+        )["total"] or 0
 
     @property
     def cout_achat(self):
@@ -134,13 +135,6 @@ class DetailsApprovisionnement(models.Model):
             fournisseur=self.fournisseur,
             facture=self.facture,
             defaults={
-                'declaration': self.declaration,
-                'transport': self.transport,
-                'chargement': self.chargement,
-                'dechargement': self.dechargement,
-                'services': self.services,
-                'entreposage': self.entreposage,
-                'autre_frais': self.autre_frais,
                 'qte': self.qte,
                 'prix': self.prix,
             }
@@ -150,16 +144,7 @@ class DetailsApprovisionnement(models.Model):
             detail.qte += self.qte
             detail.save()
 
-        # Mise à jour ou création du stock
-        stock, stock_created = Stock.objects.get_or_create(
-            magasin=self.approvisionnement.magasin,
-            article=self.article,
-            date_peremption=self.date_peremption,
-            defaults={'qte': self.qte}
-        )
-        if not stock_created:
-            stock.qte += self.qte
-            stock.save()
+        return detail
 
     @transaction.atomic
     def update_appro(self):
@@ -179,15 +164,6 @@ class DetailsApprovisionnement(models.Model):
         # Même article / même date ➜ simple update
         if (old_article == new_article) and (old_peremption == new_peremption):
             self.save()
-
-            stock = Stock.objects.get(
-                magasin=appro.magasin.pk,
-                article=old_article,
-                date_peremption=old_peremption
-            )
-            stock.qte = stock.qte - old_qte + new_qte
-            stock.save()
-
         else:
             # Fusion avec ligne existante si elle existe
             autre_detail = DetailsApprovisionnement.objects.filter(
@@ -203,30 +179,6 @@ class DetailsApprovisionnement(models.Model):
             else:
                 self.save()
 
-            # Mise à jour du stock
-            # Ancienne ligne
-            stock_old = Stock.objects.get(
-                magasin=appro.magasin,
-                article=old_article,
-                date_peremption=old_peremption
-            )
-            stock_old.qte -= old_qte
-            if stock_old.qte <= 0:
-                stock_old.delete()
-            else:
-                stock_old.save()
-
-            # Nouvelle ligne
-            stock_new, created = Stock.objects.get_or_create(
-                magasin=appro.magasin,
-                article=new_article,
-                date_peremption=new_peremption,
-                defaults={'qte': new_qte}
-            )
-            if not created:
-                stock_new.qte += new_qte
-                stock_new.save()
-
 
     def save(self, *args, **kwargs):
 
@@ -234,3 +186,9 @@ class DetailsApprovisionnement(models.Model):
 
     def get_absolute_url(self):
         return reverse('approvisionnement_details', args=[self.approvisionnement.pk])
+
+
+class FraisApprovisionnement(models.Model):
+    detail = models.ForeignKey(DetailsApprovisionnement, related_name="frais", on_delete=models.CASCADE)
+    type_frais = models.ForeignKey(TypeFrais, on_delete=models.PROTECT)
+    montant = models.DecimalField(max_digits=12, decimal_places=2)
