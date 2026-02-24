@@ -3,12 +3,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.utils.timezone import now
 from django.db.models import Sum
 import calendar
-from datetime import date
+import datetime
 from patrimoine.models import SnapshotJournalier, ResultatApprovisionnementSnapshot, ResultatJournalier, ResultatMensuel
 from caisse.models import (MouvementCaisse, SousRubriqueCaisse, MouvementCaisseChargesExploitation,
                            MouvementCaisseChargesPersonnelles)
+from patrimoine.services import JournalTransactionService
 
 
+"""
 class JournalTransactionsView(LoginRequiredMixin, TemplateView):
     # permission_required = "finances.view_mouvementcaisse"
     model = MouvementCaisse
@@ -71,6 +73,44 @@ class JournalTransactionsView(LoginRequiredMixin, TemplateView):
         })
 
         return ctx
+"""
+
+class JournalTransactionsView(LoginRequiredMixin, TemplateView):
+    template_name = "patrimoine/journal_transactions.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        mois = int(self.request.GET.get("mois", now().month))
+        annee = int(self.request.GET.get("annee", now().year))
+
+        date_debut = datetime.date(annee, mois, 1)
+
+        if mois == 12:
+            date_fin = datetime.date(annee + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            date_fin = datetime.date(annee, mois + 1, 1) - datetime.timedelta(days=1)
+
+        journal = JournalTransactionService.get_lines(date_debut, date_fin)
+
+        entrees = [i for i in journal if i.type_mouvement == "ENTREE"]
+        sorties = [i for i in journal if i.type_mouvement == "SORTIE"]
+
+        total_entrees = sum(i.montant for i in entrees)
+        total_sorties = sum(i.montant for i in sorties)
+
+        ctx.update({
+            "entrees": entrees,
+            "sorties": sorties,
+            "total_entrees": total_entrees,
+            "total_sorties": total_sorties,
+            "solde": total_entrees - total_sorties,
+            "mois": mois,
+            "annee": annee,
+            "dashboard_section": "journal",
+        })
+
+        return ctx
 
 
 class CalendrierFinancierView(LoginRequiredMixin, TemplateView):
@@ -84,9 +124,9 @@ class CalendrierFinancierView(LoginRequiredMixin, TemplateView):
         annee = int(self.request.GET.get("annee", today.year))
 
         # bornes du mois
-        first_day = date(annee, mois, 1)
+        first_day = datetime.date(annee, mois, 1)
         _, last_day_num = calendar.monthrange(annee, mois)
-        last_day = date(annee, mois, last_day_num)
+        last_day = datetime.date(annee, mois, last_day_num)
 
         # snapshots du mois indexés par date
         snapshots = {
