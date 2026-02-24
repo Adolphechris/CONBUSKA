@@ -55,6 +55,7 @@ class MouvementCaisse(models.Model):
     caisse = models.ForeignKey(CaisseCourante, on_delete=models.CASCADE, related_name='mouvements')
     type_mouvement = models.CharField(max_length=10, choices=TYPE_CHOICES)
     rubrique = models.ForeignKey(RubriqueCaisse, on_delete=models.PROTECT, related_name='mouvements_rubrique')
+    sous_rubrique = models.ForeignKey(SousRubriqueCaisse, on_delete=models.PROTECT, null=True, blank=True)
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     motif = models.CharField(max_length=255)
     reference = models.CharField(max_length=100, blank=True, null=True)  # ex: numéro de facture
