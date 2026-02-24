@@ -84,11 +84,13 @@
                                  </div>
                                  <h4 class="text-center"><strong>{{fournisseur.nom}} / {{fournisseur.tuteur}}</strong></h4>
                                  <hr>
-                                 <ul class="list-unstyled user_data">
-                                    <li class="info-item"><i class="fa fa-map-marker"></i> Addresse: {{ fournisseur.adresse }}</li>
-                                    <li class="info-item"><i class="fa fa-phone"></i> Telephone: {{ fournisseur.telephone }}</li>
-                                    <li class="info-item"><i class="fa fa-envelope"></i> Email: {{ fournisseur.email }}</li>
-                                 </ul>
+                                 {% if not fournisseur.is_system %}
+                                     <ul class="list-unstyled user_data">
+                                        <li class="info-item"><i class="fa fa-map-marker"></i> Addresse: {{ fournisseur.adresse }}</li>
+                                        <li class="info-item"><i class="fa fa-phone"></i> Telephone: {{ fournisseur.telephone }}</li>
+                                        <li class="info-item"><i class="fa fa-envelope"></i> Email: {{ fournisseur.email }}</li>
+                                     </ul>
+                                 {% endif %}
                                  <hr>
                                  <!-- Balance Box -->
                                  <div class="balance-box">
@@ -116,17 +118,30 @@
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead>
-                                                <tr>
-                                                    <th>N°</th>
-                                                    <th>Date</th>
-                                                    <th>Facture</th>
-                                                    <th>Article</th>
-                                                    <th>Qté</th>
-                                                    <th>PAU</th>
-                                                    <th>Total</th>
-                                                </tr>
+                                                {% if not fournisseur.is_system %}
+                                                    <tr>
+                                                        <th>N°</th>
+                                                        <th>Date</th>
+                                                        <th>Facture</th>
+                                                        <th>Article</th>
+                                                        <th>Qté</th>
+                                                        <th>PAU</th>
+                                                        <th>Total</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr>
+                                                        <th>N°</th>
+                                                        <th>Date</th>
+                                                        <th>Facture</th>
+                                                        <th>Article</th>
+                                                        <th>Qté</th>
+                                                        <th>Frais</th>
+                                                    </tr>
+                                                {% endif %}
                                             </thead>
                                             <tbody>
+                                            {% if not fournisseur.is_system %}
                                                 {% for i in mouvements %}
                                                     <tr>
                                                         <td>{{ forloop.counter }}</td>
@@ -143,10 +158,22 @@
                                                         </td>
                                                     </tr>
                                                 {% endfor %}
+                                            {% else %}
+                                                {% for i in mouvements %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ i.detail.date_creation }}</td>
+                                                        <td>{{ i.detail.facture }}</td>
+                                                        <td>{{ i.detail.article.designation }}</td>
+                                                        <td>{{ i.detail.qte }}</td>
+                                                        <td>{{ i.montant|floatformat }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            {% endif %}
                                             </tbody>
                                             <tfoot>
                                                 <tr class="total_row">
-                                                    <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                                                    <td colspan="{% if not fournisseur.is_system %}6{% else %} 5 {% endif %}" class="text-right"><strong>Total:</strong></td>
                                                     <td><strong>{{ total_mouvements|floatformat }}FC</strong></td>
                                                     <td></td>
                                                 </tr>

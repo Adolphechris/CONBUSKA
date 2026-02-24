@@ -15,11 +15,13 @@ class FournisseursView(LoginRequiredMixin, FilterView):
     filterset_class = FournisseurFilter
 
     def get_queryset(self):
-        return Fournisseur.objects.all().order_by('nom')
+        return Fournisseur.objects.filter(actif=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        fournisseurs = self.get_queryset()
+        fournisseurs = Fournisseur.objects.filter(actif=True).order_by('nom')
+        context['f_systemes'] = fournisseurs.filter(is_system=True)
+        context['f_ordinaires'] = fournisseurs.filter(is_system=False)
         context['total_solde'] = sum(fournisseur.solde() for fournisseur in fournisseurs)
         return context
 

@@ -40,6 +40,12 @@
         object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
     }
 
+    .uniform-img-sys {
+        width: 100px;      /* largeur fixe */
+        height: 100px;     /* hauteur fixe */
+        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
+    }
+
     .profile_details:nth-child(3n) {
         clear: none !important;
     }
@@ -54,7 +60,7 @@
                     <h5>Fournisseurs</h5>
                 </div>
             </div>
-             <div class="row">
+            <div class="row">
                 <div class="col-md-12">
                     <div class="x_panel">
                         <div class="x_title">
@@ -106,7 +112,7 @@
                             <br>
 
                             <div class="row">
-                            {% for fournisseur in liste_fournisseurs %}
+                            {% for fournisseur in f_ordinaires %}
                                 <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
                                     <div class="well profile_view">
                                         <div class="col-sm-12">
@@ -126,7 +132,7 @@
                                         </div>
                                         <div class="col-xs-12 bottom text-center">
                                             <div class="col-xs-12 col-sm-6 emphasis">
-                                                <h4 class="ratings"><i class="fa fa-usd"></i> {{ fournisseur.solde }}FC</h4>
+                                                <h4 class="ratings"><i class="fa fa-plus"></i> {{ fournisseur.solde }}FC</h4>
                                             </div>
                                             <div class="col-xs-12 col-sm-6 emphasis">
                                                 <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
@@ -137,8 +143,40 @@
                                     </div>
                                 </div>
                             {% endfor %}
+                            </div>
+                            <hr style="border-top: 3px double #8c8b8b; margin: 40px 0;">
+                            {% if f_systemes %}
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3>Fournisseurs Systèmes</h3>
+                                    </div>
+                                    {% for fournisseur in f_systemes %}
+                                        <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
+                                            <div class="well profile_view">
+                                                <div class="col-sm-12">
+                                                    <h4 class="brief"><i>Fournisseur</i></h4>
+                                                    <div class="left col-xs-7">
+                                                        <h2>{{ fournisseur.nom }}</h2>
+                                                    </div>
+                                                    <div class="right col-xs-5 text-center">
+                                                        <img src="{{ fournisseur.photo.url }}" alt="..." class="img-circle img-responsive uniform-img-sys">
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 bottom text-center">
+                                                    <div class="col-xs-12 col-sm-6 emphasis">
+                                                        <h4 class="ratings"><i class="fa fa-plus"></i> {{ fournisseur.solde }}FC</h4>
+                                                    </div>
+                                                    <div class="col-xs-12 col-sm-6 emphasis">
+                                                        <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
+                                                          <i class="fa fa-user"> </i> Voir les détails
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
                                 </div>
-
+                            {% endif %}
                             <!--<div class="content table-responsive display">
                                 <div class="row">
                                     <button type="button" class="btn btn-link pull-right creer">

@@ -30,13 +30,21 @@ class Fournisseur(models.Model):
 
     def mouvements(self):
         if self.is_system:
-            return FraisApprovisionnement.objects.filter(fournisseur=self)
+            return FraisApprovisionnement.objects.filter(type_frais=self.type_frais)
         return DetailsApprovisionnement.objects.filter(fournisseur=self)
 
     def paiements(self):
         return MouvementCaisseFournisseur.objects.filter(fournisseur=self)
 
     def total_mouvements(self):
+        if self.is_system:
+            return (
+                    self.mouvements()
+                    .annotate(prix_total_db=F('montant'))
+                    .aggregate(total=Sum('prix_total_db'))
+                    ['total'] or 0
+            )
+
         return (
                 self.mouvements()
                 .annotate(prix_total_db=F('qte') * F('prix'))
