@@ -129,48 +129,6 @@ class DetailsFacture(models.Model):
             detail.qte += self.qte
             detail.save()
 
-        magasin = Magasin.objects.get(nom="Alimentation")
-        all_stock = Stock.objects.select_for_update().filter(magasin=magasin.pk,
-                                                             article=self.article).order_by('date_peremption')
-
-        qte = self.qte
-        print("STEP 1. NEW QTE = ", qte)
-        for stock in all_stock:
-            if qte > 0:
-                if stock.qte >= qte:
-                    stock.qte -= qte
-                    stock.save()
-                    delta = qte
-                    qte = 0
-                else:
-                    print("STEP 2. STOCK QTE = ", stock.qte)
-                    delta = stock.qte
-                    qte -= stock.qte
-                    stock.qte = 0
-                    stock.save()
-
-                    print("STEP 3. DELTA = ", delta)
-
-                # Enregistrement de la reference dans DetailsLigneFacture
-                detail_ligne, created_ligne = DetailsLigneFacture.objects.get_or_create(
-                    detail_facture=detail,
-                    date_peremption=stock.date_peremption,
-                    defaults={
-                        'qte': delta,
-                    }
-                )
-
-                if not created_ligne:
-                    print("STEP 4. QTE TO SAVE = ", delta)
-                    detail_ligne.qte += delta
-                    detail_ligne.save()
-
-
-                if stock.qte <= 0:
-                    stock.delete()
-            else:
-                break
-
     @transaction.atomic
     def update_facture(self):
         old_details = DetailsFacture.objects.get(pk=self.pk)

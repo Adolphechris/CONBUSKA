@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.db.models import Min
 from .models import Facture, DetailsFacture, Livreur, FactureClient
 from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm, FactureClientForm
+from .services import FactureService
 import random
 
 
@@ -103,10 +104,11 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
             if form_type == 'add':
                 form = ArticleFactureAddForm(request.POST)
                 if form.is_valid():
-                    detail_facture = form.save(commit=False)
-                    detail_facture.facture = self.get_object()
-                    detail_facture.article = form.cleaned_data['article']
-                    detail_facture.add()
+                    FactureService.ajouter_ou_modifier_article(
+                        facture=self.get_object(),
+                        article=form.cleaned_data['article'],
+                        qte=form.cleaned_data['qte']
+                    )
 
                     html = render_to_string("factures/partials/add_form_and_table.html", {
                         "add_form": ArticleFactureAddForm(),
