@@ -40,6 +40,8 @@
                             <li id="liste_articles"><a href="{% url 'articles' %}">Articles</a></li>
                             <li id="unites"><a href="{% url 'unites' %}">Unités</a></li>
                             <li id="categories"><a href="{% url 'categories' %}">Catégories</a></li>
+                            <li id="fiche_stock"><a href="{% url 'fiche_stock' %}">Fiche de stock</a></li>
+                            <li id="transfert_stock"><a href="{% url 'transferts_stock' %}">Transfert de stock</a></li>
                         </ul>
                     </li>
                     <li id="commandes"><a href="{% url 'commandes' %}"><i class="fa fa-file-text-o"></i> Commandes </a></li>
@@ -63,7 +65,7 @@
                     <li id="paie"><a><i class="fa fa-money"></i> Livre de paie <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="agents"><a href="{% url 'agents' %}">Agents</a></li>
-                            <li id="listes_paie"><a href="{% url 'listes_paie' %}">Listes de paie</a></li>
+                            <!--<li id="listes_paie"><a href="{% url 'listes_paie' %}">Listes de paie</a></li>-->
                         </ul>
                     </li>
                 </ul>
