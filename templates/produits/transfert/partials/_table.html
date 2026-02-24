@@ -1,0 +1,19 @@
+<table id="tableTransfert" class="table table-striped bulk_action">
+    <thead>
+        <tr>
+            <th>N°</th>
+            <th>Article</th>
+            <th>Qté</th>
+            <th class="text-center">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in details_transfert %}
+            {% include "produits/transfert/partials/_row.html" %}
+        {% empty %}
+            <tr>
+                <td colspan="12" class="text-center text-muted">Aucune ligne de transfert enregistrée.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

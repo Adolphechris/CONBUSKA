@@ -1,0 +1,91 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Articles {% endblock title %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="">
+        <div class="page-title">
+            <div class="title_left">
+                <h5>Articles</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Fiche de stock ce jour<small></small></h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <div class="content table-responsive display">
+                            <table id="tableFicheStock" class="table table-striped jambo_table bulk_action">
+                                <thead>
+                                    <tr class="headings">
+                                        <th class="column-title"> No.</th>
+                                        <th class="column-title"> Désignation</th>
+                                        <th class="column-title"> Stock ouverture</th>
+                                        <th class="column-title"> Entrées</th>
+                                        <th class="column-title"> Sorties</th>
+                                        <th class="column-title"> Stock final</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for article in articles %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ article.designation }}</td>
+                                            <td>{{ article.stock_ouverture }}</td>
+                                            <td>{{ article.qte_in }}</td>
+                                            <td>{{ article.qte_out }}</td>
+                                            <td>{{ article.stock_final }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">Aucun article trouvé.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        var t = $('#tableFicheStock').DataTable({
+            dom: '<"top">rflt<"bottom"p><"clear">',
+            paging: true,
+            autoWidth: true,
+            order: [[2, 'desc']],
+            "pageLength": 100,
+            columnDefs: [
+
+            ],
+            language: {
+                "sSearch": "Rechercher&nbsp;:",
+                "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                "sLengthMenu":     "Afficher _MENU_ éléments",
+                "sLoadingRecords": "Chargement...",
+                "sProcessing": "Traitement...",
+                "oPaginate": {
+                    "sFirst":    "Premier",
+                    "sLast":     "Dernier",
+                    "sNext":     "Suivant",
+                    "sPrevious": "Précédent"
+                },
+                "oAria": {
+                    "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                }
+            },
+        });
+    });
+</script>
+{% endblock content %}

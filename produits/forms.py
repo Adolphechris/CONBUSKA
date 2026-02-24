@@ -1,5 +1,6 @@
 from django import forms
-from .models import Categorie, Unite, Article
+from .models import Categorie, Unite, Article, TransfertStock, DetailsTransfertStock
+from utils.custom_field import ArticleChoiceField
 
 
 class CategorieCreateForm(forms.ModelForm):
@@ -66,3 +67,50 @@ class ArticleCreateForm(forms.ModelForm):
 
 class ArticleActivateOrDeactivateForm(forms.Form):
     pass
+
+
+class TransfertCreateForm(forms.ModelForm):
+    class Meta:
+        model = TransfertStock
+        exclude = ['numero', 'actif', 'valide', 'cree_par', 'modifie_par']
+        widgets = {
+            'magasin_source': forms.Select(attrs={'class': 'form-control js-simple-select'}),
+            'magasin_destination': forms.Select(attrs={'class': 'form-control js-simple-select'}),
+        }
+
+
+class ArticleTransfertAddForm(forms.ModelForm):
+    article = ArticleChoiceField(
+        queryset=Article.objects.with_stock().available().order_by('designation'),
+        empty_label="--- Sélectionner un article ---",
+        widget = forms.Select(attrs={'class': 'form-control js-simple-select'}),
+    )
+
+    class Meta:
+        model = DetailsTransfertStock
+        fields = ['qte']
+        widgets = {
+            'qte': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantité'}),
+        }
+
+
+class ArticleTransfertUpdateForm(forms.ModelForm):
+    class Meta:
+        model = DetailsTransfertStock
+        fields = ['qte']
+        widgets = {
+            'qte': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # On ajoute un champ factice pour l'affichage seulement
+        self.fields['article_display'] = forms.CharField(
+            label="Article",
+            initial=self.instance.article.designation if self.instance else "",
+            required=False,
+            widget=forms.TextInput(attrs={
+                'class': 'form-control',
+                'readonly': 'readonly'
+            })
+        )

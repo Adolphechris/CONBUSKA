@@ -1,9 +1,13 @@
 from django.db import models
+from django.db.models import Max, Q, Value
+from django.db.models.aggregates import Sum, Coalesce
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from parametres.models import Magasin
 from common.utils import is_duplicate
 from django.templatetags.static import static
+from django.db import transaction
+import datetime
 
 
 class Categorie(models.Model):
@@ -28,6 +32,31 @@ class Unite(models.Model):
     @staticmethod
     def get_absolute_url():
         return reverse('unites')
+
+
+class ArticleQuerySet(models.QuerySet):
+    def with_stock(self):
+        main_id = Magasin.objects.filter(is_principal=True).values_list('id', flat=True).first()
+        return self.annotate(
+            stock_dispo=Coalesce(
+                Sum(
+                    'stock__qte',
+                    filter=Q(stock__magasin_id=main_id)
+                ),
+                Value(0)
+            )
+        )
+
+    def available(self):
+        return self.with_stock().filter(stock_dispo__gt=0)
+
+
+class ArticleManager(models.Manager):
+    def get_queryset(self):
+        return ArticleQuerySet(self.model, using=self._db)
+
+    def with_stock(self):
+        return self.get_queryset().with_stock()
 
 
 class Article(models.Model):
@@ -55,16 +84,23 @@ class Article(models.Model):
     date_modification = models.DateTimeField(auto_now=True)
     actif = models.BooleanField(default=True)
 
-    objects = models.Manager()
+    objects = ArticleManager()
 
     def __str__(self):
-        return f'{self.designation} | {self.stock} | {self.prix_vente}FC | {self.prix_vente_gros}FC'
+        return self.designation
 
     @property
     def stock(self):
-        get_stock = Stock.objects.filter(article=self.pk)
-        stock = sum(i.qte for i in get_stock)
-        return stock
+        default_magasin = Magasin.objects.only("id").filter(is_principal=True).first()
+
+        if not default_magasin:
+            return 0
+
+        return (
+            Stock.objects
+            .filter(article=self, magasin=default_magasin)
+            .aggregate(total=Sum("qte"))["total"] or 0
+        )
 
     @property
     def prix_vente_devise(self):
@@ -86,18 +122,15 @@ class Article(models.Model):
             prix_vente_gros_fc = self.prix_vente_gros
         return prix_vente_gros_fc, prix_vente_gros_usd
 
-    @property
-    def get_next_code(self):
-        last_code = Article.objects.all().order_by('-code')[:1]
-        try:
-            code = [i.code + 1 for i in last_code][0]
-        except IndexError:
-            code = 1000
-        return code
+    @classmethod
+    def get_next_code(cls):
+        with transaction.atomic():
+            last = cls.objects.select_for_update().aggregate(Max("code"))["code__max"]
+            return (last + 1) if last else 1000
 
     def save(self, *args, **kwargs):
         if self.code is None:
-            self.code = self.get_next_code
+            self.code = self.get_next_code()
 
         super(Article, self).save(*args, **kwargs)
 
@@ -126,4 +159,123 @@ class Stock(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.article
+        return str(self.article)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["magasin", "article", "date_peremption"],
+                name="unique_lot_stock"
+            ),
+            models.CheckConstraint(
+                check=models.Q(qte__gte=0),
+                name="stock_non_negatif"
+            ),
+        ]
+
+
+class MouvementStock(models.Model):
+    IN = "IN"
+    OUT = "OUT"
+
+    TYPE_CHOICES = [
+        (IN, "Entrée"),
+        (OUT, "Sortie"),
+    ]
+
+    magasin = models.ForeignKey(Magasin, on_delete=models.PROTECT)
+    article = models.ForeignKey(Article, on_delete=models.PROTECT)
+    type = models.CharField(max_length=3, choices=TYPE_CHOICES)
+    qte = models.PositiveIntegerField()
+    date_peremption = models.DateField(null=True, blank=True)
+
+    source_type = models.CharField(max_length=50)
+    source_id = models.PositiveIntegerField()
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+    objects = models.Manager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["magasin", "article"]),
+            models.Index(fields=["article", "date_peremption"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(qte__gt=0),
+                name="qte_positive"
+            ),
+        ]
+
+
+class TransfertStock(models.Model):
+    numero = models.IntegerField(unique=True, blank=False)
+    magasin_source = models.ForeignKey(Magasin, on_delete=models.PROTECT, related_name="transferts_sortants")
+    magasin_destination = models.ForeignKey(Magasin, on_delete=models.PROTECT, related_name="transferts_entrants")
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    cree_par = models.ForeignKey('users.CustomUser',
+                                 related_name='transfertcreepar',
+                                 on_delete=models.PROTECT)
+    modifie_par = models.ForeignKey('users.CustomUser',
+                                    blank=True, null=True,
+                                    related_name='transfertmodpar',
+                                    on_delete=models.PROTECT)
+    actif = models.BooleanField(default=True)
+    valide = models.BooleanField(default=False)
+
+    def total_articles(self):
+        return DetailsTransfertStock.objects.filter(transfert=self).count()
+
+    @classmethod
+    def get_next_num(cls):
+        with transaction.atomic():
+            last = cls.objects.select_for_update().aggregate(Max("numero"))["numero__max"]
+            return (last + 1) if last else int(datetime.datetime.now().strftime('%y') + '0000')
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.numero:
+            self.numero = self.get_next_num()
+
+        super(TransfertStock, self).save(*args, **kwargs)
+
+
+class DetailsTransfertStock(models.Model):
+    transfert = models.ForeignKey(TransfertStock, on_delete=models.PROTECT)
+    article = models.ForeignKey(Article, on_delete=models.PROTECT)
+    qte = models.PositiveIntegerField()
+
+    def get_my_lots(self):
+        # Si on a utilisé 'prefetch_related' avec 'to_attr',
+        # on filtre en Python plutôt qu'en SQL
+        if hasattr(self.transfert, 'lots_reserves'):
+            return [
+                lot for lot in self.transfert.lots_reserves
+                if lot.article_id == self.article_id
+            ]
+        # Fallback au cas où le prefetch n'a pas été fait
+        return ReservationTransfertLot.objects.filter(
+            transfert=self.transfert,
+            article=self.article
+        ).order_by('date_peremption')
+
+    @transaction.atomic
+    def add(self):
+        detail, created = DetailsTransfertStock.objects.get_or_create(
+            transfert=self.transfert,
+            article=self.article,
+            defaults={
+                'qte': self.qte,
+            }
+        )
+
+        if not created:
+            detail.qte += self.qte
+            detail.save()
+
+
+class ReservationTransfertLot(models.Model):
+    transfert = models.ForeignKey(TransfertStock, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.PROTECT)
+    date_peremption = models.DateField()
+    qte = models.PositiveIntegerField()

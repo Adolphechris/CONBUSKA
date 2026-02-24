@@ -1,0 +1,308 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Détails transfert {% endblock title %}
+{% block stylesheets %}
+{{block.super}}
+<style>
+    /* ====== THEME GENTELELLA ====== */
+    :root {
+      --primary: #26B99A;
+      --primary-dark: #169F85;
+      --dark: #34495E;
+      --border: #E6E9ED;
+      --bg-light: #F7F7F7;
+      --text: #73879C;
+    }
+    /* ====== HEADER ====== */
+    .header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-container {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      float: left;
+      margin-right: 15px;
+    }
+
+    .logo-container i {
+      font-size: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    /* ====== PANELS ====== */
+    .custom-panel {
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: white;
+      margin-bottom: 15px;
+    }
+
+    .panel-heading {
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-light);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--dark);
+      margin: 0;
+    }
+
+    .panel-body {
+      padding: 15px;
+    }
+
+    /* ====== FORM ====== */
+    .add-form-container {
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 15px;
+    }
+
+    .form-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .form-control {
+      border-radius: 4px;
+      border-color: #CCD0D7;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: none;
+    }
+
+    /* ====== TABLE ====== */
+    .custom-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .custom-table th {
+      background: var(--bg-light);
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--dark);
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .custom-table td {
+      padding: 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+
+    .custom-table tbody tr:hover {
+      background: #F2F9F7;
+    }
+
+    .total-row {
+      background: #F0F8F6;
+      font-weight: 600;
+    }
+
+    /* ====== BUTTONS ====== */
+    .btn {
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .btn-default {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--dark);
+    }
+
+    /* ====== ACTIONS ====== */
+    .action-buttons-container {
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 18px;
+      }
+
+      .custom-table th,
+      .custom-table td {
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      .action-buttons-container .btn {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
+
+    /* Style pour la ligne principale */
+    .main-row:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    .main-row[aria-expanded="true"] {
+        background-color: #f1f4f7;
+    }
+
+    .main-row[aria-expanded="true"] .row-arrow {
+        transform: rotate(90deg);
+        transition: 0.2s;
+    }
+
+    /* Container des détails */
+    .detail-container {
+        padding: 10px 15px 15px 45px;
+        border-left: 3px solid #007bff; /* Accent bleu pour montrer le lien avec l'article */
+        background: #fdfdfd;
+    }
+
+    .bg-light { background-color: #fcfcfc !important; }
+
+    /* Supprimer les bordures doubles */
+    .detail-row td {
+        border-top: none !important;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="">
+        <div class="page-title">
+            <div class="title_left">
+                <h5>Transferts / Editer transfert </h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="x_panel">
+                <div class="headerx clearfix">
+                    <div class="logo-wrapper">
+                        <div class="logo-container pull-left">
+                            <i class="fa fa-exchange"></i>
+                        </div>
+                        <div class="header-text">
+                            <h1>Transfert de stock</h1>
+                            <p class="text-muted">Gestion des transferts</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default custom-panel">
+                    <div class="panel-heading compact">
+                        <div class="clearfix">
+                            <h5 class="panel-title pull-left"><i class="fa fa-info-circle"></i> Informations du transfert</h5>
+                            <a href="" class="btn btn-default btn-xs pull-right" id="btnModifier">
+                                <i class="fa fa-pencil"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="panel-body compact">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6">
+                                <div class="form-group row-spacing-sm">
+                                    <label class="control-label">N° Bon de transfert:</label>
+                                    <p class="form-control-static text-medium">{{ transfert.numero }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="form-group row-spacing-sm">
+                                    <label class="control-label">Magasin source:</label>
+                                    <p class="form-control-static text-medium">{{ transfert.magasin_source }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="form-group row-spacing-sm">
+                                    <label class="control-label">Magasin destination:</label>
+                                    <p class="form-control-static text-medium">{{ transfert.magasin_destination }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Section principale avec formulaire et tableau -->
+                <div class="panel panel-default custom-panel highlighted-panel">
+                    <div class="panel-heading">
+                        <h5 class="panel-title"><i class="fa fa-list-ul"></i> Détails du transfert</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row" id="formTableContainer">
+                            <!-- Formulaire d'ajout à gauche -->
+                            {% include "produits/transfert/partials/_form_container.html" %}
+                            <!-- Tableau à droite -->
+                            <div class="col-md-8">
+                                <div class="table-responsive" id="linesTableContainer">
+                                    {% include "produits/transfert/partials/_table.html" %}
+                                </div>
+                                <button type="button" class="btn btn-danger">
+                                    <i class="fa fa-file-pdf-o"></i>
+                                    Bon de transfert
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid text-right">
+                <a class="btn btn-primary" href="{% url 'transfert_save' transfert.pk %}">
+                    <i class="fa fa-save"></i>
+                    Valider transfert
+                </a>
+                <a class="btn btn-default" href="">
+                    <i class="fa fa-trash"></i>
+                    Annuler transfert
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(() => {
+        $('#transfert_stock').addClass('current-page');
+        $('#articles').addClass('active');
+        let parent = document.getElementById('articles');
+        parent.childNodes[2].style.display = 'block';
+    })
+</script>
+{% endblock content %}

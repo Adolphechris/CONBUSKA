@@ -1,0 +1,98 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Transferts stock {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>Transferts de stock</h5>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Historique des transferts de stock<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'transfert_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEAU TRANSFERT DE STOCK
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tableTransferts" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Numero</th>
+                                            <th class="column-title"> Date</th>
+                                            <th class="column-title"> Magasin source</th>
+                                            <th class="column-title"> Magasin destination</th>
+                                            <th class="column-title"> Articles</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for transfert in historique_transfert_stock %}
+                                        <tr>
+                                            <td>{{ transfert.numero }}</td>
+                                            <td>{{ transfert.date_creation }}</td>
+                                            <td>{{ transfert.magasin_source }}</td>
+                                            <td>{{ transfert.magasin_destination }}</td>
+                                            <td>{{ transfert.total_articles }}</td>
+                                            <td>
+                                                <a href="{% url 'transfert_details' transfert.pk %}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-eye"></i>
+                                                        Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var t = $('#tableTransferts').DataTable({
+                dom: '<"top">rflt<"bottom"p><"clear">',
+                paging: true,
+			    autoWidth: true,
+                columnDefs: [
+
+                ],
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                    "sLengthMenu":     "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst":    "Premier",
+                        "sLast":     "Dernier",
+                        "sNext":     "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                },
+            });
+        });
+    </script>
+{% endblock content %}
