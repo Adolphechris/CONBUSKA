@@ -16,6 +16,7 @@ class Parametre(models.Model):
     ville = models.CharField(max_length=30, blank=True, null=True)
     telephone = models.CharField(max_length=40, blank=True, null=True)
     email = models.EmailField(unique=True, blank=True, null=True)
+    taux = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     objects = models.Manager()
@@ -33,6 +34,7 @@ class Magasin(models.Model):
     description = models.TextField()
     is_principal = models.BooleanField(default=False)
     localisation = models.CharField(max_length=30)
+    objects = models.Manager()
 
     def __str__(self):
         return self.nom

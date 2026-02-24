@@ -20,6 +20,7 @@ class ParametresForm(forms.ModelForm):
             'ville': forms.TextInput(attrs={'class': 'form-control', 'disabled': True}),
             'telephone': forms.TextInput(attrs={'class': 'form-control', 'disabled': True}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'disabled': True}),
+            'taux': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Taux', 'disabled': True}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -45,6 +46,7 @@ class ParametresEditForm(forms.ModelForm):
             'ville': forms.TextInput(attrs={'class': 'form-control'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'taux': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Taux'}),
         }
 
 

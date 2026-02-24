@@ -36,6 +36,7 @@ class ParametresView(LoginRequiredMixin, FormView):
         initial['ville'] = params.ville
         initial['telephone'] = params.telephone
         initial['email'] = params.email
+        initial['taux'] = params.taux
         return initial
 
 
