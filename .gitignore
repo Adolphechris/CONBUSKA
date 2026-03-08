@@ -1,3 +1,4 @@
+.env
 logs/
 venv/
 media/
@@ -9,3 +10,4 @@ __pycache__/
 **/__pycache__/
 *~
 .~lock.*
+.pdf
