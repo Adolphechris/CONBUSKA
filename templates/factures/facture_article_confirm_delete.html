@@ -3,9 +3,10 @@
     <h5 class="modal-title">{{ title }}</h5>
 </div>
 <form method="POST"
-      hx-delete="{% url 'delete_article_facture' facture.pk object.pk %}"
+      hx-post="{% url 'delete_article_facture' facture.pk detail.pk %}"
       hx-target="#linesTableContainer"
-      hx-swap="outerHTML">
+      hx-swap="innerHTML"
+      hx-on="htmx:beforeRequest: console.log('HTMX POST triggered')">
     <div class="modal-body">
         {% csrf_token %}
         <p>{{ message }}</p>
@@ -14,6 +15,6 @@
         <button type="submit" class="btn btn-danger">
             <i class="{{ submit_icon }}"></i> {{ submit_label }}
         </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
     </div>
 </form>

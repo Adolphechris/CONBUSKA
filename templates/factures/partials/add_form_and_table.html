@@ -1,13 +1,13 @@
  <!-- Formulaire d'ajout d'articles amélioré -->
 <div class="content-sidebar">
     <!-- Information Card -->
-    {% if facture.facture_client %}
-        <div id="client-partial" hx-swap-oob="true">
+    <div id="client-partial">
+        {% if facture.facture_client %}
             {% include "factures/partials/facture_client_partial.html" %}
-        </div>
-    {% else %}
-        {% include "factures/partials/info_form.html" %}
-    {% endif %}
+        {% else %}
+            {% include "factures/partials/info_form.html" %}
+        {% endif %}
+    </div>
     <!-- Add Item Card -->
     <div class="card-premium add-item-card">
         <div class="card-header">
@@ -31,6 +31,6 @@
 </div>
 
 <!-- Main Content -->
-<div class="content-main">
+<div class="content-main" id="linesTableContainer">
     {% include "factures/partials/lines_table.html" %}
 </div>

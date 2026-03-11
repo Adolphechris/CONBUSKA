@@ -2,7 +2,6 @@ import decimal
 from django.db import models, transaction
 from django.urls import reverse
 from django.core.validators import MinValueValidator
-from produits.models import Stock, Magasin
 from django.db.models import Max, Count, Sum, F, DecimalField
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -17,11 +16,14 @@ class Livreur(models.Model):
 
 
 class FactureManager(models.Manager):
-    def ventes_journalieres(self):
+    def ventes_journalieres(self, date_debut=None, date_fin=None):
         today = timezone.now().date()
-        # premier_jour = today.replace(day=1)
+        if date_debut is None:
+            date_debut = today
+        if date_fin is None:
+            date_fin = today
         return (self.get_queryset()
-                .filter(date_facture__range=(today, today))
+                .filter(date_facture__range=(date_debut, date_fin))
                 .annotate(date=TruncDate('date_facture'))
                 .values('date')
                 .annotate(
@@ -61,7 +63,7 @@ class Facture(models.Model):
     objects = FactureManager()
 
     def __str__(self):
-        return self.numero
+        return str(self.numero)
 
     @property
     def sous_total(self):
@@ -85,11 +87,11 @@ class Facture(models.Model):
 
     @classmethod
     def get_next_num(cls):
-        last_num = cls.objects.aggregate(Max('numero'))['numero__max']
+        with transaction.atomic():
+            last_num = cls.objects.select_for_update().aggregate(Max("numero"))["numero__max"]
         if last_num:
             return last_num + 1
-        # Format de départ basé sur l’année : exemple 250000
-        return int(timezone.now().strftime('%y') + '0000')
+        return int(timezone.now().strftime("%y") + "0000")
 
     def save(self, *args, **kwargs):
         if self.numero is None:
@@ -113,114 +115,6 @@ class DetailsFacture(models.Model):
     @property
     def total(self):
         return self.qte * self.prix
-
-    @transaction.atomic
-    def add(self):
-        detail, created = DetailsFacture.objects.get_or_create(
-            facture=self.facture,
-            article=self.article,
-            defaults={
-                'qte': self.qte,
-                'prix': self.article.prix_vente,
-            }
-        )
-
-        if not created:
-            detail.qte += self.qte
-            detail.save()
-
-    @transaction.atomic
-    def update_facture(self):
-        old_details = DetailsFacture.objects.get(pk=self.pk)
-        old_article = old_details.article
-        old_qte = old_details.qte
-
-        # Valeurs modifiées
-        new_article = self.article
-        new_qte = self.qte
-
-        facture = self.facture
-        magasin = Magasin.objects.get(nom="Alimentation")
-
-        # Même article ➜ simple update
-        if old_article == new_article:
-            delta = old_qte - new_qte
-
-            # CAS 1 le delta est superieur à 0 -> Diminution de la quantite initiale
-            if delta > 0:
-                self.save()
-
-                get_lignes_facture = DetailsLigneFacture.objects.filter(detail_facture=old_details.pk).order_by("-date_peremption")
-                for i in get_lignes_facture:
-                    if delta >= i.qte:
-                        delta -= i.qte
-                        qte = i.qte
-                    else:
-                        qte = delta
-                        delta = 0
-
-                    i.qte -= qte
-                    if i.qte <= 0:
-                        i.delete()
-                    else:
-                        i.save()
-
-                    # Mise à jour du stock
-                    stock, stock_created = Stock.objects.get_or_create(
-                        magasin=magasin,
-                        article=old_article,
-                        date_peremption=i.date_peremption,
-                        defaults={'qte': qte}
-                    )
-
-                    if not stock_created:
-                        stock.qte += qte
-                        stock.save()
-            else:
-                self.qte = new_qte - old_qte
-                self.add()
-
-        else:
-            # Fusion avec ligne existante si elle existe
-            autre_detail = DetailsFacture.objects.filter(
-                facture=facture,
-                article=new_article,
-            ).exclude(pk=self.pk).first()
-
-            if autre_detail:
-                autre_detail.qte += new_qte
-                autre_detail.save()
-                self.delete()
-            else:
-                self.save()
-
-    @transaction.atomic
-    def delete_facture(self):
-        magasin = Magasin.objects.get(nom="Alimentation")
-        get_lignes_facture = DetailsLigneFacture.objects.filter(detail_facture=self.pk)
-        for i in get_lignes_facture:
-            print(i)
-            stock, stock_created = Stock.objects.get_or_create(
-                magasin=magasin,
-                article=i.article,
-                date_peremption=i.date_peremption,
-                defaults={'qte': i.qte}
-            )
-
-            if not stock_created:
-                stock.qte += i.qte
-                stock.save()
-
-            i.delete()
-        print('Finished')
-        self.delete()
-
-
-class DetailsLigneFacture(models.Model):
-    detail_facture = models.ForeignKey(DetailsFacture, on_delete=models.PROTECT, null=True)
-    qte = models.IntegerField()
-    date_peremption = models.DateField(blank=False, null=False)
-    date_creation = models.DateTimeField(auto_now_add=True)
 
 
 class FactureClient(models.Model):

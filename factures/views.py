@@ -1,51 +1,61 @@
 import decimal
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN, user_has_role
 from django.db import transaction
 from django.views.generic import ListView, DetailView, TemplateView, RedirectView, View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.template.loader import render_to_string
-from django.db.models import Min
+from django.db.models import Min, F
+from django.core.exceptions import PermissionDenied
 from .models import Facture, DetailsFacture, Livreur, FactureClient
 from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm, FactureClientForm
 from .services import FactureService
 import random
+from parametres.models import get_taux_usd_cdf
 
 
-class FacturesView(LoginRequiredMixin, ListView):
+class FacturesView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = Facture
     context_object_name = 'liste_factures'
     template_name = 'factures/factures.html'
+    ordering = ['-numero']
 
 
 class BaseFactureCreateMixin:
     """Mixin utilitaire pour créer une nouvelle facture avec un livreur aléatoire."""
 
     @staticmethod
+    @transaction.atomic
     def get_random_livreur():
         min_livraison = Livreur.objects.aggregate(Min('livraison'))['livraison__min']
-        livreurs = Livreur.objects.filter(livraison=min_livraison)
-        random_livreur = random.choice(list(livreurs))
-        random_livreur.livraison += 1
-        random_livreur.save()
+        livreurs = list(Livreur.objects.select_for_update().filter(livraison=min_livraison))
+        random_livreur = random.choice(livreurs)
+        Livreur.objects.filter(pk=random_livreur.pk).update(livraison=F('livraison') + 1)
         return random_livreur
+
+    def get_taux(self):
+        return get_taux_usd_cdf()
 
     def create_new_facture(self, user):
         """Crée une nouvelle facture avec un livreur choisi aléatoirement."""
         get_livreur = self.get_random_livreur()
         facture = Facture.objects.create(
             devise='FC',
-            taux=2800,
+            taux=self.get_taux(),
             livreur=get_livreur,
             cree_par=user,
         )
         return facture
 
 
-class FactureCreateView(LoginRequiredMixin, BaseFactureCreateMixin, RedirectView):
+class FactureCreateView(RoleRequiredMixin, BaseFactureCreateMixin, RedirectView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     """ Crée une facture brouillon non validée """
     permanent = False
     query_string = True
@@ -56,31 +66,62 @@ class FactureCreateView(LoginRequiredMixin, BaseFactureCreateMixin, RedirectView
         return reverse('facture_details', kwargs={'pk': facture.pk})
 
 
-class FactureValidateAndCreateView(LoginRequiredMixin, BaseFactureCreateMixin, View):
+class FactureValidateAndCreateView(RoleRequiredMixin, BaseFactureCreateMixin, View):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     """Valide la facture en cours et crée une nouvelle facture."""
 
-    def get(self, request, *args, **kwargs):
-        # On valide d'abord la facture actuelle
+    def post(self, request, *args, **kwargs):
         facture = get_object_or_404(Facture, pk=kwargs.get("pk"))
-        facture.valide = True
-        facture.save(update_fields=['valide'])
 
-        # On crée une nouvelle facture
+        try:
+            FactureService.valider(facture=facture, user=request.user)
+        except ValidationError as e:
+            return HttpResponse(str(e), status=400)
+
         new_facture = self.create_new_facture(self.request.user)
 
-        # Redirection vers la nouvelle facture
         response = HttpResponse()
         response["HX-Redirect"] = reverse('facture_details', kwargs={'pk': new_facture.pk})
         return response
 
+
+class FactureRemiseView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
+    """Met à jour la remise d'une facture."""
+
+    def post(self, request, pk):
+        facture = get_object_or_404(Facture, pk=pk)
+        remise = request.POST.get('remise', 0)
+
+        try:
+            remise = float(remise)
+        except ValueError:
+            remise = 0
+
+        # Met à jour la remise
+        facture.remise = decimal.Decimal(remise)
+        facture.save(update_fields=['remise'])
+
+        # Renvoie le fragment HTML mis à jour
+        return render(request, "factures/partials/facture_summary_partial.html", {"facture": facture})
+
+
+@login_required
 @require_GET
 def get_update_form(request, pk):
+    if not user_has_role(request.user, ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN):
+        raise PermissionDenied
     instance = get_object_or_404(DetailsFacture, pk=pk)
     form = ArticleFactureUpdateForm(instance=instance)
-    return render(request, "factures/partials/update_form.html",
-                  {"update_form": form, "facture_pk": instance.facture.pk, "detail_facture_pk": pk})
+    return render(request, "factures/partials/update_form.html", {
+        "update_form": form,
+        "facture_pk": instance.facture.pk,
+        "detail_facture_pk": pk,
+        "article_nom": instance.article.designation,
+    })
 
-class FactureDetailView(LoginRequiredMixin, DetailView):
+class FactureDetailView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = Facture
     context_object_name = 'facture'
     template_name = 'factures/facture_details.html'
@@ -88,7 +129,6 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(object=self.object)
-        print("FACTURE CLIENT ", self.object.numero)
         context['info_form'] = InfosFactureForm(instance=self.object)
         context['add_form'] = ArticleFactureAddForm()
         context['update_form'] = ArticleFactureUpdateForm(
@@ -97,23 +137,27 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
-        print(request.headers, request.headers.get('HX-Request'))
+        facture = self.get_object()
+
         if request.headers.get('HX-Request') == 'true':
             form_type = request.POST.get('form_type')
-            print(form_type)
+
             if form_type == 'add':
                 form = ArticleFactureAddForm(request.POST)
                 if form.is_valid():
-                    FactureService.ajouter_ou_modifier_article(
-                        facture=self.get_object(),
-                        article=form.cleaned_data['article'],
-                        qte=form.cleaned_data['qte']
-                    )
+                    try:
+                        FactureService.ajouter_article_facture(
+                            facture=facture,
+                            article=form.cleaned_data['article'],
+                            qte=form.cleaned_data['qte']
+                        )
+                    except ValidationError as e:
+                        return JsonResponse({'success': False, 'errors': {'stock': e.messages}}, status=400)
 
                     html = render_to_string("factures/partials/add_form_and_table.html", {
                         "add_form": ArticleFactureAddForm(),
                         "info_form": InfosFactureForm(),
-                        "facture": self.get_object(),
+                        "facture": facture,
                         "details_facture": self.get_details_facture()
                     }, request=request)
 
@@ -121,16 +165,21 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
             else:
-                print(request.POST.get('id'), "##################################")
                 instance = get_object_or_404(DetailsFacture, pk=request.POST.get('id'))
                 form = ArticleFactureUpdateForm(request.POST, instance=instance)
                 if form.is_valid():
-                    detail_facture = form.save(commit=False)
-                    detail_facture.update_facture()
+                    try:
+                        FactureService.modifier_article_facture(
+                            facture=facture,
+                            article=instance.article,  # article verrouillé — jamais modifiable
+                            qte_nouvelle=form.cleaned_data['qte']
+                        )
+                    except ValidationError as e:
+                        return JsonResponse({'success': False, 'errors': {'stock': e.messages}}, status=400)
 
                     html = render_to_string("factures/partials/add_form_and_table.html", {
                         "add_form": ArticleFactureAddForm(),
-                        "facture": self.get_object(),
+                        "facture": facture,
                         "info_form": InfosFactureForm(),
                         "details_facture": self.get_details_facture()
                     }, request=request)
@@ -150,63 +199,58 @@ class FactureDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class FactureRemiseView(View):
-    def post(self, request, pk):
-        facture = get_object_or_404(Facture, pk=pk)
-        remise = request.POST.get('remise', 0)
+class ArticleFactureDeleteView(RoleRequiredMixin, View):
 
-        try:
-            remise = float(remise)
-        except ValueError:
-            remise = 0
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
+    def get(self, request, facture_pk, pk):
+        facture = get_object_or_404(Facture, pk=facture_pk)
+        detail = get_object_or_404(DetailsFacture, pk=pk, facture=facture)
 
-        # Met à jour la remise
-        facture.remise = decimal.Decimal(remise)
-        facture.save(update_fields=['remise'])
+        context = {
+            "title": "Supprimer un article de la facture",
+            "message": f"Voulez-vous supprimer l'article {detail.article.designation} de la facture ?",
+            "submit_icon": "fa fa-check",
+            "submit_label": "Valider",
+            "facture": facture,
+            "detail": detail,
+        }
 
-        # Renvoie le fragment HTML mis à jour
-        return render(request, "factures/partials/facture_summary_partial.html", {"facture": facture})
+        return render(
+            request,
+            "factures/facture_article_confirm_delete.html",
+            context
+        )
 
+    def post(self, request, facture_pk, pk):
+        facture = get_object_or_404(Facture, pk=facture_pk)
+        detail = get_object_or_404(DetailsFacture, pk=pk, facture=facture)
 
-class ArticleFactureDeleteView(LoginRequiredMixin, DeleteView):
-    model = DetailsFacture
-    template_name = 'factures/facture_article_confirm_delete.html'
+        FactureService.supprimer_article_facture(
+            facture=facture,
+            article=detail.article,
+        )
 
-    def get_facture(self):
-        return get_object_or_404(Facture, pk=self.kwargs['facture_pk'])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = "Supprimer un article de la facture"
-        context['message'] = f"Voulez-vous supprimer l'article {self.object.article.designation} de la facture ?"
-        context['submit_icon'] = 'fa fa-check'
-        context['submit_label'] = 'Valider'
-        context['facture'] = self.get_facture()
-        return context
-
-    def get_success_url(self):
-        return reverse('facture_details', kwargs={'pk': self.object.pk})
-
-    @transaction.atomic
-    def delete(self, request, *args, **kwargs):
-        facture = self.object.facture
-        print('*** Called ')
-
-        # Mettre à jour le stock
-        self.object.delete_facture()
-
-        if request.headers.get('HX-Request') == 'true':
+        if request.headers.get("HX-Request"):
             details = DetailsFacture.objects.filter(facture=facture)
+
             context = {
-                'details_facture': details,
-                'facture': facture
+                "details_facture": details,
+                "facture": facture,
+                # "add_form": ArticleFactureAddForm(),
+                # "info_form": InfosFactureForm(),
             }
-            return render(request, "factures/partials/lines_table.html", context)
 
-        return redirect(self.get_success_url())
+            html = render_to_string('factures/partials/lines_table.html', context)
+
+            response = HttpResponse(html)
+            response["HX-Trigger"] = "closeMainModal"
+            return response
+
+        return redirect("facture_details", pk=facture.pk)
 
 
-class FactureInfosUpdateView(LoginRequiredMixin, UpdateView):
+class FactureInfosUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = Facture
     form_class = InfosFactureForm
     template_name = 'factures/partials/info_form.html'
@@ -235,7 +279,8 @@ class FactureInfosUpdateView(LoginRequiredMixin, UpdateView):
         return JsonResponse({'success': False, 'html': html})
 
 
-class FactureClientCreateView(LoginRequiredMixin, CreateView):
+class FactureClientCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = FactureClient
     template_name = 'factures/partials/facture_client_form.html'
     form_class = FactureClientForm
@@ -277,7 +322,8 @@ class FactureClientCreateView(LoginRequiredMixin, CreateView):
         })
 
 
-class FactureClientUpdateView(LoginRequiredMixin, UpdateView):
+class FactureClientUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = FactureClient
     template_name = 'factures/partials/facture_client_form.html'
     form_class = FactureClientForm
@@ -312,7 +358,8 @@ class FactureClientUpdateView(LoginRequiredMixin, UpdateView):
         })
 
 
-class FactureClientDeleteView(LoginRequiredMixin, DeleteView):
+class FactureClientDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     model = FactureClient
 
     def delete(self, request, *args, **kwargs):
@@ -327,7 +374,8 @@ class FactureClientDeleteView(LoginRequiredMixin, DeleteView):
         return HttpResponse(html)
 
 
-class FactureShowDetailsView(LoginRequiredMixin, TemplateView):
+class FactureShowDetailsView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
     template_name = 'factures/facture_show_details.html'
 
     def get_facture(self):
@@ -341,3 +389,37 @@ class FactureShowDetailsView(LoginRequiredMixin, TemplateView):
         context['facture'] = facture
         context['details_facture'] = details_facture
         return context
+
+
+class FactureDeleteView(RoleRequiredMixin, View):
+
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
+    def get(self, request, pk):
+        facture = get_object_or_404(Facture, pk=pk)
+
+        context = {
+            "title": "Suppression facture",
+            "message": f"Voulez-vous supprimer la facture {facture.numero} ?",
+            "submit_icon": "fa fa-check",
+            "submit_label": "Valider",
+            "facture": facture,
+        }
+
+        return render(
+            request,
+            "factures/facture_confirm_delete.html",
+            context
+        )
+
+    def post(self, request, pk):
+        facture = get_object_or_404(Facture, pk=pk)
+
+        FactureService.supprimer(facture=facture)
+
+        if request.headers.get("HX-Request"):
+            # Redirection vers la liste des factures
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse('factures')
+            return response
+
+        return redirect("factures")

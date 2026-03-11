@@ -83,10 +83,15 @@
                                                         <i class="fa fa-eye"></i>
                                                         Détails
                                                     </a>
-                                                    <a href="" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-eye"></i>
+                                                    <button class="btn btn-xs btn-danger" id="btnAnnuler"
+                                                            hx-get="{% url 'facture_delete' facture.pk %}"
+                                                            hx-target="#modalContent"
+                                                            hx-trigger="click"
+                                                            hx-swap="innerHTML"
+                                                    >
+                                                        <i class="fa fa-times-circle"></i>
                                                         Supprimer
-                                                    </a>
+                                                    </button>
                                                 </td>
 										    </tr>
 									    {% endfor %}
@@ -99,35 +104,54 @@
             </div>
         </div>
     </div>
-    <script>
-        $(document).ready(function () {
-            var t = $('#tableFactures').DataTable({
-                dom: '<"top">rflt<"bottom"p><"clear">',
-                paging: true,
-			    autoWidth: true,
-                columnDefs: [
 
-                ],
-                language: {
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "sLengthMenu":     "Afficher _MENU_ éléments",
-                    "sLoadingRecords": "Chargement...",
-                    "sProcessing": "Traitement...",
-                    "oPaginate": {
-                        "sFirst":    "Premier",
-                        "sLast":     "Dernier",
-                        "sNext":     "Suivant",
-                        "sPrevious": "Précédent"
-                    },
-                    "oAria": {
-                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
-                    }
+    <!-- Modal Bootstrap -->
+    <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="modalContent">
+          <!-- Le contenu HTMX (formulaire de confirmation) sera injecté ici -->
+        </div>
+      </div>
+    </div>
+
+<script>
+    $(document).ready(function () {
+        var t = $('#tableFactures').DataTable({
+            dom: '<"top">rflt<"bottom"p><"clear">',
+            paging: true,
+            autoWidth: true,
+            order: [],
+            columnDefs: [
+
+            ],
+            language: {
+                "sSearch": "Rechercher&nbsp;:",
+                "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                "sLengthMenu":     "Afficher _MENU_ éléments",
+                "sLoadingRecords": "Chargement...",
+                "sProcessing": "Traitement...",
+                "oPaginate": {
+                    "sFirst":    "Premier",
+                    "sLast":     "Dernier",
+                    "sNext":     "Suivant",
+                    "sPrevious": "Précédent"
                 },
-            });
+                "oAria": {
+                    "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
+                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                }
+            },
         });
-    </script>
+
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            const container = evt.target;
+
+            if (container.id === "modalContent") {
+                $('#mainModal').modal('show');
+            }
+        });
+    });
+</script>
 {% endblock content %}

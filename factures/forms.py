@@ -4,6 +4,7 @@ from factures.models import Facture, DetailsFacture, FactureClient
 from produits.models import Article, Stock
 from parametres.models import Magasin
 from clients.models import Client
+from utils.custom_field import ArticleChoiceField
 
 """
 class InfosFactureForm(forms.Form):
@@ -40,8 +41,8 @@ class InfosFactureForm(forms.ModelForm):
 
 
 class ArticleFactureAddForm(forms.ModelForm):
-    article = forms.ModelChoiceField(
-        queryset=Article.objects.all(),
+    article = ArticleChoiceField(
+        queryset=Article.objects.none(),
         empty_label="--- Sélectionner un article ---",
         widget = forms.Select(attrs={'class': 'form-control js-simple-select'}),
     )
@@ -52,12 +53,17 @@ class ArticleFactureAddForm(forms.ModelForm):
             'qte': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantité'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # On rafraîchit le queryset à chaque instanciation
+        self.fields['article'].queryset = Article.objects.with_stock().available().order_by('designation')
+
     def clean(self):
         cleaned_data = super().clean()
         article = cleaned_data.get("article")
         qte = cleaned_data.get("qte")
 
-        get_magasin = Magasin.objects.get(nom="Alimentation")
+        get_magasin = Magasin.objects.get(is_principal=True)
         stock = sum(i.qte for i in Stock.objects.filter(article=article.pk, magasin=get_magasin.pk))
 
         if qte > stock:
@@ -66,20 +72,25 @@ class ArticleFactureAddForm(forms.ModelForm):
 
 
 class ArticleFactureUpdateForm(forms.ModelForm):
+    """
+    Formulaire de modification d'une ligne de facture.
+    L'article est verrouillé sur l'instance existante — seule la quantité
+    est modifiable. Cela évite tout risque de doublon ou de delta stock erroné.
+    """
     class Meta:
         model = DetailsFacture
-        fields = ['article', 'qte']
+        fields = ['qte']
         widgets = {
-            'article': forms.Select(attrs={'class': 'form-control js-simple-select'}),
             'qte': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantité'}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
-        article = cleaned_data.get("article")
         qte = cleaned_data.get("qte")
+        # L'article est toujours celui de l'instance en base — non modifiable.
+        article = self.instance.article
 
-        get_magasin = Magasin.objects.get(nom="Alimentation")
+        get_magasin = Magasin.objects.get(is_principal=True)
         stock = sum(i.qte for i in Stock.objects.filter(article=article.pk, magasin=get_magasin.pk))
 
         if qte > stock:

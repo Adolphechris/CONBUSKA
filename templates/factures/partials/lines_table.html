@@ -1,3 +1,4 @@
+<div>
 <div class="card-premium invoice-table-card">
     <div class="card-header">
         <div class="card-title">
@@ -73,35 +74,46 @@
 
 <!-- Boutons d'action améliorés -->
 <div class="action-buttons-container">
-        <div class="row">
-            <div class="col-md-6 text-left">
-                <div class="btn-group">
-                    <button class="btn btn-danger" id="btnPdf">
-                        <i class="fa fa-file-pdf-o icon-space"></i>PDF
-                    </button>
-                    <button class="btn btn-warning" id="btnPrint">
-                        <i class="fa fa-print icon-space"></i>POS
-                    </button>
-                </div>
+    <div class="row">
+        <div class="col-md-6 text-left">
+            <div class="btn-group">
+                <button class="btn btn-danger" id="btnPdf">
+                    <i class="fa fa-file-pdf-o icon-space"></i>PDF
+                </button>
+                <button class="btn btn-warning" id="btnPrint">
+                    <i class="fa fa-print icon-space"></i>POS
+                </button>
             </div>
-            <div class="col-md-6 text-right">
-                <div class="btn-group">
+        </div>
+        <div class="col-md-6 text-right">
+            <div class="btn-group">
+                {% if not facture.valide %}
                     <button class="btn btn-default" id="btnBrouillon">
                         <a href="{% url 'facture_create' %}">
                             <i class="fa fa-save icon-space"></i> Enregistrer le brouillon
                         </a>
                     </button>
-                    <button hx-get="{% url 'validate_facture' facture.pk %}"
+                    <button hx-post="{% url 'validate_facture' facture.pk %}"
                             hx-target="body"
                             hx-swap="none"
                             class="btn btn-primary"
                             id="btnEnregistrer">
                         <i class="fa fa-check-circle icon-space"></i>Valider la facture
                     </button>
-                    <button class="btn btn-danger" id="btnAnnuler">
-                        <i class="fa fa-times-circle icon-space"></i>Annuler la facture
-                    </button>
-                </div>
+                {% endif %}
+                <a href="{% url 'factures' %}" class="btn btn-default" id="btnOk">
+                    <i class="fa fa-check icon-space"></i>OK
+                </a>
+                <button class="btn btn-danger" id="btnAnnuler"
+                        hx-get="{% url 'facture_delete' facture.pk %}"
+                        hx-target="#modalContent"
+                        hx-trigger="click"
+                        hx-swap="innerHTML"
+                >
+                    <i class="fa fa-times-circle icon-space"></i>Annuler la facture
+                </button>
             </div>
         </div>
     </div>
+</div>
+</div>
