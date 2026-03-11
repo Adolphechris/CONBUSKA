@@ -1,204 +1,379 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Rapport des caisses {% endblock title %}
-{% block stylesheets %}
-{{block.super}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-<style>
-    .panel-success .panel-heading {
-      background-color: #5cb85c;
-      color: white;
-    }
+{% block title %}Rapport des Caisses{% endblock %}
 
-    .form-inline .form-group {
-      margin-right: 15px;
-    }
+{% block stylesheets %}
+{{ block.super }}
+<style>
+.right_col { min-height: 100vh; }
+
+.report-header {
+    background: linear-gradient(135deg, #2A3F54 0%, #1a2a3a 100%);
+    color: #fff; padding: 22px 28px; border-radius: 8px; margin-bottom: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(42,63,84,0.3);
+}
+.report-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; color: #fff; }
+.report-header p  { margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); }
+
+.filter-bar {
+    background: #F8F9FA; border: 1px solid #E6E9ED; border-radius: 8px;
+    padding: 12px 18px; margin-bottom: 22px; display: flex; align-items: center;
+    gap: 12px; flex-wrap: wrap;
+}
+.filter-bar .drp-wrap { position: relative; flex: 1; min-width: 220px; }
+.filter-bar .drp-wrap .fa { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: #73879C; pointer-events: none; }
+.filter-bar .drp-wrap input { padding-left: 32px; border-radius: 5px; border: 1px solid #ddd; height: 34px; width: 100%; font-size: 13px; }
+.btn-filter { background: #2A3F54; color: #fff; border: none; border-radius: 5px; padding: 7px 18px; font-size: 13px; cursor: pointer; }
+.btn-filter:hover { background: #1f2e3e; color: #fff; }
+.btn-pdf { background: #E74C3C; color: #fff; border: none; border-radius: 5px; padding: 7px 14px; font-size: 12px; cursor: pointer; text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+.btn-pdf:hover { background: #C0392B; color: #fff; }
+
+/* KPI */
+.kpi-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #E6E9ED; border-left: 4px solid; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform .2s, box-shadow .2s; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.kpi-card.green  { border-left-color: #26B99A; }
+.kpi-card.red    { border-left-color: #E74C3C; }
+.kpi-card.blue   { border-left-color: #3498DB; }
+.kpi-card.dark   { border-left-color: #2A3F54; }
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #73879C; }
+.kpi-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.kpi-icon.green  { background: rgba(38,185,154,.12); color: #26B99A; }
+.kpi-icon.red    { background: rgba(231,76,60,.12);  color: #E74C3C; }
+.kpi-icon.blue   { background: rgba(52,152,219,.12); color: #3498DB; }
+.kpi-icon.dark   { background: rgba(42,63,84,.12);   color: #2A3F54; }
+.kpi-value { font-size: 22px; font-weight: 800; color: #2A3F54; margin: 0; line-height: 1.2; }
+.kpi-sub { font-size: 11px; color: #ADB5BD; margin-top: 4px; }
+
+/* Caisse cards */
+.caisse-cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+.caisse-card {
+    flex: 1; min-width: 200px; background: #fff; border-radius: 8px; padding: 16px 18px;
+    border: 1px solid #E6E9ED; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border-top: 3px solid;
+}
+.caisse-card:nth-child(1) { border-top-color: #3498DB; }
+.caisse-card:nth-child(2) { border-top-color: #9B59B6; }
+.caisse-card:nth-child(3) { border-top-color: #26B99A; }
+.caisse-card:nth-child(4) { border-top-color: #F39C12; }
+.caisse-card:nth-child(n+5) { border-top-color: #E74C3C; }
+.caisse-name { font-size: 12px; font-weight: 700; color: #73879C; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.caisse-solde { font-size: 20px; font-weight: 800; color: #2A3F54; }
+.caisse-meta { margin-top: 8px; display: flex; gap: 12px; }
+.caisse-meta span { font-size: 11px; }
+.caisse-meta .e { color: #26B99A; font-weight: 600; }
+.caisse-meta .s { color: #E74C3C; font-weight: 600; }
+
+/* Panel */
+.report-panel { background: #fff; border-radius: 8px; border: 1px solid #E6E9ED; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 24px; overflow: hidden; }
+.rp-header { padding: 14px 20px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+.rp-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: #2A3F54; display: flex; align-items: center; gap: 8px; }
+.rp-header h4 i { color: #3498DB; }
+.rp-body { padding: 20px; }
+.rp-body.p0 { padding: 0; }
+
+/* Table */
+.report-table thead th { background: #F5F7FA; color: #2A3F54; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #E6E9ED; padding: 11px 15px; }
+.report-table td { padding: 10px 15px; vertical-align: middle; font-size: 13px; border-bottom: 1px solid #F5F5F5; color: #2A3F54; }
+.report-table tbody tr:hover { background: #FAFBFC; }
+.report-table tbody tr:last-child td { border-bottom: none; }
+
+.badge-entree { background: rgba(38,185,154,.12); color: #169F85; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.badge-sortie { background: rgba(231,76,60,.12);  color: #C0392B; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+
+/* Synthèse footer */
+.synthese-box {
+    background: linear-gradient(135deg, #2A3F54, #1a2a3a);
+    color: #fff; border-radius: 8px; padding: 20px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+}
+.synthese-box .s-label { font-size: 12px; opacity: .7; }
+.synthese-box .s-value { font-size: 28px; font-weight: 800; color: #26B99A; }
+.synthese-box .s-note { font-size: 11px; opacity: .6; margin-top: 4px; }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-     <div class="right_col" role="main">
-         <div class="">
+<div class="right_col" role="main">
+<div class="container-fluid">
 
-    <!-- En-tête du module -->
-    <div class="page-title">
-      <div class="title_left">
-        <h3>Rapports des Caisses <small>Vue d'ensemble des mouvements et soldes</small></h3>
-      </div>
+    <!-- Header -->
+    <div class="report-header">
+        <div>
+            <h2><i class="fa fa-archive"></i> Rapport des Caisses</h2>
+            <p>Trésorerie et mouvements — {{ debut }} au {{ fin }}</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-pdf" id="btnPdf"><i class="fa fa-file-pdf-o"></i> Exporter PDF</button>
+        </div>
     </div>
-    <div class="clearfix"></div>
 
-    <!-- Résumé général -->
-    <div class="row top_tiles" style="margin: 10px 0;">
-      <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-        <div class="tile-stats">
-          <div class="icon"><i class="fa fa-archive"></i></div>
-          <div class="count">{{ total_caisses }}</div>
-          <h3>Caisses actives</h3>
-          <p>Nombre total de caisses en activité</p>
+    <!-- Filter bar -->
+    <div class="filter-bar">
+        <span style="font-size:12px;font-weight:600;color:#73879C;white-space:nowrap;">
+            <i class="fa fa-calendar"></i> Période :
+        </span>
+        <div class="drp-wrap">
+            <i class="fa fa-calendar-o"></i>
+            <input type="text" id="daterange" readonly>
         </div>
-      </div>
-      <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-        <div class="tile-stats">
-          <div class="icon"><i class="fa fa-arrow-circle-o-up"></i></div>
-          <div class="count">{{ total_entrees|floatformat:2 }}</div>
-          <h3>Total Entrées</h3>
-          <p>Somme des entrées de la période</p>
-        </div>
-      </div>
-      <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-        <div class="tile-stats">
-          <div class="icon"><i class="fa fa-arrow-circle-o-down"></i></div>
-          <div class="count">{{ total_sorties|floatformat:2 }}</div>
-          <h3>Total Sorties</h3>
-          <p>Somme des sorties de la période</p>
-        </div>
-      </div>
-      <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
-        <div class="tile-stats">
-          <div class="icon"><i class="fa fa-balance-scale"></i></div>
-          <div class="count">{{ solde_total|floatformat:2 }}</div>
-          <h3>Solde Final Global</h3>
-          <p>Solde cumulé de toutes les caisses</p>
-        </div>
-      </div>
+        <button class="btn-filter" id="btnAppliquer"><i class="fa fa-search"></i> Appliquer</button>
     </div>
+
+    <!-- KPI tiles -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card blue">
+                <div class="kpi-top">
+                    <span class="kpi-label">Caisses actives</span>
+                    <div class="kpi-icon blue"><i class="fa fa-archive"></i></div>
+                </div>
+                <div class="kpi-value">{{ total_caisses }}</div>
+                <div class="kpi-sub">Nombre de caisses enregistrées</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card green">
+                <div class="kpi-top">
+                    <span class="kpi-label">Total Entrées</span>
+                    <div class="kpi-icon green"><i class="fa fa-arrow-circle-down"></i></div>
+                </div>
+                <div class="kpi-value">{{ total_entrees|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-sub">Somme des entrées sur la période</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card red">
+                <div class="kpi-top">
+                    <span class="kpi-label">Total Sorties</span>
+                    <div class="kpi-icon red"><i class="fa fa-arrow-circle-up"></i></div>
+                </div>
+                <div class="kpi-value">{{ total_sorties|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-sub">Somme des sorties sur la période</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card dark">
+                <div class="kpi-top">
+                    <span class="kpi-label">Solde Net Période</span>
+                    <div class="kpi-icon dark"><i class="fa fa-balance-scale"></i></div>
+                </div>
+                <div class="kpi-value" style="{% if solde_total >= 0 %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
+                    {{ solde_total|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>
+                </div>
+                <div class="kpi-sub">Entrées − Sorties de la période</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solde par caisse -->
+    {% if solde_par_caisse %}
+    <div class="caisse-cards">
+        {% for c in solde_par_caisse %}
+        <div class="caisse-card">
+            <div class="caisse-name"><i class="fa fa-archive" style="margin-right:5px;"></i>{{ c.nom }}</div>
+            <div class="caisse-solde">{{ c.solde|floatformat:0 }} FC</div>
+            <div class="caisse-meta">
+                <span class="e"><i class="fa fa-arrow-down"></i> {{ c.entrees|floatformat:0 }}</span>
+                <span class="s"><i class="fa fa-arrow-up"></i> {{ c.sorties|floatformat:0 }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Graphiques -->
     <div class="row">
-      <!-- Graphique 1 : Évolution du solde -->
-      <div class="col-md-8 col-sm-8 col-xs-12">
-        <div class="x_panel">
-          <div class="x_title">
-            <h2>Évolution du solde des caisses <small>par jour</small></h2>
-            <div class="clearfix"></div>
-          </div>
-          <div class="x_content">
-            <canvas id="soldeEvolutionChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Graphique 2 : Répartition par caisse -->
-      <div class="col-md-4 col-sm-4 col-xs-12">
-        <div class="x_panel">
-          <div class="x_title">
-            <h2>Répartition du solde <small>par caisse</small></h2>
-            <div class="clearfix"></div>
-          </div>
-          <div class="x_content">
-            <canvas id="soldeParCaisseChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tableau détaillé des mouvements -->
-    <div class="row">
-      <div class="col-md-12 col-sm-12 col-xs-12">
-        <div class="x_panel">
-          <div class="x_title">
-            <h2>Historique des Mouvements <small>toutes caisses confondues</small></h2>
-            <ul class="nav navbar-right panel_toolbox">
-              <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
-              <li><a class="close-link"><i class="fa fa-close"></i></a></li>
-            </ul>
-            <div class="clearfix"></div>
-          </div>
-          <div class="x_content">
-            <table class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Caisse</th>
-                  <th>Type</th>
-                  <th>Rubrique</th>
-                  <th>Montant</th>
-                  <th>Motif</th>
-                  <th>Effectué par</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for mouvement in mouvements %}
-                <tr>
-                  <td>{{ mouvement.date_mouvement|date:"d/m/Y H:i" }}</td>
-                  <td>{{ mouvement.caisse.nom }}</td>
-                  <td>
-                    {% if mouvement.type_mouvement == 'ENTREE' %}
-                      <span class="label label-success">Entrée</span>
+        <div class="col-md-8">
+            <div class="report-panel">
+                <div class="rp-header">
+                    <h4><i class="fa fa-bar-chart"></i> Entrées vs Sorties par caisse</h4>
+                </div>
+                <div class="rp-body">
+                    {% if chart_labels %}
+                        <canvas id="chartCaisses" height="100"></canvas>
                     {% else %}
-                      <span class="label label-danger">Sortie</span>
+                        <p style="color:#ADB5BD;text-align:center;padding:20px;">Aucune donnée</p>
                     {% endif %}
-                  </td>
-                  <td>{{ mouvement.rubrique.nom }}</td>
-                  <td class="text-right">{{ mouvement.montant|floatformat:2 }}</td>
-                  <td>{{ mouvement.motif }}</td>
-                  <td>{{ mouvement.effectue_par }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7" class="text-center">Aucun mouvement trouvé pour la période sélectionnée.</td></tr>
-                {% endfor %}
-              </tbody>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="report-panel">
+                <div class="rp-header">
+                    <h4><i class="fa fa-pie-chart"></i> Répartition des soldes</h4>
+                </div>
+                <div class="rp-body">
+                    {% if chart_labels %}
+                        <canvas id="chartDoughnut"></canvas>
+                    {% else %}
+                        <p style="color:#ADB5BD;text-align:center;padding:20px;">Aucune donnée</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau mouvements -->
+    <div class="report-panel">
+        <div class="rp-header">
+            <h4><i class="fa fa-list-alt"></i> Historique des mouvements</h4>
+            <span style="font-size:11px;color:#ADB5BD;">{{ mouvements|length }} mouvement(s) — 300 max</span>
+        </div>
+        <div class="rp-body p0">
+            <table id="tableMovements" class="table report-table" style="margin:0;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Caisse</th>
+                        <th>Type</th>
+                        <th>Rubrique</th>
+                        <th class="text-right">Montant (FC)</th>
+                        <th>Motif</th>
+                        <th>Par</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in mouvements %}
+                    <tr>
+                        <td style="white-space:nowrap;color:#73879C;font-size:12px;">{{ m.date_mouvement|date:"d/m/Y H:i" }}</td>
+                        <td style="font-weight:500;">{{ m.caisse.caisse.nom }}</td>
+                        <td>
+                            {% if m.type_mouvement == 'ENTREE' %}
+                                <span class="badge-entree"><i class="fa fa-arrow-down"></i> Entrée</span>
+                            {% else %}
+                                <span class="badge-sortie"><i class="fa fa-arrow-up"></i> Sortie</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:#73879C;">{{ m.rubrique.nom }}</td>
+                        <td class="text-right" style="font-weight:700;{% if m.type_mouvement == 'ENTREE' %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
+                            {% if m.type_mouvement == 'ENTREE' %}+{% else %}−{% endif %}{{ m.montant|floatformat:0 }}
+                        </td>
+                        <td style="font-size:12px;color:#555;">{{ m.motif|truncatechars:40 }}</td>
+                        <td style="font-size:12px;color:#73879C;">{{ m.effectue_par }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center" style="padding:30px;color:#ADB5BD;">
+                        <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:8px;"></i>
+                        Aucun mouvement pour cette période
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
             </table>
-          </div>
         </div>
-      </div>
     </div>
 
-    <!-- Synthèse fin de journée -->
-    <div class="row">
-      <div class="col-md-12 col-sm-12 col-xs-12">
-        <div class="x_panel bg-info">
-          <div class="x_title">
-            <h2>Synthèse de clôture <small>fin de période</small></h2>
-            <div class="clearfix"></div>
-          </div>
-          <div class="x_content">
-            <h4>Somme totale des soldes finaux : <strong>{{ solde_total|floatformat:2 }}</strong></h4>
-            <p>Ce montant constituera le <strong>solde initial</strong> pour la période suivante.</p>
-          </div>
+    <!-- Synthèse clôture -->
+    <div class="synthese-box">
+        <div>
+            <div class="s-label">Solde net de la période (Entrées − Sorties)</div>
+            <div class="s-value">{{ solde_total|floatformat:0 }} FC</div>
+            <div class="s-note">Ce montant reflète le flux net de trésorerie sur la période sélectionnée.</div>
         </div>
-      </div>
+        <div style="text-align:right;">
+            <div class="s-label">Période analysée</div>
+            <div style="font-size:15px;font-weight:600;margin-top:4px;">{{ debut }} → {{ fin }}</div>
+        </div>
     </div>
 
-  </div>
 </div>
-<!-- /page content -->
+</div>
 
-<!-- Scripts pour les graphiques -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ chart_labels|json_script:"rapport-caisse-labels" }}
+{{ chart_entrees|json_script:"rapport-caisse-entrees" }}
+{{ chart_sorties|json_script:"rapport-caisse-sorties" }}
+{{ chart_soldes|json_script:"rapport-caisse-soldes" }}
 <script>
-  // Graphique d'évolution du solde
-  var ctx = document.getElementById("soldeEvolutionChart").getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Caisse Principale', 'Caisse secondaire 1', 'Caisse secondaire 2'],
-      datasets: [{
-        label: "Solde Journalier",
-        data: [100000, 250000, 150000],
-        borderColor: "#26B99A",
-        fill: false,
-        tension: 0.2
-      }]
-    },
-    options: { responsive: true, scales: { y: { beginAtZero: true } } }
-  });
+$(document).ready(function() {
+    $('#rapport_caisse').addClass('active');
 
-  // Graphique de répartition du solde par caisse
-  var ctx2 = document.getElementById("soldeParCaisseChart").getContext('2d');
-  new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-      labels: ['Caisse Principale', 'Caisse secondaire 1', 'Caisse secondaire 2'],
-      datasets: [{
-        data: [100000, 250000, 150000],
-        backgroundColor: ["#3498DB", "#9B59B6", "#26B99A", "#F39C12", "#E74C3C"]
-      }]
-    },
-    options: { responsive: true }
-  });
+    $('#daterange').daterangepicker({
+        startDate: moment('{{ debut }}'),
+        endDate:   moment('{{ fin }}'),
+        locale: { format: 'DD/MM/YYYY', applyLabel: 'OK', cancelLabel: 'Annuler',
+                  monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'] },
+        ranges: {
+            "Aujourd'hui"  : [moment(), moment()],
+            'Hier'         : [moment().subtract(1,'days'), moment().subtract(1,'days')],
+            '7 derniers j' : [moment().subtract(6,'days'), moment()],
+            '30 derniers j': [moment().subtract(29,'days'), moment()],
+            'Ce mois'      : [moment().startOf('month'), moment().endOf('month')],
+            'Mois dernier' : [moment().subtract(1,'month').startOf('month'), moment().subtract(1,'month').endOf('month')]
+        }
+    });
+
+    $('#btnAppliquer').click(function() {
+        var drp = $('#daterange').data('daterangepicker');
+        window.location.href = '?debut=' + drp.startDate.format('YYYY-MM-DD') + '&fin=' + drp.endDate.format('YYYY-MM-DD');
+    });
+
+    $('#btnPdf').click(function() {
+        var drp = $('#daterange').data('daterangepicker');
+        var d = drp.startDate.format('YYYY-MM-DD');
+        var f = drp.endDate.format('YYYY-MM-DD');
+        location.href = '{% url "export_rapport_caisse_pdf" %}?debut=' + d + '&fin=' + f;
+    });
+
+    {% if chart_labels %}
+    var chartLabels = JSON.parse(document.getElementById('rapport-caisse-labels').textContent);
+    var chartEntrees = JSON.parse(document.getElementById('rapport-caisse-entrees').textContent);
+    var chartSorties = JSON.parse(document.getElementById('rapport-caisse-sorties').textContent);
+    var chartSoldes = JSON.parse(document.getElementById('rapport-caisse-soldes').textContent);
+    var COLORS = ['#3498DB','#9B59B6','#26B99A','#F39C12','#E74C3C','#1ABC9C','#E67E22'];
+
+    // Bar chart entrées vs sorties
+    new Chart(document.getElementById('chartCaisses').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                { label: 'Entrées', data: chartEntrees, backgroundColor: 'rgba(38,185,154,0.7)', borderColor: '#26B99A', borderWidth: 1, borderRadius: 4 },
+                { label: 'Sorties', data: chartSorties, backgroundColor: 'rgba(231,76,60,0.7)',  borderColor: '#E74C3C', borderWidth: 1, borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
+                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR'); } } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Doughnut soldes
+    new Chart(document.getElementById('chartDoughnut').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: chartSoldes,
+                backgroundColor: COLORS,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } },
+            cutout: '65%'
+        }
+    });
+    {% endif %}
+
+    // DataTable
+    if ($('#tableMovements tbody tr td').length && !$('#tableMovements tbody tr td[colspan]').length) {
+        $('#tableMovements').DataTable({
+            dom: 'rflt<"bottom"p>',
+            pageLength: 25,
+            order: [[0, 'desc']],
+            language: { sSearch: 'Rechercher :', sZeroRecords: 'Aucun résultat', sEmptyTable: 'Aucun mouvement', oPaginate: { sNext:'Suivant', sPrevious:'Précédent' } }
+        });
+    }
+});
 </script>
-
-{% endblock content %}
+{% endblock %}

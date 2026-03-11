@@ -1,0 +1,245 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Rapport des Commandes{% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+.right_col { min-height: 100vh; }
+
+.report-header {
+    background: linear-gradient(135deg, #2A3F54 0%, #1a2a38 100%);
+    color: #fff; padding: 22px 28px; border-radius: 8px; margin-bottom: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(42,63,84,0.4);
+}
+.report-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; color: #fff; }
+.report-header p  { margin: 0; font-size: 12px; color: rgba(255,255,255,0.65); }
+
+.btn-pdf  { background: #E74C3C; color: #fff; border: none; border-radius: 5px; padding: 8px 16px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn-pdf:hover  { background: #C0392B; color: #fff; }
+
+/* KPI */
+.kpi-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #E6E9ED; border-left: 4px solid; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform .2s, box-shadow .2s; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.kpi-card.navy   { border-left-color: #2A3F54; }
+.kpi-card.red    { border-left-color: #E74C3C; }
+.kpi-card.orange { border-left-color: #F39C12; }
+.kpi-card.blue   { border-left-color: #3498DB; }
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #73879C; }
+.kpi-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.kpi-icon.navy   { background: rgba(42,63,84,.1);    color: #2A3F54; }
+.kpi-icon.red    { background: rgba(231,76,60,.12);  color: #E74C3C; }
+.kpi-icon.orange { background: rgba(243,156,18,.12); color: #F39C12; }
+.kpi-icon.blue   { background: rgba(52,152,219,.12); color: #3498DB; }
+.kpi-value { font-size: 24px; font-weight: 800; color: #2A3F54; margin: 0; line-height: 1.2; }
+.kpi-sub { font-size: 11px; color: #ADB5BD; margin-top: 4px; }
+
+/* Panel */
+.report-panel { background: #fff; border-radius: 8px; border: 1px solid #E6E9ED; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 24px; overflow: hidden; }
+.rp-header { padding: 14px 20px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+.rp-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: #2A3F54; display: flex; align-items: center; gap: 8px; }
+.rp-header h4 i { color: #2A3F54; }
+.rp-body { padding: 20px; }
+.rp-body.p0 { padding: 0; }
+
+/* Table */
+.report-table thead th {
+    background: #F5F7FA; color: #2A3F54; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #E6E9ED;
+    padding: 11px 12px; white-space: nowrap;
+}
+.report-table td { padding: 10px 12px; vertical-align: middle; font-size: 13px; border-bottom: 1px solid #F5F5F5; color: #2A3F54; }
+.report-table tbody tr:hover { background: #FAFBFC; }
+.report-table tbody tr:last-child td { border-bottom: none; }
+.report-table td.num { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Badges urgence */
+.badge-urgence { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-critique { background: #FDEDEC; color: #C0392B; }
+.badge-alerte   { background: #FEF9E7; color: #D68910; }
+.badge-ok       { background: #EAFAF1; color: #1E8449; }
+.badge-none     { background: #F2F3F4; color: #95A5A6; }
+
+/* Colonne jours : indicateur visuel */
+.jours-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.jours-bar { flex: 1; height: 5px; background: #F0F0F0; border-radius: 3px; max-width: 60px; overflow: hidden; }
+.jours-bar-fill { height: 100%; border-radius: 3px; }
+
+/* Legend */
+.legend-box { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 20px; background: #F8F9FA; border-top: 1px solid #F0F0F0; font-size: 12px; color: #73879C; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="report-header">
+        <div>
+            <h2><i class="fa fa-shopping-basket"></i> Rapport des Commandes</h2>
+            <p>Suggestions de commande basées sur l'écoulement des 30 derniers jours (couverture : 12,5 jours)</p>
+        </div>
+        <a href="{% url 'export_bon_commande_pdf' %}" class="btn-pdf" target="_blank">
+            <i class="fa fa-file-pdf-o"></i> Exporter bon de commande PDF
+        </a>
+    </div>
+
+    <!-- KPI tiles -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card navy">
+                <div class="kpi-top">
+                    <span class="kpi-label">Articles à commander</span>
+                    <div class="kpi-icon navy"><i class="fa fa-list-ol"></i></div>
+                </div>
+                <div class="kpi-value">{{ nb_articles }}</div>
+                <div class="kpi-sub">Articles avec qté suggérée > 0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card red">
+                <div class="kpi-top">
+                    <span class="kpi-label">Critique (&le; 5 jours)</span>
+                    <div class="kpi-icon red"><i class="fa fa-exclamation-triangle"></i></div>
+                </div>
+                <div class="kpi-value" style="{% if nb_critique > 0 %}color:#E74C3C{% endif %}">{{ nb_critique }}</div>
+                <div class="kpi-sub">Stock pour 5 jours ou moins</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card orange">
+                <div class="kpi-top">
+                    <span class="kpi-label">Alerte (6 – 12 jours)</span>
+                    <div class="kpi-icon orange"><i class="fa fa-bell"></i></div>
+                </div>
+                <div class="kpi-value" style="{% if nb_alerte > 0 %}color:#F39C12{% endif %}">{{ nb_alerte }}</div>
+                <div class="kpi-sub">Stock pour 6 à 12 jours</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card blue">
+                <div class="kpi-top">
+                    <span class="kpi-label">Valeur totale estimée</span>
+                    <div class="kpi-icon blue"><i class="fa fa-money"></i></div>
+                </div>
+                <div class="kpi-value">{{ total_estime|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-sub">Coût d'achat estimé de la commande</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des suggestions -->
+    <div class="report-panel">
+        <div class="rp-header">
+            <h4><i class="fa fa-table"></i> Suggestions de commande par article</h4>
+            <span style="font-size:11px;color:#ADB5BD;">{{ rows|length }} article(s) — trié par urgence</span>
+        </div>
+        <div class="rp-body p0" style="overflow-x:auto;">
+            <table id="tableCommandes" class="table report-table" style="margin:0;">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Fournisseur</th>
+                        <th>Unité</th>
+                        <th class="text-right">Stock actuel</th>
+                        <th class="text-right">Écoul. 30j</th>
+                        <th class="text-right">Écoul./jour</th>
+                        <th>Jours restants</th>
+                        <th class="text-right">Qté suggérée</th>
+                        <th class="text-right">Total estimé (FC)</th>
+                        <th>Urgence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td style="font-weight:600;">{{ r.designation }}</td>
+                        <td style="font-size:12px;color:#73879C;">{{ r.fournisseur }}</td>
+                        <td style="font-size:12px;">{{ r.unite }}</td>
+                        <td class="num">{{ r.stock_actuel }}</td>
+                        <td class="num">{{ r.ecoul_30j }}</td>
+                        <td class="num" style="color:#73879C;">{{ r.ecoul_par_jour }}</td>
+                        <td>
+                            {% if r.jours_restants is not None %}
+                            <div class="jours-bar-wrap">
+                                <div class="jours-bar">
+                                    <div class="jours-bar-fill" style="width:{% if r.jours_restants > 30 %}100{% else %}{{ r.jours_restants|floatformat:0 }}{% endif %}%;background:{% if r.urgence == 'critique' %}#E74C3C{% elif r.urgence == 'alerte' %}#F39C12{% else %}#26B99A{% endif %};"></div>
+                                </div>
+                                <span style="font-size:12px;font-weight:700;color:{% if r.urgence == 'critique' %}#E74C3C{% elif r.urgence == 'alerte' %}#D68910{% else %}#1E8449{% endif %};">
+                                    {{ r.jours_restants }}j
+                                </span>
+                            </div>
+                            {% else %}
+                            <span style="color:#ADB5BD;font-size:12px;">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="num" style="color:#2A3F54;font-size:14px;">
+                            {% if r.qte_suggere > 0 %}
+                                <strong>{{ r.qte_suggere }}</strong>
+                            {% else %}
+                                <span style="color:#ADB5BD;">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="num">
+                            {% if r.total_estime > 0 %}{{ r.total_estime|floatformat:0 }}{% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if r.urgence == 'critique' %}
+                                <span class="badge-urgence badge-critique"><i class="fa fa-exclamation-triangle"></i> Critique</span>
+                            {% elif r.urgence == 'alerte' %}
+                                <span class="badge-urgence badge-alerte"><i class="fa fa-bell"></i> Alerte</span>
+                            {% elif r.urgence == 'ok' %}
+                                <span class="badge-urgence badge-ok"><i class="fa fa-check"></i> OK</span>
+                            {% else %}
+                                <span class="badge-urgence badge-none">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center" style="padding:40px;color:#ADB5BD;">
+                            <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;"></i>
+                            Aucun article n'a été vendu sur les 30 derniers jours
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Légende -->
+        <div class="legend-box">
+            <span><span class="legend-dot" style="background:#E74C3C;"></span><strong>Critique</strong> : stock ≤ 5 jours</span>
+            <span><span class="legend-dot" style="background:#F39C12;"></span><strong>Alerte</strong> : 6 à 12 jours</span>
+            <span><span class="legend-dot" style="background:#26B99A;"></span><strong>OK</strong> : > 12 jours</span>
+            <span><span class="legend-dot" style="background:#BDC3C7;"></span><strong>—</strong> : aucun écoulement (pas de ventes sur 30j)</span>
+            <span style="margin-left:auto;"><i class="fa fa-info-circle"></i> Qté suggérée = écoulement/jour × 12,5 jours</span>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#rapport_commande').addClass('active');
+
+    if ($('#tableCommandes tbody tr td').length && !$('#tableCommandes tbody tr td[colspan]').length) {
+        $('#tableCommandes').DataTable({
+            dom: 'rflt<"bottom"p>',
+            pageLength: 25,
+            order: [],   // respect l'ordre serveur (urgence)
+            language: {
+                sSearch: 'Rechercher :', sZeroRecords: 'Aucun résultat',
+                sEmptyTable: 'Aucune donnée',
+                oPaginate: { sNext: 'Suivant', sPrevious: 'Précédent' }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

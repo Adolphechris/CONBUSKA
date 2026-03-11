@@ -1,126 +1,371 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Rapport des articles {% endblock title %}
+{% block title %}Rapport des Articles{% endblock %}
+
 {% block stylesheets %}
-{{block.super}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+{{ block.super }}
 <style>
-    .panel-success .panel-heading {
-      background-color: #5cb85c;
-      color: white;
-    }
-    .form-inline .form-group {
-      margin-right: 15px;
-    }
+.right_col { min-height: 100vh; }
+
+.report-header {
+    background: linear-gradient(135deg, #F39C12 0%, #D68910 100%);
+    color: #fff; padding: 22px 28px; border-radius: 8px; margin-bottom: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(243,156,18,0.3);
+}
+.report-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; color: #fff; }
+.report-header p  { margin: 0; font-size: 12px; color: rgba(255,255,255,0.75); }
+.report-header-badge {
+    background: rgba(255,255,255,0.2); border-radius: 6px;
+    padding: 6px 14px; font-size: 13px; font-weight: 600; color: #fff;
+}
+
+/* KPI */
+.kpi-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #E6E9ED; border-left: 4px solid; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform .2s, box-shadow .2s; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.kpi-card.orange { border-left-color: #F39C12; }
+.kpi-card.blue   { border-left-color: #3498DB; }
+.kpi-card.green  { border-left-color: #26B99A; }
+.kpi-card.purple { border-left-color: #9B59B6; }
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #73879C; }
+.kpi-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.kpi-icon.orange { background: rgba(243,156,18,.12); color: #F39C12; }
+.kpi-icon.blue   { background: rgba(52,152,219,.12); color: #3498DB; }
+.kpi-icon.green  { background: rgba(38,185,154,.12); color: #26B99A; }
+.kpi-icon.purple { background: rgba(155,89,182,.12); color: #9B59B6; }
+.kpi-value { font-size: 22px; font-weight: 800; color: #2A3F54; margin: 0; line-height: 1.2; }
+.kpi-sub { font-size: 11px; color: #ADB5BD; margin-top: 4px; }
+
+/* Panel */
+.report-panel { background: #fff; border-radius: 8px; border: 1px solid #E6E9ED; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 24px; overflow: hidden; }
+.rp-header { padding: 14px 20px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+.rp-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: #2A3F54; display: flex; align-items: center; gap: 8px; }
+.rp-header h4 i { color: #F39C12; }
+.rp-body { padding: 20px; }
+.rp-body.p0 { padding: 0; }
+
+/* Table */
+.report-table { width: 100%; border-collapse: collapse; }
+.report-table thead th {
+    background: #F5F7FA; color: #2A3F54; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px; padding: 10px 10px;
+    border-bottom: 2px solid #E6E9ED; white-space: nowrap;
+}
+.report-table thead th.group-header {
+    text-align: center; font-size: 10px; font-weight: 700; background: #EFF2F7;
+    border-bottom: 2px solid #E6E9ED; padding: 8px 10px;
+}
+.report-table thead th.group-orange { background: rgba(243,156,18,.08); color: #D68910; border-bottom-color: #F39C12; }
+.report-table thead th.group-blue   { background: rgba(52,152,219,.08);  color: #2980B9; border-bottom-color: #3498DB; }
+.report-table thead th.group-green  { background: rgba(38,185,154,.08);  color: #169F85; border-bottom-color: #26B99A; }
+.report-table thead th.group-purple { background: rgba(155,89,182,.08);  color: #8E44AD; border-bottom-color: #9B59B6; }
+.report-table td { padding: 9px 10px; vertical-align: middle; font-size: 12px; border-bottom: 1px solid #F5F5F5; color: #2A3F54; }
+.report-table tbody tr:hover { background: #FAFBFC; }
+.report-table tbody tr:last-child td { border-bottom: none; }
+.report-table td.num { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.report-table td.pct { text-align: right; color: #73879C; font-size: 11px; }
+
+/* Mini progress bar inline */
+.pct-inline { display: flex; align-items: center; gap: 5px; justify-content: flex-end; }
+.pct-pill { height: 5px; border-radius: 3px; flex-shrink: 0; }
+.pct-pill.orange { background: rgba(243,156,18,.5); }
+.pct-pill.blue   { background: rgba(52,152,219,.5); }
+.pct-pill.green  { background: rgba(38,185,154,.5); }
+.pct-pill.purple { background: rgba(155,89,182,.5); }
+.pct-text { font-size: 11px; color: #73879C; white-space: nowrap; width: 36px; text-align: right; }
+
+/* Info note */
+.info-note {
+    background: #EBF5FB; border-left: 4px solid #3498DB; border-radius: 0 6px 6px 0;
+    padding: 10px 16px; margin-bottom: 20px; font-size: 12px; color: #1A5276;
+    display: flex; align-items: center; gap: 10px;
+}
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-     <div class="right_col" role="main">
-         <div class="">
-             <div class="page-title">
-                <div class="title_left">
-                    <h5>Rapport des articles</h5>
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="report-header">
+        <div>
+            <h2><i class="fa fa-tags"></i> Rapport des Articles</h2>
+            <p>Stock, chiffre d'affaires, résultat et rotation — 30 derniers jours</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <div class="report-header-badge">{{ nb_articles }} article(s)</div>
+            <a href="{% url 'export_rapport_articles_pdf' %}" class="btn-pdf" target="_blank">
+                <i class="fa fa-file-pdf-o"></i> Exporter PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI tiles -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card orange">
+                <div class="kpi-top">
+                    <span class="kpi-label">Valeur totale du stock</span>
+                    <div class="kpi-icon orange"><i class="fa fa-cubes"></i></div>
+                </div>
+                <div class="kpi-value">{{ total_valeur_stock|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-sub">Aux prix de vente actuels (tous magasins)</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card blue">
+                <div class="kpi-top">
+                    <span class="kpi-label">CA 30 derniers jours</span>
+                    <div class="kpi-icon blue"><i class="fa fa-shopping-cart"></i></div>
+                </div>
+                <div class="kpi-value">{{ ca_total_30j|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-sub">Chiffre d'affaires sur 30j</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card green">
+                <div class="kpi-top">
+                    <span class="kpi-label">Résultat 30j</span>
+                    <div class="kpi-icon green"><i class="fa fa-line-chart"></i></div>
+                </div>
+                <div class="kpi-value" style="{% if resultat_total_30j >= 0 %}color:#26B99A{% else %}color:#E74C3C{% endif %}">
+                    {{ resultat_total_30j|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>
+                </div>
+                <div class="kpi-sub">Bénéfice net sur les ventes 30j</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card purple">
+                <div class="kpi-top">
+                    <span class="kpi-label">Articles suivis</span>
+                    <div class="kpi-icon purple"><i class="fa fa-list"></i></div>
+                </div>
+                <div class="kpi-value">{{ nb_articles }}</div>
+                <div class="kpi-sub">Avec stock ou ventes sur 30j</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row">
+        <div class="col-md-7">
+            <div class="report-panel">
+                <div class="rp-header">
+                    <h4><i class="fa fa-bar-chart"></i> Top 10 — Valeur en stock</h4>
+                </div>
+                <div class="rp-body">
+                    {% if chart_labels %}
+                        <canvas id="chartValeur" height="120"></canvas>
+                    {% else %}
+                        <p style="color:#ADB5BD;text-align:center;padding:30px;">Aucune donnée de stock disponible</p>
+                    {% endif %}
                 </div>
             </div>
-             <div class="row">
-                 <!-- Filtres -->
-  <form class="form-inline" style="margin-bottom: 20px;">
-    <div class="form-group">
-      <label for="startDate">Date de début</label>
-      <input type="date" class="form-control" id="startDate" name="start_date">
+        </div>
+        <div class="col-md-5">
+            <div class="report-panel">
+                <div class="rp-header">
+                    <h4><i class="fa fa-pie-chart"></i> Répartition CA 30j</h4>
+                </div>
+                <div class="rp-body">
+                    {% if chart_labels %}
+                        <canvas id="chartCA"></canvas>
+                    {% else %}
+                        <p style="color:#ADB5BD;text-align:center;padding:30px;">Aucune vente sur la période</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-      <label for="endDate">Date de fin</label>
-      <input type="date" class="form-control" id="endDate" name="end_date">
-    </div>
-    <button type="submit" class="btn btn-primary">Filtrer</button>
-  </form>
 
-  <!-- Valeur totale du stock -->
-  <div class="panel panel-primary">
-    <div class="panel-heading">
-      <h4 class="panel-title">Valeur totale du stock actuel</h4>
+    <!-- Note méthodologique -->
+    <div class="info-note">
+        <i class="fa fa-info-circle" style="flex-shrink:0;"></i>
+        <span>
+            <strong>Méthodologie :</strong> La <em>moyenne journalière stock</em> est calculée sur les 30 derniers jours calendaires
+            par reconstruction du stock historique depuis le ledger de mouvements (stock actuel − delta cumulé par jour).
+            Le <em>résultat</em> est basé sur <code>(prix vente facture − prix achat article) × quantité</code>.
+        </span>
     </div>
-    <div class="panel-body">
-      <h3><strong>1 250 000 FC</strong></h3>
-      <p>Calculé sur la base des prix de vente au détail</p>
-    </div>
-  </div>
 
-  <!-- Graphique -->
-  <div class="panel panel-default">
-    <div class="panel-heading">Top 5 des articles selon la valeur en stock</div>
-    <div class="panel-body">
-      <canvas id="articlesChart" height="80"></canvas>
-    </div>
-  </div>
+    <!-- Tableau détaillé -->
+    <div class="report-panel">
+        <div class="rp-header">
+            <h4><i class="fa fa-table"></i> Détail par article</h4>
+            <span style="font-size:11px;color:#ADB5BD;">{{ articles_data|length }} ligne(s) — trié par valeur stock ↓</span>
+        </div>
+        <div class="rp-body p0" style="overflow-x:auto;">
+            <table id="tableArticles" class="report-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="vertical-align:middle;min-width:160px;">Article</th>
+                        <th colspan="2" class="group-header group-orange">Valeur en Stock</th>
+                        <th colspan="2" class="group-header group-blue">CA mensuel (30j)</th>
+                        <th colspan="2" class="group-header group-green">Résultat (30j)</th>
+                        <th colspan="2" class="group-header group-purple">Moy. journalière stock</th>
+                    </tr>
+                    <tr>
+                        <th class="group-orange" style="text-align:right;">Montant (FC)</th>
+                        <th class="group-orange" style="text-align:right;">% stock</th>
+                        <th class="group-blue"   style="text-align:right;">Montant (FC)</th>
+                        <th class="group-blue"   style="text-align:right;">% CA</th>
+                        <th class="group-green"  style="text-align:right;">Montant (FC)</th>
+                        <th class="group-green"  style="text-align:right;">% résultat</th>
+                        <th class="group-purple" style="text-align:right;">Moy. (FC)</th>
+                        <th class="group-purple" style="text-align:right;">% stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in articles_data %}
+                    <tr>
+                        <td style="font-weight:600;">{{ a.designation }}</td>
 
-  <!-- Détail par article -->
-  <div class="panel panel-default">
-    <div class="panel-heading">Détails par article</div>
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead>
-          <tr class="info">
-            <th rowspan="2">Article</th>
-            <th colspan="2" class="text-center">Valeur en Stock</th>
-            <th colspan="2" class="text-center">Chiffre d’affaires (30j)</th>
-            <th colspan="2" class="text-center">Résultat (30j)</th>
-            <th colspan="2" class="text-center">Moyenne journalière stockée</th>
-          </tr>
-          <tr>
-            <th>Montant (FC)</th><th>% du stock</th>
-            <th>Montant (FC)</th><th>% du CA</th>
-            <th>Montant (FC)</th><th>% du Résultat</th>
-            <th>Moyenne (FC)</th><th>% du stock total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Coca-Cola</td>
-            <td>150 000</td><td>12%</td>
-            <td>90 000</td><td>18%</td>
-            <td>30 000</td><td>25%</td>
-            <td>145 000</td><td>11.6%</td>
-          </tr>
-          <tr>
-            <td>Savon OMO</td>
-            <td>120 000</td><td>9.6%</td>
-            <td>75 000</td><td>15%</td>
-            <td>22 000</td><td>18%</td>
-            <td>125 000</td><td>10%</td>
-          </tr>
-          <!-- autres articles -->
-        </tbody>
-      </table>
+                        <td class="num" style="color:#D68910;">{{ a.valeur_stock|floatformat:0 }}</td>
+                        <td class="pct">
+                            <div class="pct-inline">
+                                <div class="pct-pill orange" style="width:{{ a.pct_stock }}px;max-width:50px;"></div>
+                                <span class="pct-text">{{ a.pct_stock }}%</span>
+                            </div>
+                        </td>
+
+                        <td class="num" style="color:#2980B9;">{{ a.ca_30j|floatformat:0 }}</td>
+                        <td class="pct">
+                            <div class="pct-inline">
+                                <div class="pct-pill blue" style="width:{{ a.pct_ca }}px;max-width:50px;"></div>
+                                <span class="pct-text">{{ a.pct_ca }}%</span>
+                            </div>
+                        </td>
+
+                        <td class="num" style="{% if a.resultat_30j >= 0 %}color:#169F85{% else %}color:#E74C3C{% endif %}">
+                            {% if a.resultat_30j >= 0 %}+{% endif %}{{ a.resultat_30j|floatformat:0 }}
+                        </td>
+                        <td class="pct">
+                            <div class="pct-inline">
+                                <div class="pct-pill green" style="width:{{ a.pct_resultat }}px;max-width:50px;"></div>
+                                <span class="pct-text">{{ a.pct_resultat }}%</span>
+                            </div>
+                        </td>
+
+                        <td class="num" style="color:#8E44AD;">{{ a.moy_stock_30j|floatformat:0 }}</td>
+                        <td class="pct">
+                            <div class="pct-inline">
+                                <div class="pct-pill purple" style="width:{{ a.pct_moy_stock }}px;max-width:50px;"></div>
+                                <span class="pct-text">{{ a.pct_moy_stock }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center" style="padding:40px;color:#ADB5BD;">
+                            <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;"></i>
+                            Aucune donnée disponible
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if articles_data %}
+                <tfoot>
+                    <tr style="background:#F5F7FA;font-weight:800;font-size:12px;">
+                        <td>TOTAL</td>
+                        <td class="num" style="color:#D68910;">{{ total_valeur_stock|floatformat:0 }}</td>
+                        <td class="pct" style="text-align:right;">100%</td>
+                        <td class="num" style="color:#2980B9;">{{ ca_total_30j|floatformat:0 }}</td>
+                        <td class="pct" style="text-align:right;">100%</td>
+                        <td class="num">{{ resultat_total_30j|floatformat:0 }}</td>
+                        <td class="pct" style="text-align:right;">100%</td>
+                        <td class="num" colspan="2"></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
     </div>
-  </div>
+
 </div>
-         </div>
-     </div>
+</div>
 
-<!-- Chart.js -->
+{{ chart_labels|json_script:"rapport-article-labels" }}
+{{ chart_valeur|json_script:"rapport-article-valeur" }}
+{{ chart_ca|json_script:"rapport-article-ca" }}
 <script>
-  var ctx = document.getElementById('articlesChart').getContext('2d');
-  var articlesChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Coca-Cola', 'Savon OMO'],
-      datasets: [{
-        label: 'Valeur en stock (FC)',
-        data: [150000, 120000],
-        backgroundColor: '#337ab7'
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      }
+$(document).ready(function() {
+    $('#rapport_article').addClass('active');
+
+    {% if chart_labels %}
+    var PALETTE = ['#F39C12','#3498DB','#26B99A','#9B59B6','#E74C3C','#1ABC9C','#E67E22','#2980B9','#D35400','#8E44AD'];
+
+    // Bar chart — valeur en stock
+    var chartLabels = JSON.parse(document.getElementById('rapport-article-labels').textContent);
+    var chartValeur = JSON.parse(document.getElementById('rapport-article-valeur').textContent);
+    new Chart(document.getElementById('chartValeur').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Valeur en stock (FC)',
+                data: chartValeur,
+                backgroundColor: PALETTE.map(function(c){ return c + 'BB'; }),
+                borderColor: PALETTE,
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
+                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR') + ' FC'; } } },
+                x: { grid: { display: false }, ticks: { maxRotation: 35, font: { size: 10 } } }
+            }
+        }
+    });
+
+    // Doughnut — CA 30j
+    var caData = JSON.parse(document.getElementById('rapport-article-ca').textContent);
+    var caTotal = caData.reduce(function(a,b){ return a+b; }, 0);
+    if (caTotal > 0) {
+        new Chart(document.getElementById('chartCA').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: caData,
+                    backgroundColor: PALETTE,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 10, font: { size: 10 } } }
+                },
+                cutout: '60%'
+            }
+        });
+    } else {
+        document.getElementById('chartCA').parentElement.innerHTML =
+            '<p style="color:#ADB5BD;text-align:center;padding:30px;">Aucune vente sur la période</p>';
     }
-  });
+    {% endif %}
+
+    // DataTable
+    if ($('#tableArticles tbody tr td').length && !$('#tableArticles tbody tr td[colspan]').length) {
+        $('#tableArticles').DataTable({
+            dom: 'rflt<"bottom"p>',
+            pageLength: 25,
+            order: [[1, 'desc']],
+            language: {
+                sSearch: 'Rechercher :', sZeroRecords: 'Aucun résultat',
+                sEmptyTable: 'Aucune donnée',
+                oPaginate: { sNext: 'Suivant', sPrevious: 'Précédent' }
+            }
+        });
+    }
+});
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock content %}
+{% endblock %}
