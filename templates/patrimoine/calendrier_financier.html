@@ -249,21 +249,37 @@
 {% block content %}
 <div class="right_col" role="main">
     <div class="container-fluid">
-        <!-- Page title -->
-        <div class="page-title">
-            <div class="title_left">
-                <h3>Calendrier financier</h3>
-            </div>
-            <div class="title_right">
-                <div class="pull-right">
-                    <button class="btn btn-default btn-sm">
-                        <i class="fa fa-download"></i> Exporter
-                    </button>
+        <!-- Breadcrumb -->
+        <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+            <li><a href="{% url 'patrimoine' %}"><i class="fa fa-bank"></i> Patrimoine</a></li>
+            <li class="active">Calendrier Financier</li>
+        </ol>
+
+        <!-- Page Header -->
+        <div style="background: linear-gradient(135deg, #26B99A 0%, #1ABC9C 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+            <div class="row" style="margin: 0; display: flex; align-items: center;">
+                <div class="col-md-8 col-sm-7" style="padding: 0;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa fa-calendar" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 4px;">Patrimoine</div>
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Calendrier Financier</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Historique journalier des flux</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-5 text-right" style="padding: 0;">
+                    <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.65; margin-bottom: 3px;">
+                            <i class="fa fa-calendar-o"></i>&nbsp; Mois affiché
+                        </div>
+                        <div style="font-size: 16px; font-weight: 600;">{{ mois_label }}</div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="clearfix"></div>
 
         <!-- Monthly Statistics -->
         <div class="row" style="margin-top: 20px;">
@@ -365,4 +381,9 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        $('#patrimoine').addClass('active');
+    });
+</script>
 {% endblock content %}

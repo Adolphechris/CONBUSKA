@@ -1,6 +1,7 @@
 from django.db.models import Value, F, CharField, DecimalField, Sum
 from django.db.models.functions import Cast
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Optional
 from caisse.models import MouvementCaisse
 from patrimoine.models import ResultatApprovisionnementSnapshot
 from decimal import Decimal
@@ -16,6 +17,7 @@ class JournalLine:
     montant: Decimal
     type_mouvement: str  # ENTREE ou SORTIE
     source: str
+    badge_entite: Optional[str] = None
 
 
 class JournalTransactionService:
@@ -29,10 +31,22 @@ class JournalTransactionService:
         # 1️⃣ MOUVEMENTS CAISSE
         # ===============================
 
+        EXCLUDED_RUBRIQUES = {"clients", "fournisseurs"}
+
         mouvements = (
             MouvementCaisse.objects
-            .select_related("caisse", "rubrique")
+            .select_related("caisse", "rubrique", "sous_rubrique", "caisse_destination")
+            .prefetch_related(
+                "mouvements_caisse_f__fournisseur",
+                "mouvements_caisse_c__client",
+                "mouvements_caisse_cr__creancier",
+                "mouvements_caisse_db__debiteur",
+                "mouvements_caisse_ag__agent",
+                "mouvements_caisse_ce__sous_rubrique",
+                "mouvements_caisse_cp__sous_rubrique",
+            )
             .filter(date_mouvement__date__range=(date_debut, date_fin))
+            .exclude(rubrique__nom__in=EXCLUDED_RUBRIQUES)
         )
 
         for m in mouvements:
@@ -44,7 +58,8 @@ class JournalTransactionService:
                     rubrique_nom=m.rubrique.nom if m.rubrique else "",
                     montant=m.montant,
                     type_mouvement=m.type_mouvement,
-                    source="CAISSE"
+                    source="CAISSE",
+                    badge_entite=m.badge_entite,
                 )
             )
 

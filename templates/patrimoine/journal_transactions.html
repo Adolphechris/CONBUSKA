@@ -299,21 +299,37 @@
 {% block content %}
 <div class="right_col" role="main">
     <div class="container-fluid">
-        <!-- Page title -->
-        <div class="page-title">
-            <div class="title_left">
-                <h3>Journal des Transactions – {{ mois }}/{{ annee }} <small>Suivi détaillé des flux</small></h3>
-            </div>
-            <div class="title_right">
-                <div class="pull-right">
-                    <button class="btn btn-default btn-sm">
-                        <i class="fa fa-download"></i> Exporter
-                    </button>
+        <!-- Breadcrumb -->
+        <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+            <li><a href="{% url 'patrimoine' %}"><i class="fa fa-bank"></i> Patrimoine</a></li>
+            <li class="active">Journal des Transactions</li>
+        </ol>
+
+        <!-- Page Header -->
+        <div style="background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+            <div class="row" style="margin: 0; display: flex; align-items: center;">
+                <div class="col-md-8 col-sm-7" style="padding: 0;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa fa-list-alt" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 4px;">Patrimoine</div>
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Journal des Transactions</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Suivi détaillé des flux financiers</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-5 text-right" style="padding: 0;">
+                    <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.65; margin-bottom: 3px;">
+                            <i class="fa fa-calendar-o"></i>&nbsp; Période
+                        </div>
+                        <div style="font-size: 15px; font-weight: 600;">{{ debut }} → {{ fin }}</div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="clearfix"></div>
 
         <!-- Stats Row -->
         <div class="row" style="margin-top: 20px;">
@@ -349,7 +365,7 @@
             <div class="col-md-12 col-sm-12 col-xs-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Liste des Mouvements <small>Mois en cours</small></h2>
+                        <h2>Liste des Mouvements <small>{{ debut }} → {{ fin }}</small></h2>
                         <ul class="nav navbar-right panel_toolbox" style="min-width: 0;">
                             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
                             <li><a><i class="fa fa-wrench"></i></a></li>
@@ -360,46 +376,35 @@
                     <!-- Filter Bar -->
                     <div class="filter-bar">
                         <div class="row">
-                            <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="col-md-4 col-sm-6 col-xs-12">
                                 <div class="form-group">
-                                    <select class="form-control">
-                                        <option>Ce mois (Janvier 2026)</option>
-                                        <option>Mois dernier</option>
-                                        <option>Ce trimestre</option>
-                                        <option>Cette année</option>
-                                        <option>Période personnalisée</option>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                        <input type="text" id="daterange" class="form-control" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <select id="filtreType" class="form-control">
+                                        <option value="" {% if not type_filter %}selected{% endif %}>Tous les types</option>
+                                        <option value="ENTREE" {% if type_filter == "ENTREE" %}selected{% endif %}>Entrées</option>
+                                        <option value="SORTIE" {% if type_filter == "SORTIE" %}selected{% endif %}>Sorties</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-3 col-sm-6 col-xs-12">
                                 <div class="form-group">
-                                    <select class="form-control">
-                                        <option>Toutes les caisses</option>
-                                        <option>Caisse Principale</option>
-                                        <option>Banque A</option>
-                                        <option>Banque B</option>
-                                        <option>Petite Caisse</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <input type="text" id="filtreQ" class="form-control" placeholder="Rechercher motif, rubrique..." value="{{ q }}">
+                                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3 col-sm-6 col-xs-12">
-                                <div class="form-group">
-                                    <select class="form-control">
-                                        <option>Tous les types</option>
-                                        <option>Entrées uniquement</option>
-                                        <option>Sorties uniquement</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-sm-6 col-xs-12">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Rechercher...">
-                                    <span class="input-group-btn">
-                                        <button class="btn btn-default" type="button">
-                                            <i class="fa fa-search"></i>
-                                        </button>
-                                    </span>
-                                </div>
+                                <button id="btnAppliquer" class="btn btn-primary btn-block">
+                                    <i class="fa fa-filter"></i> Appliquer
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -415,7 +420,6 @@
                                         <span class="pull-right badge bg-green">{{ total_entrees }}FC</span>
                                     </div>
                                     <div class="transaction-scroll">
-                                        <!-- Transaction Entrée 1 -->
                                         {% for i in entrees %}
                                             <div class="transaction-item">
                                                 <div class="transaction-date">
@@ -424,23 +428,36 @@
                                                 <div class="transaction-caisse">
                                                     <i class="fa fa-building"></i> {{ i.caisse }}
                                                 </div>
-                                                <div class="transaction-motif">
-                                                    {{ i.motif }}
-                                                </div>
+                                                <div class="transaction-motif">{{ i.motif }}</div>
                                                 <div class="transaction-ref">
-                                                    {{ i.rubrique.nom }}
+                                                    <span class="label label-default">{{ i.rubrique_nom }}</span>
+                                                    {% if i.badge_entite %}
+                                                        <span class="label label-info" style="margin-left:4px;">{{ i.badge_entite }}</span>
+                                                    {% endif %}
                                                 </div>
-                                                <div class="transaction-montant entree">
-                                                    {{ i.montant }} FC
-                                                </div>
-                                                <div class="transaction-actions">
-                                                    <button class="btn btn-xs btn-primary">
-                                                        <i class="fa fa-eye"></i> Détails
-                                                    </button>
-                                                </div>
+                                                <div class="transaction-montant entree">{{ i.montant }} FC</div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="transaction-item" style="color:#999; text-align:center;">
+                                                Aucune entrée
                                             </div>
                                         {% endfor %}
                                     </div>
+                                    {% if entrees.has_other_pages %}
+                                    <div style="padding:8px 15px; border-top:1px solid #F0F0F0; text-align:center;">
+                                        {% if entrees.has_previous %}
+                                            <a href="?debut={{ debut }}&fin={{ fin }}&type={{ type_filter }}&q={{ q }}&page_e={{ entrees.previous_page_number }}&page_s={{ sorties.number }}"
+                                               class="btn btn-xs btn-default">&laquo;</a>
+                                        {% endif %}
+                                        <span style="font-size:11px; color:#73879C;">
+                                            Page {{ entrees.number }} / {{ paginateur_e.num_pages }}
+                                        </span>
+                                        {% if entrees.has_next %}
+                                            <a href="?debut={{ debut }}&fin={{ fin }}&type={{ type_filter }}&q={{ q }}&page_e={{ entrees.next_page_number }}&page_s={{ sorties.number }}"
+                                               class="btn btn-xs btn-default">&raquo;</a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -453,7 +470,7 @@
                                         <span class="pull-right badge bg-red">{{ total_sorties }}FC</span>
                                     </div>
                                     <div class="transaction-scroll">
-                                         {% for i in sorties %}
+                                        {% for i in sorties %}
                                             <div class="transaction-item">
                                                 <div class="transaction-date">
                                                     <i class="fa fa-calendar"></i> {{ i.date_mouvement|date:"d/m H:i" }}
@@ -461,23 +478,36 @@
                                                 <div class="transaction-caisse">
                                                     <i class="fa fa-building"></i> {{ i.caisse }}
                                                 </div>
-                                                <div class="transaction-motif">
-                                                    {{ i.motif }}
-                                                </div>
+                                                <div class="transaction-motif">{{ i.motif }}</div>
                                                 <div class="transaction-ref">
-                                                    {{ i.rubrique.nom }}
+                                                    <span class="label label-default">{{ i.rubrique_nom }}</span>
+                                                    {% if i.badge_entite %}
+                                                        <span class="label label-warning" style="margin-left:4px;">{{ i.badge_entite }}</span>
+                                                    {% endif %}
                                                 </div>
-                                                <div class="transaction-montant sortie">
-                                                    - {{ i.montant }} FC
-                                                </div>
-                                                <div class="transaction-actions">
-                                                    <button class="btn btn-xs btn-primary">
-                                                        <i class="fa fa-eye"></i> Détails
-                                                    </button>
-                                                </div>
+                                                <div class="transaction-montant sortie">- {{ i.montant }} FC</div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="transaction-item" style="color:#999; text-align:center;">
+                                                Aucune sortie
                                             </div>
                                         {% endfor %}
                                     </div>
+                                    {% if sorties.has_other_pages %}
+                                    <div style="padding:8px 15px; border-top:1px solid #F0F0F0; text-align:center;">
+                                        {% if sorties.has_previous %}
+                                            <a href="?debut={{ debut }}&fin={{ fin }}&type={{ type_filter }}&q={{ q }}&page_e={{ entrees.number }}&page_s={{ sorties.previous_page_number }}"
+                                               class="btn btn-xs btn-default">&laquo;</a>
+                                        {% endif %}
+                                        <span style="font-size:11px; color:#73879C;">
+                                            Page {{ sorties.number }} / {{ paginateur_s.num_pages }}
+                                        </span>
+                                        {% if sorties.has_next %}
+                                            <a href="?debut={{ debut }}&fin={{ fin }}&type={{ type_filter }}&q={{ q }}&page_e={{ entrees.number }}&page_s={{ sorties.next_page_number }}"
+                                               class="btn btn-xs btn-default">&raquo;</a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -487,4 +517,52 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        $('#patrimoine').addClass('active');
+
+        // ── Daterangepicker ──────────────────────────────────────────
+        var debut = '{{ debut }}';
+        var fin   = '{{ fin }}';
+
+        $('#daterange').daterangepicker({
+            startDate: moment(debut),
+            endDate:   moment(fin),
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: 'OK',
+                cancelLabel: 'Annuler',
+                daysOfWeek: ['Di','Lu','Ma','Me','Je','Ve','Sa'],
+                monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
+                             'Août','Septembre','Octobre','Novembre','Décembre']
+            },
+            ranges: {
+                "Aujourd'hui"  : [moment(), moment()],
+                'Hier'         : [moment().subtract(1,'days'), moment().subtract(1,'days')],
+                '7 derniers j' : [moment().subtract(6,'days'), moment()],
+                '30 derniers j': [moment().subtract(29,'days'), moment()],
+                'Ce mois'      : [moment().startOf('month'), moment().endOf('month')],
+                'Mois dernier' : [moment().subtract(1,'month').startOf('month'),
+                                  moment().subtract(1,'month').endOf('month')]
+            }
+        });
+
+        $('#btnAppliquer').click(function() {
+            var drp  = $('#daterange').data('daterangepicker');
+            var d    = drp.startDate.format('YYYY-MM-DD');
+            var f    = drp.endDate.format('YYYY-MM-DD');
+            var type = $('#filtreType').val();
+            var q    = $('#filtreQ').val();
+            var url  = '?debut=' + d + '&fin=' + f;
+            if (type) url += '&type=' + type;
+            if (q)    url += '&q=' + encodeURIComponent(q);
+            window.location.href = url;
+        });
+
+        // Soumettre aussi avec Entrée dans le champ recherche
+        $('#filtreQ').on('keydown', function(e) {
+            if (e.key === 'Enter') $('#btnAppliquer').click();
+        });
+    });
+</script>
 {% endblock %}

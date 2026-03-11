@@ -125,6 +125,8 @@ class SnapshotService:
 
     @staticmethod
     def on_approvisionnement_validated(approvisionnement: Approvisionnement):
+        from patrimoine.services.fonds_roulement_service import FondsRoulementService
+
         snapshot_date = approvisionnement.date_creation.date()
 
         SnapshotService.capture_approvisionnement(
@@ -138,8 +140,12 @@ class SnapshotService:
             snapshot_date.month
         )
 
+        FondsRoulementService.rebuild(snapshot_date)
+
     @staticmethod
     def on_approvisionnement_rollback(approvisionnement: Approvisionnement):
+        from patrimoine.services.fonds_roulement_service import FondsRoulementService
+
         snapshot_date = approvisionnement.date_creation.date()
 
         ResultatApprovisionnementSnapshot.objects.filter(
@@ -151,3 +157,5 @@ class SnapshotService:
             snapshot_date.year,
             snapshot_date.month
         )
+
+        FondsRoulementService.rebuild(snapshot_date)

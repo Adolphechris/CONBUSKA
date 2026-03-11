@@ -1,2 +1,3 @@
 from .snapshot_service import SnapshotService
 from .journal_transaction_service import JournalTransactionService
+from .fonds_roulement_service import FondsRoulementService

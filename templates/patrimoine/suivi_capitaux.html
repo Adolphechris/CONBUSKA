@@ -305,65 +305,92 @@
 {% block content %}
 <div class="right_col" role="main">
     <div class="container-fluid">
-        <!-- Page title -->
-        <div class="page-title">
-            <div class="title_left">
-                <h3>Suivi des capitaux <small>Analyse du fonds de roulement</small></h3>
-                <p style="color: #73879C; margin: 5px 0;">
-                    <i class="fa fa-calendar"></i> Période : <strong>01 Janvier au 31 Janvier 2026</strong>
-                </p>
-            </div>
-            <div class="title_right">
-                <div class="pull-right">
-                    <button class="btn btn-default btn-sm">
-                        <i class="fa fa-download"></i> Exporter
-                    </button>
+        <!-- Breadcrumb -->
+        <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+            <li><a href="{% url 'patrimoine' %}"><i class="fa fa-bank"></i> Patrimoine</a></li>
+            <li class="active">Suivi des Capitaux</li>
+        </ol>
+
+        <!-- Page Header -->
+        <div style="background: linear-gradient(135deg, #2A3F54 0%, #34495E 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+            <div class="row" style="margin: 0; display: flex; align-items: center;">
+                <div class="col-md-7 col-sm-6" style="padding: 0;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa fa-bank" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 4px;">Patrimoine</div>
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Suivi des Capitaux</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Fonds de roulement &amp; Fonds Propre</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5 col-sm-6 text-right" style="padding: 0; display: flex; align-items: center; justify-content: flex-end; gap: 12px;">
+                    <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.65; margin-bottom: 3px;">
+                            <i class="fa fa-calendar-o"></i>&nbsp; Période
+                        </div>
+                        <div style="font-size: 15px; font-weight: 600;">{{ debut }} → {{ fin }}</div>
+                    </div>
+                    <a href="{% url 'patrimoine_export_pdf' %}?debut={{ debut }}&fin={{ fin }}"
+                       style="display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 6px; padding: 10px 16px; font-size: 13px; text-decoration: none; white-space: nowrap;">
+                        <i class="fa fa-download"></i> Exporter PDF
+                    </a>
                 </div>
             </div>
         </div>
 
         <div class="clearfix"></div>
 
+        <!-- Filtre période -->
+        <div class="row" style="margin-bottom: 15px;">
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                    <input type="text" id="daterange" class="form-control" value="{{ debut }} - {{ fin }}" readonly>
+                </div>
+            </div>
+            <div class="col-md-2 col-sm-3 col-xs-6">
+                <button id="btnAppliquer" class="btn btn-primary btn-block">
+                    <i class="fa fa-filter"></i> Appliquer
+                </button>
+            </div>
+        </div>
+
         <!-- KPI Tiles -->
         <div class="row">
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats tile-primary">
-                    <div class="icon">
-                        <i class="fa fa-money"></i>
-                    </div>
+                    <div class="icon"><i class="fa fa-money"></i></div>
                     <div class="count-label">Fonds de Roulement</div>
-                    <div class="count">0 FC</div>
+                    <div class="count">{{ fr_final|floatformat:0 }} FC</div>
                 </div>
             </div>
-
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats tile-blue">
-                    <div class="icon">
-                        <i class="fa fa-check-circle"></i>
-                    </div>
+                    <div class="icon"><i class="fa fa-check-circle"></i></div>
                     <div class="count-label">Contre-vérification</div>
-                    <div class="count">0 FC</div>
+                    <div class="count">{{ fr_contreverif|floatformat:0 }} FC</div>
                 </div>
             </div>
-
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats tile-red">
-                    <div class="icon">
-                        <i class="fa fa-exclamation-triangle"></i>
-                    </div>
+                    <div class="icon"><i class="fa fa-exclamation-triangle"></i></div>
                     <div class="count-label">Écart</div>
-                    <div class="count text-danger">0.00 FC</div>
-                    <span style="font-style: italic; font-size: 11px;">Parfaitement équilibré</span>
+                    <div class="count {% if ecart == 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ ecart|floatformat:0 }} FC
+                    </div>
+                    <span style="font-style: italic; font-size: 11px;">
+                        {% if ecart == 0 %}Parfaitement équilibré{% else %}Écart détecté{% endif %}
+                    </span>
                 </div>
             </div>
-
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats tile-dark">
-                    <div class="icon">
-                        <i class="fa fa-university"></i>
-                    </div>
+                    <div class="icon"><i class="fa fa-university"></i></div>
                     <div class="count-label">Fonds Propre</div>
-                    <div class="count">0 FC</div>
+                    <div class="count">{{ fonds_propre|floatformat:0 }} FC</div>
                 </div>
             </div>
         </div>
@@ -374,19 +401,12 @@
                 <!-- Chart Panel -->
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2><i class="fa fa-area-chart"></i> Historique du Fonds de Roulement <small>Mois en cours</small></h2>
-                        <div class="filter">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-primary btn-xs">Jour</button>
-                                <button type="button" class="btn btn-default btn-xs">Semaine</button>
-                                <button type="button" class="btn btn-default btn-xs">Mois</button>
-                            </div>
-                        </div>
+                        <h2><i class="fa fa-area-chart"></i> Historique du Fonds de Roulement <small>{{ debut }} → {{ fin }}</small></h2>
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
                         <div style="margin-bottom: 20px;">
-                            <span style="font-size: 32px; font-weight: 300; color: #2A3F54;">0 FC</span>
+                            <span style="font-size: 32px; font-weight: 300; color: #2A3F54;">{{ fr_final|floatformat:0 }} FC</span>
                         </div>
                         <div class="chart-container">
                             <canvas id="frChart"></canvas>
@@ -420,51 +440,52 @@
                                         <th class="text-right">Entrées (EJ)</th>
                                         <th class="text-right">Sorties (SJ)</th>
                                         <th class="text-right">FR Final (FRF)</th>
+                                        <th class="text-center">Statut</th>
+                                        <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td><strong>13 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
+                                    {% for snap in historique reversed %}
+                                    <tr style="{% if snap.valide %}background: #f0faf7;{% endif %}">
+                                        <td>
+                                            <strong>{{ snap.date|date:"d F Y" }}</strong>
+                                            {% if snap.valide %}
+                                            <br><small style="color: #73879C;">par {{ snap.valide_par }} · {{ snap.valide_le|date:"d/m H:i" }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">{{ snap.fr_initial|floatformat:0 }} FC</td>
+                                        <td class="text-right text-success"><strong>+ {{ snap.ej|floatformat:0 }} FC</strong></td>
+                                        <td class="text-right text-danger"><strong>- {{ snap.sj|floatformat:0 }} FC</strong></td>
+                                        <td class="text-right"><strong style="color: #2A3F54;">{{ snap.fr_final|floatformat:0 }} FC</strong></td>
+                                        <td class="text-center">
+                                            {% if snap.valide %}
+                                            <span class="label label-success"><i class="fa fa-check"></i> Validé</span>
+                                            {% else %}
+                                            <span class="label label-default"><i class="fa fa-clock-o"></i> Provisoire</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <form method="post" action="{% url 'patrimoine_valider_fr' snap.pk %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                {% if snap.valide %}
+                                                <button type="submit" class="btn btn-xs btn-warning" title="Annuler la validation">
+                                                    <i class="fa fa-undo"></i>
+                                                </button>
+                                                {% else %}
+                                                <button type="submit" class="btn btn-xs btn-success" title="Valider ce FR">
+                                                    <i class="fa fa-check"></i> Valider
+                                                </button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td><strong>12 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
+                                        <td colspan="7" class="text-center" style="color: #73879C; padding: 20px;">
+                                            <i class="fa fa-info-circle"></i> Aucune donnée pour cette période
+                                        </td>
                                     </tr>
-                                    <tr>
-                                        <td><strong>11 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>10 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>09 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>08 Janvier 2026</strong></td>
-                                        <td class="text-right">00.00 FC</td>
-                                        <td class="text-right text-success"><strong>+ 00.00 FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- 00.00 FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">00.00 FC</strong></td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -494,32 +515,32 @@
                                     <div class="label-text">TVMS</div>
                                     <div class="label-desc">Total Valeur Marchandise Stock</div>
                                 </div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ contreverif.tvms|floatformat:0 }} FC</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">TSC</div>
                                     <div class="label-desc">Total Soldes des Caisses</div>
                                 </div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ contreverif.tsc|floatformat:0 }} FC</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">TSCl</div>
                                     <div class="label-desc">Total Soldes Comptes Clients</div>
                                 </div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ contreverif.tscl|floatformat:0 }} FC</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">TSCF</div>
                                     <div class="label-desc">Total Soldes Comptes Fournisseurs</div>
                                 </div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value text-danger">- {{ contreverif.tscf|floatformat:0 }} FC</div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds de Roulement (Contre-vérifié)</strong></div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ contreverif.total|floatformat:0 }} FC</div>
                             </li>
                         </ul>
                     </div>
@@ -556,25 +577,25 @@
                                 <div>
                                     <div class="label-text">Fonds de Roulement</div>
                                 </div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ fr_final|floatformat:0 }} FC</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">Comptes Débiteurs</div>
                                     <div class="label-desc">Créances reçues</div>
                                 </div>
-                                <div class="value text-success">+ 00.00 FC</div>
+                                <div class="value text-success">+ {{ total_debiteurs|floatformat:0 }} FC</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">Comptes Créanciers</div>
                                     <div class="label-desc">Dettes à payer</div>
                                 </div>
-                                <div class="value text-danger">- 00.00 FC</div>
+                                <div class="value text-danger">- {{ total_creanciers|floatformat:0 }} FC</div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds Propre (FP)</strong></div>
-                                <div class="value">00.00 FC</div>
+                                <div class="value">{{ fonds_propre|floatformat:0 }} FC</div>
                             </li>
                         </ul>
                     </div>
@@ -584,16 +605,20 @@
     </div>
 </div>
 
+{{ chart_labels|json_script:"patrimoine-fr-labels" }}
+{{ chart_data|json_script:"patrimoine-fr-data" }}
 <script>
     // Chart.js - Historique du Fonds de Roulement
+    const frChartLabels = JSON.parse(document.getElementById('patrimoine-fr-labels').textContent);
+    const frChartData = JSON.parse(document.getElementById('patrimoine-fr-data').textContent);
     const ctx = document.getElementById('frChart').getContext('2d');
     const frChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['01 Jan', '05 Jan', '10 Jan', '15 Jan', '20 Jan', '25 Jan', '30 Jan'],
+            labels: frChartLabels,
             datasets: [{
                 label: 'Fonds de Roulement',
-                data: [110000, 112400, 115800, 119000, 118200, 120500, 125400],
+                data: frChartData,
                 borderColor: '#1ABB9C',
                 backgroundColor: 'rgba(26, 187, 156, 0.1)',
                 borderWidth: 3,
@@ -651,6 +676,44 @@
                 }
             }
         }
+    });
+
+    $('#patrimoine').addClass('active');
+
+    // Daterangepicker
+    var debut = '{{ debut }}';
+    var fin   = '{{ fin }}';
+
+    $('#daterange').daterangepicker({
+        startDate: moment(debut),
+        endDate:   moment(fin),
+        locale: {
+            format: 'YYYY-MM-DD',
+            separator: ' - ',
+            applyLabel: 'Appliquer',
+            cancelLabel: 'Annuler',
+            fromLabel: 'De',
+            toLabel: 'À',
+            customRangeLabel: 'Personnalisé',
+            daysOfWeek: ['Di','Lu','Ma','Me','Je','Ve','Sa'],
+            monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+            firstDay: 1
+        },
+        ranges: {
+            'Aujourd\'hui'  : [moment(), moment()],
+            'Hier'          : [moment().subtract(1,'days'), moment().subtract(1,'days')],
+            '7 derniers j.' : [moment().subtract(6,'days'), moment()],
+            '30 derniers j.': [moment().subtract(29,'days'), moment()],
+            'Ce mois'       : [moment().startOf('month'), moment().endOf('month')],
+            'Mois dernier'  : [moment().subtract(1,'month').startOf('month'), moment().subtract(1,'month').endOf('month')]
+        }
+    });
+
+    $('#btnAppliquer').click(function() {
+        var drp = $('#daterange').data('daterangepicker');
+        var d   = drp.startDate.format('YYYY-MM-DD');
+        var f   = drp.endDate.format('YYYY-MM-DD');
+        window.location.href = '?debut=' + d + '&fin=' + f;
     });
 </script>
 {% endblock %}

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from caisse.models import Caisse
 from approvisionnements.models import Approvisionnement
 
@@ -62,3 +63,29 @@ class ResultatMensuel(models.Model):
 
     class Meta:
         unique_together = ('mois', 'annee')
+
+
+class FondsRoulementSnapshot(models.Model):
+    date = models.DateField(unique=True, db_index=True)
+    fr_initial = models.DecimalField(max_digits=16, decimal_places=2)
+    ej = models.DecimalField(max_digits=16, decimal_places=2)
+    sj = models.DecimalField(max_digits=16, decimal_places=2)
+    fr_final = models.DecimalField(max_digits=16, decimal_places=2)
+    fr_contreverif = models.DecimalField(max_digits=16, decimal_places=2)
+    ecart = models.DecimalField(max_digits=16, decimal_places=2)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+
+    # Validation métier
+    valide = models.BooleanField(default=False)
+    valide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="validations_fr",
+    )
+    valide_le = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        statut = "✓" if self.valide else "~"
+        return f"[{statut}] FR {self.date} — {self.fr_final} FC"

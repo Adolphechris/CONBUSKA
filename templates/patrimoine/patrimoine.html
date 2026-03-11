@@ -6,530 +6,497 @@
 {% block stylesheets %}
 {{block.super}}
 <style>
-/* ============================================
-           KPI STAT CARDS
-           ============================================ */
+    /* ============================================
+    KPI STAT CARDS
+    ============================================ */
 
-        .kpi-card {
-            background: #FFFFFF;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            border: 1px solid #E6E9ED;
-            transition: all 0.3s ease;
+    .kpi-card {
+        background: #FFFFFF;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        border: 1px solid #E6E9ED;
+        transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .kpi-card .kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .kpi-card .kpi-header .kpi-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #73879C;
+    }
+
+    .kpi-card .kpi-header i {
+        font-size: 24px;
+    }
+
+    .kpi-card .kpi-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2A3F54;
+        margin-bottom: 8px;
+    }
+
+    .kpi-card .kpi-footer {
+        font-size: 11px;
+    }
+
+    .kpi-card .kpi-footer.positive {
+        color: #26B99A;
+    }
+
+    .kpi-card .kpi-footer.neutral {
+        color: #73879C;
+    }
+
+    .kpi-card .kpi-value.green {
+        color: #26B99A;
+    }
+
+    .kpi-card .kpi-value.red {
+        color: #E74C3C;
+    }
+
+    /* ============================================
+       MODULE CARDS
+       ============================================ */
+
+    .section-title {
+        color: #2A3F54;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: #3498DB;
+    }
+
+    .module-card {
+        background: #FFFFFF;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        border: 1px solid #E6E9ED;
+        transition: all 0.4s ease;
+        text-decoration: none !important;
+        display: block;
+    }
+
+    .module-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+
+    .module-card:hover .module-header .module-icon {
+        transform: scale(1.1);
+    }
+
+    .module-card .module-header {
+        padding: 25px;
+        color: #FFFFFF;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .module-card .module-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(30deg);
+        pointer-events: none;
+    }
+
+    .module-card .module-header.header-blue {
+        background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+    }
+
+    .module-card .module-header.header-green {
+        background: linear-gradient(135deg, #26B99A 0%, #1ABC9C 100%);
+    }
+
+    .module-card .module-header.header-purple {
+        background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+    }
+
+    .module-card .module-header.header-orange {
+        background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+    }
+
+    .module-card .module-header.header-dark {
+        background: linear-gradient(135deg, #2A3F54 0%, #34495E 100%);
+    }
+
+    .module-card .module-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
+    }
+
+    .module-card .module-icon i {
+        font-size: 28px;
+    }
+
+    .module-card .module-header h4 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 5px 0;
+    }
+
+    .module-card .module-header p {
+        font-size: 13px;
+        opacity: 0.85;
+        margin: 0;
+    }
+
+    .module-card .module-body {
+        padding: 20px 25px;
+    }
+
+    .module-card .module-body .description {
+        color: #73879C;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+    .module-card .module-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #F0F0F0;
+    }
+
+    .module-card .module-footer .stats {
+        display: flex;
+        gap: 15px;
+    }
+
+    .module-card .module-footer .stat-item {
+        font-size: 11px;
+        color: #73879C;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .module-card .module-footer .stat-item i {
+        font-size: 12px;
+    }
+
+    .module-card .module-footer .stat-item.green i {
+        color: #26B99A;
+    }
+
+    .module-card .module-footer .stat-item.red i {
+        color: #E74C3C;
+    }
+
+    .module-card .module-footer .arrow {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #F7F7F7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .module-card:hover .module-footer .arrow {
+        background: #3498DB;
+        color: #FFFFFF;
+    }
+
+    .module-card .module-footer .arrow i {
+        font-size: 14px;
+        color: #73879C;
+    }
+
+    .module-card:hover .module-footer .arrow i {
+        color: #FFFFFF;
+    }
+
+    /* Arrow colors per card type */
+    .module-card:hover .module-footer .arrow.arrow-green {
+        background: #26B99A;
+    }
+
+    .module-card:hover .module-footer .arrow.arrow-purple {
+        background: #9B59B6;
+    }
+
+    .module-card:hover .module-footer .arrow.arrow-orange {
+        background: #F39C12;
+    }
+
+    .module-card:hover .module-footer .arrow.arrow-dark {
+        background: #2A3F54;
+    }
+
+    /* ============================================
+       RECENT ACTIVITY PANEL
+       ============================================ */
+
+    .x_panel {
+        background: #FFFFFF;
+        border: 1px solid #E6E9ED;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .x_title {
+        padding: 12px 17px;
+        border-bottom: 2px solid #E6E9ED;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .x_title h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2A3F54;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .x_title h2 i {
+        color: #3498DB;
+    }
+
+    .x_content {
+        padding: 20px;
+    }
+
+    /* Activity List */
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid #F0F0F0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .activity-list li:last-child {
+        border-bottom: none;
+    }
+
+    .activity-list .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .activity-list .activity-icon.green {
+        background: rgba(38, 185, 154, 0.15);
+        color: #26B99A;
+    }
+
+    .activity-list .activity-icon.red {
+        background: rgba(231, 76, 60, 0.15);
+        color: #E74C3C;
+    }
+
+    .activity-list .activity-content {
+        flex: 1;
+    }
+
+    .activity-list .activity-content .activity-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #2A3F54;
+        margin-bottom: 2px;
+    }
+
+    .activity-list .activity-content .activity-meta {
+        font-size: 11px;
+        color: #ADB5BD;
+    }
+
+    .activity-list .activity-amount {
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .activity-list .activity-amount.green {
+        color: #26B99A;
+    }
+
+    .activity-list .activity-amount.red {
+        color: #E74C3C;
+    }
+
+    /* ============================================
+       CAPITAL STATUS PANEL
+       ============================================ */
+
+    .capital-item {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .capital-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .capital-item.bg-green {
+        background: rgba(38, 185, 154, 0.1);
+        border-left: 4px solid #26B99A;
+    }
+
+    .capital-item.bg-blue {
+        background: rgba(52, 152, 219, 0.1);
+        border-left: 4px solid #3498DB;
+    }
+
+    .capital-item .capital-label {
+        font-size: 12px;
+        color: #73879C;
+        margin-bottom: 3px;
+    }
+
+    .capital-item .capital-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2A3F54;
+    }
+
+    .capital-item .capital-status {
+        text-align: right;
+    }
+
+    .capital-item .capital-status .badge {
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 3px;
+    }
+
+    .badge-success-light {
+        background: rgba(38, 185, 154, 0.2);
+        color: #169F85;
+    }
+
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+
+    @media (max-width: 991px) {
+        .left_col {
+            display: none;
         }
 
-        .kpi-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        .right_col {
+            margin-left: 0;
         }
 
-        .kpi-card .kpi-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .kpi-card .kpi-header .kpi-label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #73879C;
-        }
-
-        .kpi-card .kpi-header i {
-            font-size: 24px;
-        }
-
-        .kpi-card .kpi-value {
-            font-size: 22px;
-            font-weight: 700;
-            color: #2A3F54;
-            margin-bottom: 8px;
-        }
-
-        .kpi-card .kpi-footer {
-            font-size: 11px;
-        }
-
-        .kpi-card .kpi-footer.positive {
-            color: #26B99A;
-        }
-
-        .kpi-card .kpi-footer.neutral {
-            color: #73879C;
-        }
-
-        .kpi-card .kpi-value.green {
-            color: #26B99A;
-        }
-
-        .kpi-card .kpi-value.red {
-            color: #E74C3C;
-        }
-
-        /* ============================================
-           MODULE CARDS
-           ============================================ */
-
-        .section-title {
-            color: #2A3F54;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title i {
-            color: #3498DB;
-        }
-
-        .module-card {
-            background: #FFFFFF;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-            border: 1px solid #E6E9ED;
-            transition: all 0.4s ease;
-            text-decoration: none !important;
+        .top_nav .nav_toggle {
             display: block;
         }
+    }
 
-        .module-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-        }
-
-        .module-card:hover .module-header .module-icon {
-            transform: scale(1.1);
-        }
-
+    @media (max-width: 768px) {
         .module-card .module-header {
-            padding: 25px;
-            color: #FFFFFF;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .module-card .module-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 200%;
-            background: rgba(255,255,255,0.1);
-            transform: rotate(30deg);
-            pointer-events: none;
-        }
-
-        .module-card .module-header.header-blue {
-            background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
-        }
-
-        .module-card .module-header.header-green {
-            background: linear-gradient(135deg, #26B99A 0%, #1ABC9C 100%);
-        }
-
-        .module-card .module-header.header-purple {
-            background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
-        }
-
-        .module-card .module-header.header-orange {
-            background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
-        }
-
-        .module-card .module-header.header-dark {
-            background: linear-gradient(135deg, #2A3F54 0%, #34495E 100%);
+            padding: 20px;
         }
 
         .module-card .module-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            transition: transform 0.3s ease;
+            width: 50px;
+            height: 50px;
         }
 
         .module-card .module-icon i {
-            font-size: 28px;
+            font-size: 22px;
         }
 
-        .module-card .module-header h4 {
+        .kpi-card .kpi-value {
             font-size: 18px;
-            font-weight: 700;
-            margin: 0 0 5px 0;
         }
-
-        .module-card .module-header p {
-            font-size: 13px;
-            opacity: 0.85;
-            margin: 0;
-        }
-
-        .module-card .module-body {
-            padding: 20px 25px;
-        }
-
-        .module-card .module-body .description {
-            color: #73879C;
-            font-size: 13px;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-
-        .module-card .module-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #F0F0F0;
-        }
-
-        .module-card .module-footer .stats {
-            display: flex;
-            gap: 15px;
-        }
-
-        .module-card .module-footer .stat-item {
-            font-size: 11px;
-            color: #73879C;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .module-card .module-footer .stat-item i {
-            font-size: 12px;
-        }
-
-        .module-card .module-footer .stat-item.green i {
-            color: #26B99A;
-        }
-
-        .module-card .module-footer .stat-item.red i {
-            color: #E74C3C;
-        }
-
-        .module-card .module-footer .arrow {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #F7F7F7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .module-card:hover .module-footer .arrow {
-            background: #3498DB;
-            color: #FFFFFF;
-        }
-
-        .module-card .module-footer .arrow i {
-            font-size: 14px;
-            color: #73879C;
-        }
-
-        .module-card:hover .module-footer .arrow i {
-            color: #FFFFFF;
-        }
-
-        /* Arrow colors per card type */
-        .module-card:hover .module-footer .arrow.arrow-green {
-            background: #26B99A;
-        }
-
-        .module-card:hover .module-footer .arrow.arrow-purple {
-            background: #9B59B6;
-        }
-
-        .module-card:hover .module-footer .arrow.arrow-orange {
-            background: #F39C12;
-        }
-
-        .module-card:hover .module-footer .arrow.arrow-dark {
-            background: #2A3F54;
-        }
-
-        /* ============================================
-           RECENT ACTIVITY PANEL
-           ============================================ */
-
-        .x_panel {
-            background: #FFFFFF;
-            border: 1px solid #E6E9ED;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .x_title {
-            padding: 12px 17px;
-            border-bottom: 2px solid #E6E9ED;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .x_title h2 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #2A3F54;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .x_title h2 i {
-            color: #3498DB;
-        }
-
-        .x_content {
-            padding: 20px;
-        }
-
-        /* Activity List */
-        .activity-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .activity-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #F0F0F0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .activity-list li:last-child {
-            border-bottom: none;
-        }
-
-        .activity-list .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .activity-list .activity-icon.green {
-            background: rgba(38, 185, 154, 0.15);
-            color: #26B99A;
-        }
-
-        .activity-list .activity-icon.red {
-            background: rgba(231, 76, 60, 0.15);
-            color: #E74C3C;
-        }
-
-        .activity-list .activity-content {
-            flex: 1;
-        }
-
-        .activity-list .activity-content .activity-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: #2A3F54;
-            margin-bottom: 2px;
-        }
-
-        .activity-list .activity-content .activity-meta {
-            font-size: 11px;
-            color: #ADB5BD;
-        }
-
-        .activity-list .activity-amount {
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .activity-list .activity-amount.green {
-            color: #26B99A;
-        }
-
-        .activity-list .activity-amount.red {
-            color: #E74C3C;
-        }
-
-        /* ============================================
-           CAPITAL STATUS PANEL
-           ============================================ */
-
-        .capital-item {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .capital-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .capital-item.bg-green {
-            background: rgba(38, 185, 154, 0.1);
-            border-left: 4px solid #26B99A;
-        }
-
-        .capital-item.bg-blue {
-            background: rgba(52, 152, 219, 0.1);
-            border-left: 4px solid #3498DB;
-        }
-
-        .capital-item .capital-label {
-            font-size: 12px;
-            color: #73879C;
-            margin-bottom: 3px;
-        }
-
-        .capital-item .capital-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2A3F54;
-        }
-
-        .capital-item .capital-status {
-            text-align: right;
-        }
-
-        .capital-item .capital-status .badge {
-            font-size: 10px;
-            padding: 4px 8px;
-            border-radius: 3px;
-        }
-
-        .badge-success-light {
-            background: rgba(38, 185, 154, 0.2);
-            color: #169F85;
-        }
-
-        /* ============================================
-           USER PROFILE IN SIDEBAR
-           ============================================ */
-
-        .profile_info {
-            padding: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: rgba(0,0,0,0.1);
-        }
-
-        .profile_info .profile-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .profile_info .profile-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(52, 152, 219, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFFFFF;
-        }
-
-        .profile_info .profile-details {
-            color: #FFFFFF;
-        }
-
-        .profile_info .profile-details .name {
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .profile_info .profile-details .role {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
-
-        @media (max-width: 991px) {
-            .left_col {
-                display: none;
-            }
-
-            .right_col {
-                margin-left: 0;
-            }
-
-            .top_nav .nav_toggle {
-                display: block;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .module-card .module-header {
-                padding: 20px;
-            }
-
-            .module-card .module-icon {
-                width: 50px;
-                height: 50px;
-            }
-
-            .module-card .module-icon i {
-                font-size: 22px;
-            }
-
-            .kpi-card .kpi-value {
-                font-size: 18px;
-            }
-        }
+    }
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
 
 <div class="right_col" role="main">
-<div class="container-fluid">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+            <li class="active"><i class="fa fa-bank"></i> Patrimoine</li>
+        </ol>
 
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="row">
-      <div class="col-md-8 col-sm-6">
-        <h2>
-          <span class="glyphicon glyphicon-briefcase"></span>
-          Gestion de Patrimoine
-        </h2>
-        <p class="text-muted" style="margin-top: 5px; font-size: 13px;">
-          Vue d'ensemble analytique et suivi des flux financiers
-        </p>
+      <!-- Page Header -->
+      <div style="background: linear-gradient(135deg, #2A3F54 0%, #34495E 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+          <div class="row" style="margin: 0; display: flex; align-items: center;">
+              <div class="col-md-8 col-sm-7" style="padding: 0;">
+                  <div style="display: flex; align-items: center; gap: 16px;">
+                      <div style="width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                          <i class="fa fa-bank" style="font-size: 24px;"></i>
+                      </div>
+                      <div>
+                          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 4px;">Tableau de bord</div>
+                          <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Gestion de Patrimoine</h2>
+                          <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Vue d'ensemble analytique et suivi des flux financiers</p>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-md-4 col-sm-5 text-right" style="padding: 0;">
+                  <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,0.15);">
+                      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.65; margin-bottom: 3px;">
+                          <i class="fa fa-calendar-o"></i>&nbsp; Mois en cours
+                      </div>
+                      <div style="font-size: 16px; font-weight: 600;">{{ mois_label }}</div>
+                  </div>
+              </div>
+          </div>
       </div>
-      <div class="col-md-4 col-sm-6 text-right export-section">
-        <a href="" class="btn btn-export">
-          <span class="glyphicon glyphicon-download-alt"></span> Exporter en PDF
-        </a>
-      </div>
-    </div>
-  </div>
 
   <div class="clearfix"></div>
       <!-- KPI Stats Row -->
@@ -537,45 +504,118 @@
           <div class="col-md-3 col-sm-6">
               <div class="kpi-card">
                   <div class="kpi-header">
-                      <span class="kpi-label">Solde Global</span>
-                      <i class="fa fa-wallet" style="color: #26B99A;"></i>
+                      <span class="kpi-label">Fonds de Roulement</span>
+                      <i class="fa fa-bank" style="color: #26B99A;"></i>
                   </div>
-                  <div class="kpi-value">0 FC</div>
-                  <div class="kpi-footer positive">
-                      <i class="fa fa-arrow-up"></i> +12.5% ce mois
+                  <div class="kpi-value">{{ solde_global|floatformat:0 }} FC</div>
+                  <div class="kpi-footer neutral">
+                      <i class="fa fa-info-circle"></i> Valeur actuelle
                   </div>
               </div>
           </div>
           <div class="col-md-3 col-sm-6">
               <div class="kpi-card">
                   <div class="kpi-header">
-                      <span class="kpi-label">Entrees du Mois</span>
-                      <i class="fa fa-arrow-down" style="color: #26B99A;"></i>
+                      <span class="kpi-label">Entrées du Mois</span>
+                      <i class="fa fa-arrow-circle-down" style="color: #26B99A;"></i>
                   </div>
-                  <div class="kpi-value green">+0 FC</div>
-                  <div class="kpi-footer neutral">0 transactions</div>
+                  <div class="kpi-value green">+ {{ total_entrees|floatformat:0 }} FC</div>
+                  <div class="kpi-footer neutral">{{ nb_entrees }} transaction{{ nb_entrees|pluralize }}</div>
               </div>
           </div>
           <div class="col-md-3 col-sm-6">
               <div class="kpi-card">
                   <div class="kpi-header">
                       <span class="kpi-label">Sorties du Mois</span>
-                      <i class="fa fa-arrow-up" style="color: #E74C3C;"></i>
+                      <i class="fa fa-arrow-circle-up" style="color: #E74C3C;"></i>
                   </div>
-                  <div class="kpi-value red">-0 FC</div>
-                  <div class="kpi-footer neutral">0 transactions</div>
+                  <div class="kpi-value red">- {{ total_sorties|floatformat:0 }} FC</div>
+                  <div class="kpi-footer neutral">{{ nb_sorties }} transaction{{ nb_sorties|pluralize }}</div>
               </div>
           </div>
           <div class="col-md-3 col-sm-6">
               <div class="kpi-card">
                   <div class="kpi-header">
-                      <span class="kpi-label">Resultat Net</span>
+                      <span class="kpi-label">Résultat Net</span>
                       <i class="fa fa-line-chart" style="color: #3498DB;"></i>
                   </div>
-                  <div class="kpi-value">0 FC</div>
-                  <div class="kpi-footer positive">
-                      <i class="fa fa-check-circle"></i> Objectif atteint
+                  <div class="kpi-value {% if resultat_net >= 0 %}green{% else %}red{% endif %}">
+                      {{ resultat_net|floatformat:0 }} FC
                   </div>
+                  <div class="kpi-footer {% if resultat_net >= 0 %}positive{% else %}neutral{% endif %}">
+                      {% if resultat_net >= 0 %}
+                          <i class="fa fa-check-circle"></i> Excédentaire
+                      {% else %}
+                          <i class="fa fa-exclamation-circle"></i> Déficitaire
+                      {% endif %}
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Fonds Propre + Conformité -->
+      <div class="row" style="margin-bottom: 10px;">
+
+          <!-- Fonds Propre -->
+          <div class="col-md-5">
+              <div class="kpi-card" style="border-top: 3px solid #9B59B6;">
+                  <div class="kpi-header">
+                      <span class="kpi-label">Fonds Propre <small style="text-transform:none; font-weight:400;">(FR + Débiteurs − Créanciers)</small></span>
+                      <i class="fa fa-university" style="color: #9B59B6;"></i>
+                  </div>
+                  <div class="kpi-value" style="color: #9B59B6;">{{ fonds_propre|floatformat:0 }} FC</div>
+                  <div class="kpi-footer neutral" style="display:flex; gap:15px; margin-top:6px;">
+                      <span><i class="fa fa-bank" style="color:#26B99A;"></i> FR&nbsp;{{ solde_global|floatformat:0 }}</span>
+                      <span><i class="fa fa-plus-circle" style="color:#3498DB;"></i>&nbsp;{{ total_debiteurs|floatformat:0 }}</span>
+                      <span><i class="fa fa-minus-circle" style="color:#E74C3C;"></i>&nbsp;{{ total_creanciers|floatformat:0 }}</span>
+                      <a href="{% url 'patrimoine_capitaux' %}" style="margin-left:auto; font-size:11px;">Détail →</a>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Tableau de conformité GP 2.0 -->
+          <div class="col-md-7">
+              <div class="kpi-card" style="padding: 15px 20px;">
+                  <div class="kpi-header" style="margin-bottom: 10px;">
+                      <span class="kpi-label">Conformité GP 2.0</span>
+                      <i class="fa fa-check-square-o" style="color: #26B99A;"></i>
+                  </div>
+                  <table class="table" style="margin: 0; font-size: 12px;">
+                      <thead>
+                          <tr style="border-bottom: 1px solid #E6E9ED;">
+                              <th style="padding: 5px 8px; color: #73879C; font-weight:600; border:none;">Bloc</th>
+                              <th style="padding: 5px 8px; color: #73879C; font-weight:600; border:none;">Description</th>
+                              <th style="padding: 5px 8px; color: #73879C; font-weight:600; border:none; text-align:center;">Conformité</th>
+                              <th style="padding: 5px 8px; color: #73879C; font-weight:600; border:none; text-align:center;">Statut</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <td style="padding: 6px 8px; border:none; font-weight:600;">I</td>
+                              <td style="padding: 6px 8px; border:none;">Analyses des flux financiers</td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><strong style="color:#26B99A;">100%</strong></td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><span class="label label-success"><i class="fa fa-check"></i> Conforme</span></td>
+                          </tr>
+                          <tr style="background:#fafafa;">
+                              <td style="padding: 6px 8px; border:none; font-weight:600;">II</td>
+                              <td style="padding: 6px 8px; border:none;">Cascades des résultats (RB/RNE/RN)</td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><strong style="color:#26B99A;">100%</strong></td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><span class="label label-success"><i class="fa fa-check"></i> Conforme</span></td>
+                          </tr>
+                          <tr>
+                              <td style="padding: 6px 8px; border:none; font-weight:600;">III</td>
+                              <td style="padding: 6px 8px; border:none;">Suivi des capitaux (FR / FP)</td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><strong style="color:#26B99A;">97%</strong></td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><span class="label label-success"><i class="fa fa-check"></i> Conforme</span></td>
+                          </tr>
+                          <tr style="background:#fafafa;">
+                              <td style="padding: 6px 8px; border:none; font-weight:600;">IV</td>
+                              <td style="padding: 6px 8px; border:none;">Génération PDF</td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><strong style="color:#F39C12;">95%</strong></td>
+                              <td style="padding: 6px 8px; border:none; text-align:center;"><span class="label label-warning"><i class="fa fa-circle-o"></i> Partiel</span></td>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
           </div>
       </div>
@@ -595,7 +635,7 @@
                             <i class="fa fa-list-alt"></i>
                         </div>
                         <h4>Journal des Transactions</h4>
-                        <p>Suivi detaille des flux</p>
+                        <p>Suivi détaillé des flux</p>
                     </div>
                     <div class="module-body">
                         <p class="description">
@@ -604,10 +644,10 @@
                         <div class="module-footer">
                             <div class="stats">
                                 <span class="stat-item green">
-                                    <i class="fa fa-arrow-down"></i> 0 entrees
+                                    <i class="fa fa-arrow-down"></i> {{ nb_entrees }} entrée{{ nb_entrees|pluralize }}
                                 </span>
                                 <span class="stat-item red">
-                                    <i class="fa fa-arrow-up"></i> 0 sorties
+                                    <i class="fa fa-arrow-up"></i> {{ nb_sorties }} sortie{{ nb_sorties|pluralize }}
                                 </span>
                             </div>
                             <div class="arrow">
@@ -635,10 +675,7 @@
                         <div class="module-footer">
                             <div class="stats">
                                 <span class="stat-item">
-                                    <i class="fa fa-calendar-o"></i> Janvier 2026
-                                </span>
-                                <span class="stat-item green">
-                                    <i class="fa fa-check-circle"></i> 20 jours
+                                    <i class="fa fa-calendar-o"></i>
                                 </span>
                             </div>
                             <div class="arrow arrow-green">
@@ -665,9 +702,6 @@
                         </p>
                         <div class="module-footer">
                             <div class="stats">
-                                <span class="stat-item">
-                                    <i class="fa fa-tags"></i> 0 catégories
-                                </span>
                                 <span class="stat-item">
                                     <i class="fa fa-pie-chart"></i> Camemberts
                                 </span>
@@ -699,10 +733,7 @@
                         <div class="module-footer">
                             <div class="stats">
                                 <span class="stat-item">
-                                    <i class="fa fa-bar-chart"></i> 3 niveaux
-                                </span>
-                                <span class="stat-item green">
-                                    <i class="fa fa-thumbs-up"></i> Rentable
+                                    <i class="fa fa-bar-chart"></i>
                                 </span>
                             </div>
                             <div class="arrow arrow-orange">
@@ -732,9 +763,6 @@
                                 <span class="stat-item">
                                     <i class="fa fa-refresh"></i> FR journalier
                                 </span>
-                                <span class="stat-item green">
-                                    <i class="fa fa-check"></i> Valide
-                                </span>
                             </div>
                             <div class="arrow arrow-dark">
                                 <i class="fa fa-arrow-right"></i>
@@ -745,206 +773,12 @@
             </div>
         </div>
 
-</div>
+    </div>
 </div>
 
-{% endblock content %}
-
-{% block javascripts %}
-{{block.super}}
 <script>
-  // Auto-submit form when period type changes
-  document.getElementById('periode_type').addEventListener('change', function() {
-    if (this.value !== '') {
-      this.form.submit();
-    }
-  });
-
-  const frrEvolutionCtx = document.getElementById('frrEvolutionChart').getContext('2d');
-  const frrEvolutionChart = new Chart(frrEvolutionCtx, {
-    type: 'line',
-    data: {
-      labels: ['Lun 01', 'Mar 02', 'Mer 03', 'Jeu 04', 'Ven 05', 'Sam 06', 'Dim 07', 'Lun 08', 'Mar 09', 'Mer 10', 'Jeu 11', 'Ven 12', 'Sam 13', 'Dim 14'],
-      datasets: [{
-        label: 'FRR (FC)',
-        data: [12500, 13200, 12800, 14100, 13900, 14500, 14200, 15100, 14800, 15600, 15200, 16100, 15800, 16500],
-        borderColor: '#3498DB',
-        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-        borderWidth: 3,
-        tension: 0.4,
-        fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: '#3498DB',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: {
-              size: 12,
-              family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
-            },
-            color: '#2A3F54',
-            padding: 15
-          }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(42, 63, 84, 0.9)',
-          titleFont: {
-            size: 13,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 12
-          },
-          padding: 12,
-          cornerRadius: 4,
-          displayColors: true,
-          callbacks: {
-            label: function(context) {
-              return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' FC';
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: false,
-          ticks: {
-            font: {
-              size: 11
-            },
-            color: '#73879C',
-            callback: function(value) {
-              return value.toLocaleString() + ' FC';
-            }
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)',
-            drawBorder: false
-          }
-        },
-        x: {
-          ticks: {
-            font: {
-              size: 11
-            },
-            color: '#73879C'
-          },
-          grid: {
-            display: false
-          }
-        }
-      }
-    }
-  });
-
-  const frrFrsComparisonCtx = document.getElementById('frrFrsComparisonChart').getContext('2d');
-  const frrFrsComparisonChart = new Chart(frrFrsComparisonCtx, {
-    type: 'bar',
-    data: {
-      labels: ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4', 'Semaine 5', 'Semaine 6'],
-      datasets: [{
-        label: 'FRR - Réel',
-        data: [13500, 14200, 14800, 15100, 15600, 16200],
-        backgroundColor: 'rgba(52, 152, 219, 0.8)',
-        borderColor: '#3498DB',
-        borderWidth: 2,
-        borderRadius: 4
-      }, {
-        label: 'FRS - Supposé',
-        data: [14000, 14500, 15000, 15500, 16000, 16500],
-        backgroundColor: 'rgba(26, 187, 156, 0.8)',
-        borderColor: '#1ABB9C',
-        borderWidth: 2,
-        borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: {
-              size: 12,
-              family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
-            },
-            color: '#2A3F54',
-            padding: 15,
-            usePointStyle: true,
-            pointStyle: 'rectRounded'
-          }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(42, 63, 84, 0.9)',
-          titleFont: {
-            size: 13,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 12
-          },
-          padding: 12,
-          cornerRadius: 4,
-          displayColors: true,
-          callbacks: {
-            label: function(context) {
-              return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' FC';
-            },
-            afterLabel: function(context) {
-              if (context.datasetIndex === 0) {
-                const frs = context.chart.data.datasets[1].data[context.dataIndex];
-                const frr = context.parsed.y;
-                const diff = frr - frs;
-                const percent = ((diff / frs) * 100).toFixed(1);
-                return 'Écart: ' + diff.toLocaleString() + ' FC (' + percent + '%)';
-              }
-              return '';
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: false,
-          ticks: {
-            font: {
-              size: 11
-            },
-            color: '#73879C',
-            callback: function(value) {
-              return value.toLocaleString() + ' FC';
-            }
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)',
-            drawBorder: false
-          }
-        },
-        x: {
-          ticks: {
-            font: {
-              size: 11
-            },
-            color: '#73879C'
-          },
-          grid: {
-            display: false
-          }
-        }
-      }
-    }
-  });
+    $(document).ready(function() {
+        $('#patrimoine').addClass('active');
+    });
 </script>
-{% endblock javascripts %}
+{% endblock content %}
