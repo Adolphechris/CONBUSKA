@@ -38,6 +38,7 @@
                                             <th class="column-title"> Devise</th>
                                             <th class="column-title"> Montant </th>
                                             <th class="column-title"> Cout d'achat </th>
+                                            <th class="column-title"> Statut </th>
                                             <th class="column-title"> Action</th>
                                         </tr>
                                     </thead>
@@ -52,14 +53,32 @@
                                                 <td>{{ approvisionnement.total_approvisionnement }}</td>
                                                 <td>{{ approvisionnement.cout_achat }}</td>
                                                 <td>
-                                                    <a href="{{ approvisionnement.get_absolute_url }}" class="btn btn-warning btn-xs">
+                                                    {% if approvisionnement.valide %}
+                                                        <span class="label label-success">
+                                                            <i class="fa fa-check-circle"></i>
+                                                            Validé
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="label label-warning">
+                                                            <i class="fa fa-circle"></i>
+                                                             Brouillon
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ approvisionnement.get_absolute_url }}" class="btn btn-primary btn-xs">
                                                         <i class="fa fa-eye"></i>
-                                                        Details
+                                                        Détails
                                                     </a>
-                                                    <a href="" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-eye"></i>
+                                                    <button class="btn btn-xs btn-danger" id="btnAnnuler"
+                                                            hx-get="{% url 'approvisionnement_delete' approvisionnement.pk %}"
+                                                            hx-target="#modalContent"
+                                                            hx-trigger="click"
+                                                            hx-swap="innerHTML"
+                                                    >
+                                                        <i class="fa fa-times-circle"></i>
                                                         Supprimer
-                                                    </a>
+                                                    </button>
                                                 </td>
 										    </tr>
 									    {% endfor %}
@@ -72,12 +91,23 @@
             </div>
         </div>
     </div>
+
+     <!-- Modal Bootstrap -->
+    <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="modalContent">
+          <!-- Le contenu HTMX (formulaire de confirmation) sera injecté ici -->
+        </div>
+      </div>
+    </div>
+
     <script>
         $(document).ready(function () {
             var t = $('#tableApprovisionnements').DataTable({
                 dom: '<"top">rflt<"bottom"p><"clear">',
                 paging: true,
 			    autoWidth: true,
+			    order: [],
                 columnDefs: [
 
                 ],
@@ -100,6 +130,14 @@
                         "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
                     }
                 },
+            });
+
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                const container = evt.target;
+
+                if (container.id === "modalContent") {
+                    $('#mainModal').modal('show');
+                }
             });
         });
     </script>

@@ -1,0 +1,128 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Approvisionnements {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5>
+                        <a href="{% url 'approvisionnements' %}">Approvisionnements</a> / Détails approvisionnement
+                    </h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <div class="invoice-identity">
+                                <div class="invoice-icon">
+                                    <i class="fa fa-truck"></i>
+                                </div>
+                                <div class="invoice-details">
+                                    <h1>Fiche d'approvisionnement #{{ approvisionnement.numero }}</h1>
+                                    <div class="invoice-meta">
+                                        <span class="meta-item">
+                                            <i class="fa fa-building"></i>
+                                            Magasin : <strong>{{ approvisionnement.magasin }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-money"></i>
+                                            Devise : <strong>{{ approvisionnement.devise }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-exchange"></i>
+                                            Taux : <strong>{{ approvisionnement.taux }}</strong>
+                                        </span>
+                                        <span class="meta-separator">•</span>
+                                        <span class="meta-item">
+                                            <i class="fa fa-calendar"></i>
+                                            <strong>{{ approvisionnement.date_creation }}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <table id="tableApprovisionnementShow" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title">N°</th>
+                                            <th class="column-title">Date</th>
+                                            <th class="column-title">Facture</th>
+                                            <th class="column-title">Article</th>
+                                            <th class="column-title">Quantité</th>
+                                            <th class="column-title">Prix unitaire</th>
+                                            <th class="column-title">Prix total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for d in details_approvisionnement %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ d.date_creation }}</td>
+                                                <td>{{ d.facture }}</td>
+                                                <td>{{ d.article.designation }}</td>
+                                                <td>{{ d.qte }}</td>
+                                                <td>{{ d.prix|floatformat }}</td>
+                                                <td>{{ d.prix_total|floatformat }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total_row">
+                                            <td colspan="6" class="text-right"><strong>Total approvisionnement :</strong></td>
+                                            <td><strong>{{ approvisionnement.total_approvisionnement|floatformat }} FC</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a onclick="history.go(-1);">
+                            <i class="fa fa-arrow-left"></i>
+                            Retourner
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#tableApprovisionnementShow').DataTable({
+                dom: '<\"top\">rflt<\"bottom\"p><\"clear\">',
+                paging: true,
+                autoWidth: true,
+                language: {
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sInfoEmpty": "Aucun résultat disponible",
+                    "sZeroRecords": "Aucun élément à afficher",
+                    "sEmptyTable": "Aucune donnée disponible dans le tableau",
+                    "sLengthMenu": "Afficher _MENU_ éléments",
+                    "sLoadingRecords": "Chargement...",
+                    "sProcessing": "Traitement...",
+                    "oPaginate": {
+                        "sFirst": "Premier",
+                        "sLast": "Dernier",
+                        "sNext": "Suivant",
+                        "sPrevious": "Précédent"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                }
+            });
+            $('#approvisionnements').addClass('active');
+        });
+    </script>
+{% endblock content %}
+

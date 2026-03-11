@@ -1,26 +1,31 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN, user_has_role
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, View
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
-from .models import Approvisionnement, DetailsApprovisionnement, FraisApprovisionnement
-from fournisseurs.models import Fournisseur
+from django.core.exceptions import PermissionDenied
+from .models import Approvisionnement, DetailsApprovisionnement
 from .forms import ApprovisionnementCreateForm, ArticleApprovisionnementAddForm, ArticleApprovisionnementUpdateForm
 from .services import ApprovisionnementService, FraisService
 
 
-class ApprovisionnementsView(LoginRequiredMixin, ListView):
+class ApprovisionnementsView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     context_object_name = 'liste_approvisionnements'
     template_name = 'approvisionnements/approvisionnements.html'
+    ordering = ['-numero']
 
 
-class ApprovisionnementCreateView(LoginRequiredMixin, CreateView):
+class ApprovisionnementCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     template_name = 'approvisionnements/approvisionnement_form.html'
     form_class = ApprovisionnementCreateForm
@@ -39,7 +44,8 @@ class ApprovisionnementCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class ApprovisionnementUpdateView(LoginRequiredMixin, UpdateView):
+class ApprovisionnementUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     template_name = 'approvisionnements/approvisionnement_form.html'
     form_class = ApprovisionnementCreateForm
@@ -52,26 +58,44 @@ class ApprovisionnementUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class ApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
+class ApprovisionnementDeleteView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     template_name = 'approvisionnements/approvisionnement_confirm_delete.html'
     success_url = reverse_lazy('approvisionnements')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Annuler un approvisionnement'
-        context['message'] = "Voulez-vous annuler l'approvisionnement {} ?".format(self.get_object().numero)
-        context['submit_icon'] = 'fa fa-check'
-        context['submit_label'] = 'Valider'
-        return context
+    def get(self, request, pk):
+        approvisionnement = get_object_or_404(Approvisionnement, pk=pk)
 
-    def delete(self, request, *args, **kwargs):
-        approvisionnement = self.get_object()
-        ApprovisionnementService.supprimer(approvisionnement)
-        return redirect(self.success_url)
+        context = {
+            "title": "Suppression approvisionnement",
+            "message": f"Voulez-vous supprimer l'approvisionnement {approvisionnement.numero} ?",
+            "submit_icon": "fa fa-check",
+            "submit_label": "Valider",
+            "approvisionnement": approvisionnement,
+        }
+
+        return render(
+            request,
+            'approvisionnements/approvisionnement_confirm_delete.html',
+            context
+        )
+
+    def post(self, request, pk):
+        approvisionnement = get_object_or_404(Approvisionnement, pk=pk)
+        ApprovisionnementService.supprimer(approvisionnement=approvisionnement)
+
+        if request.headers.get("HX-Request"):
+            # Redirection vers la liste des approvisionnements
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse('approvisionnements')
+            return response
+
+        return redirect("approvisionnements")
 
 
-class ApprovisionnementSaveView(LoginRequiredMixin, TemplateView):
+class ApprovisionnementSaveView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     template_name = 'approvisionnements/approvisionnement_confirm_save.html'
     success_url = reverse_lazy('approvisionnements')
@@ -89,22 +113,34 @@ class ApprovisionnementSaveView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         approvisionnement = self.get_approvisionnement()
-        ApprovisionnementService.valider(
-            approvisionnement=approvisionnement,
-            user=request.user
-        )
+        try:
+            ApprovisionnementService.valider(
+                approvisionnement=approvisionnement,
+                user=request.user
+            )
+        except ValidationError as e:
+            return HttpResponse(str(e), status=400)
         return redirect(self.success_url)
 
 
+@login_required
 @require_GET
 def get_update_form(request, pk):
+    if not user_has_role(request.user, ROLE_ADMIN):
+        raise PermissionDenied
     instance = get_object_or_404(DetailsApprovisionnement, pk=pk)
     form = ArticleApprovisionnementUpdateForm(instance=instance)
-    return render(request, "approvisionnements/partials/update_form.html",
-                  {"update_form": form, "appro_pk": instance.approvisionnement.pk, "detail_appro_pk": pk})
+    return render(request, "approvisionnements/partials/update_form.html", {
+        "update_form": form,
+        "appro_pk": instance.approvisionnement.pk,
+        "detail_appro_pk": pk,
+        "article_nom": instance.article.designation,
+        "fournisseur_nom": str(instance.fournisseur),
+    })
 
 
-class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
+class ApprovisionnementDetailView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Approvisionnement
     context_object_name = "approvisionnement"
     template_name = "approvisionnements/approvisionnement_details.html"
@@ -124,12 +160,53 @@ class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
         context["add_form"] = ArticleApprovisionnementAddForm()
         return context
 
+
+class ApprovisionnementShowDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
+    """
+    Vue read-only pour consulter une fiche d'approvisionnement depuis le module fournisseurs.
+    """
+    model = Approvisionnement
+    context_object_name = "approvisionnement"
+    template_name = "approvisionnements/approvisionnement_show_details.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        approvisionnement = self.object
+        context["approvisionnement"] = approvisionnement
+        context["details_approvisionnement"] = (
+            DetailsApprovisionnement.objects
+            .filter(approvisionnement=approvisionnement)
+            .select_related("article", "fournisseur")
+            .order_by("pk")
+        )
+        return context
+
 def is_htmx(request):
     return request.headers.get("HX-Request", "").lower() == "true"
 
 
-class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
+class ApprovisionnementLineTableMixin:
 
+    def _render_table(self, request, approvisionnement):
+        html = render_to_string(
+            "approvisionnements/partials/lines_table.html",
+            {
+                "approvisionnement": approvisionnement,
+                "details_approvisionnement": (
+                    DetailsApprovisionnement.objects
+                    .filter(approvisionnement=approvisionnement)
+                    .select_related("article", "fournisseur")
+                ),
+            },
+            request=request,
+        )
+        return HttpResponse(html)
+
+
+class ApprovisionnementLineCreateView(RoleRequiredMixin, ApprovisionnementLineTableMixin, View):
+
+    allowed_roles = [ROLE_ADMIN]
     def post(self, request, pk):
         if not is_htmx(request):
             return JsonResponse({"error": "HTMX required"}, status=400)
@@ -146,29 +223,16 @@ class ApprovisionnementLineCreateView(LoginRequiredMixin, View):
             detail.article = form.cleaned_data['article']
             detail.fournisseur = form.cleaned_data['fournisseur']
             detail = detail.add()
+
+            # Enregistrement des frais
             FraisService.save_frais(detail, form.cleaned_data)
 
         return self._render_table(request, approvisionnement)
 
-    def _render_table(self, request, approvisionnement):
-        html = render_to_string(
-            "approvisionnements/partials/lines_table.html",
-            {
-                # "add_form": ArticleApprovisionnementAddForm(),
-                "approvisionnement": approvisionnement,
-                "details_approvisionnement": (
-                    DetailsApprovisionnement.objects
-                    .filter(approvisionnement=approvisionnement)
-                    .select_related("article", "fournisseur")
-                ),
-            },
-            request=request,
-        )
-        return HttpResponse(html)
 
+class ApprovisionnementLineUpdateView(RoleRequiredMixin, ApprovisionnementLineTableMixin, View):
 
-class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
-
+    allowed_roles = [ROLE_ADMIN]
     def post(self, request, pk):
         if not request.headers.get("HX-Request"):
             return JsonResponse({"error": "HTMX required"}, status=400)
@@ -180,6 +244,10 @@ class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
 
         approvisionnement = detail.approvisionnement
 
+        # Capture l'article et le fournisseur AVANT que le form ne les écrase.
+        article_verrouille = detail.article
+        fournisseur_verrouille = detail.fournisseur
+
         form = ArticleApprovisionnementUpdateForm(
             request.POST,
             instance=detail
@@ -190,108 +258,31 @@ class ApprovisionnementLineUpdateView(LoginRequiredMixin, View):
 
         with transaction.atomic():
             detail = form.save(commit=False)
+            # Réaffectation explicite : article et fournisseur ne peuvent
+            # pas changer, quelle que soit la valeur reçue en POST.
+            detail.article = article_verrouille
+            detail.fournisseur = fournisseur_verrouille
             detail.update_appro()
+
+            # Enregistrement des frais
             FraisService.save_frais(detail, form.cleaned_data)
 
         return self._render_table(request, approvisionnement)
 
-    def _render_table(self, request, approvisionnement):
-        html = render_to_string(
-            "approvisionnements/partials/lines_table.html",
-            {
-                # "add_form": ArticleApprovisionnementAddForm(),
-                "approvisionnement": approvisionnement,
-                "details_approvisionnement": (
-                    DetailsApprovisionnement.objects
-                    .filter(approvisionnement=approvisionnement)
-                    .select_related("article", "fournisseur")
-                ),
-            },
-            request=request,
-        )
-        return HttpResponse(html)
 
-
-"""
-class ApprovisionnementDetailView(LoginRequiredMixin, DetailView):
-    model = Approvisionnement
-    context_object_name = 'approvisionnement'
-    template_name = 'approvisionnements/approvisionnement_details.html'
-
-    def get_details_approvisionnement(self):
-        return DetailsApprovisionnement.objects.filter(approvisionnement=self.get_object())
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(object=self.object)
-        # context['details_approvisionnement'] = self.get_details_approvisionnement()
-        context['add_form'] = ArticleApprovisionnementAddForm()
-        context['update_form'] = ArticleApprovisionnementUpdateForm(
-            instance=DetailsApprovisionnement.objects.filter(approvisionnement=self.get_object())
-        )  # ou autre instance logique
-        return self.render_to_response(context)
-
-    def post(self, request, *args, **kwargs):
-        # print(request.headers.get('X-Requested-With'), request.POST, request.POST.get('id'), request.POST.get('form_type'))
-        if request.headers.get('HX-Request'):
-            form_type = request.POST.get('form_type')
-            if form_type == 'add':
-                form = ArticleApprovisionnementAddForm(request.POST)
-                if form.is_valid():
-                    detail_approvisionnement = form.save(commit=False)
-                    detail_approvisionnement.approvisionnement = self.get_object()
-                    detail_approvisionnement.article = form.cleaned_data['article']
-                    detail_approvisionnement.fournisseur = form.cleaned_data['fournisseur']
-                    detail_approvisionnement.add()
-
-                    html = render_to_string("approvisionnements/partials/add_form_and_table.html", {
-                        "add_form": ArticleApprovisionnementAddForm(),
-                        "approvisionnement": self.get_object(),
-                        "details_approvisionnement": self.get_details_approvisionnement()
-                    }, request=request)
-
-                    return HttpResponse(html)
-                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-            else:
-                instance = get_object_or_404(DetailsApprovisionnement, pk=request.POST.get('id'))
-                form = ArticleApprovisionnementUpdateForm(request.POST, instance=instance)
-                if form.is_valid():
-                    detail_approvisionnement = form.save(commit=False)
-                    detail_approvisionnement.update_appro()
-
-                    html = render_to_string("approvisionnements/partials/add_form_and_table.html", {
-                        "add_form": ArticleApprovisionnementAddForm(),
-                        "approvisionnement": self.get_object(),
-                        "details_approvisionnement": self.get_details_approvisionnement()
-                    }, request=request)
-
-                    return HttpResponse(html)
-                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-        return JsonResponse({'error': 'Invalid request'}, status=400)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['details_approvisionnement'] = self.get_details_approvisionnement()
-        return context
-"""
-
-
-class ArticleApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
+class ArticleApprovisionnementDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = DetailsApprovisionnement
-    template_name = 'approvisionnements/approvisionnement_confirm_delete.html'
-
-    def get_approvisionnement(self):
-        return get_object_or_404(Approvisionnement, pk=self.kwargs['approvisionnement_pk'])
+    template_name = 'approvisionnements/approvisionnement_article_confirm_delete.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        obj = self.get_object()
         context['title'] = "Supprimer un article de l'approvisionnement"
-        context['message'] = f"Voulez-vous supprimer l'article {self.get_object().article} de l'approvisionnement ?"
+        context['message'] = f"Voulez-vous supprimer l'article {obj.article} de l'approvisionnement ?"
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Valider'
-        context['approvisionnement'] = self.get_approvisionnement()
+        context['approvisionnement'] = obj.approvisionnement
         return context
 
     def get_success_url(self):
@@ -310,10 +301,19 @@ class ArticleApprovisionnementDeleteView(LoginRequiredMixin, DeleteView):
                 .filter(approvisionnement=appro)
                 .prefetch_related("frais__type_frais")
             )
-            context = {
-                'details_approvisionnement': details,
-                'approvisionnement': appro
-            }
-            return render(request, "approvisionnements/partials/lines_table.html", context)
+
+            table_html = render_to_string(
+                "approvisionnements/partials/lines_table.html",
+                {'details_approvisionnement': details, 'approvisionnement': appro},
+                request=request,
+            )
+            # On retourne le tableau avec un swap OOB sur linesTableContainer
+            # ET un swap vide sur modalContent pour fermer
+            response = HttpResponse(
+                f'<div id="linesTableContainer" hx-swap-oob="innerHTML">{table_html}</div>'
+                f'<div id="modalContent" hx-swap-oob="innerHTML"></div>'
+            )
+            response['HX-Trigger'] = 'closeModal'
+            return response
 
         return redirect(self.get_success_url())

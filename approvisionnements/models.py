@@ -37,7 +37,7 @@ class Approvisionnement(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.numero
+        return str(self.numero)
 
     @property
     def total_approvisionnement(self):
@@ -45,11 +45,11 @@ class Approvisionnement(models.Model):
 
     @property
     def frais_achat_total(self):
-        return sum(i.frais_achat for i in self.detailsapprovisionnement_set.all())
+        return sum(i.frais_achat * i.qte for i in self.detailsapprovisionnement_set.all())
 
     @property
     def cout_achat(self):
-        return sum(i.cout_achat for i in self.detailsapprovisionnement_set.all())
+        return sum(i.cout_achat * i.qte for i in self.detailsapprovisionnement_set.all())
 
     @property
     def resultat_total(self):
@@ -149,27 +149,31 @@ class DetailsApprovisionnement(models.Model):
     @transaction.atomic
     def update_appro(self):
         old_details = DetailsApprovisionnement.objects.get(pk=self.pk)
-        print(old_details)
-        old_article = old_details.article
         old_peremption = old_details.date_peremption
-        old_qte = old_details.qte
 
-        # Valeurs modifiées
-        new_article = self.article
+        # Article et fournisseur sont verrouillés — on les réaffecte
+        # depuis la BDD pour ignorer toute valeur injectée via POST.
+        self.article = old_details.article
+        self.fournisseur = old_details.fournisseur
+
         new_peremption = self.date_peremption
         new_qte = self.qte
-
         appro = self.approvisionnement
 
-        # Même article / même date ➜ simple update
-        if (old_article == new_article) and (old_peremption == new_peremption):
+        # Même date de péremption ➜ simple update (article/fournisseur déjà verrouillés)
+        if old_peremption == new_peremption:
             self.save()
         else:
-            # Fusion avec ligne existante si elle existe
+            # Fusion uniquement avec une ligne de même source
+            # (article + fournisseur + facture + nouvelle date de péremption).
+            # Sans fournisseur/facture dans le filtre, on risquait de fusionner
+            # deux lignes de sources différentes → perte de traçabilité.
             autre_detail = DetailsApprovisionnement.objects.filter(
                 approvisionnement=appro,
-                article=new_article,
-                date_peremption=new_peremption
+                article=self.article,
+                fournisseur=self.fournisseur,
+                facture=self.facture,
+                date_peremption=new_peremption,
             ).exclude(pk=self.pk).first()
 
             if autre_detail:

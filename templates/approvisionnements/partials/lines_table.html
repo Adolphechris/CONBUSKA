@@ -11,7 +11,7 @@
             <th>FA</th>
             <th>PVD</th>
             <th>PVG</th>
-            <th>Resultats</th>
+            <th>Résultats</th>
             <th class="text-center">Action</th>
         </tr>
     </thead>
@@ -59,8 +59,12 @@
     </tbody>
     <tfoot>
         <tr class="total-row">
-            <td colspan="10" class="text-right"><strong>Total:</strong></td>
+            <td colspan="6" class="text-right"><strong>Total:</strong></td>
             <td><strong>{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise  }}</strong></td>
+            <td><strong>{{approvisionnement.frais_achat_total }} {{ approvisionnement.devise  }}</strong></td>
+            <td><strong>{{approvisionnement.chiffre_affaires }} {{ approvisionnement.devise  }}</strong></td>
+            <td><strong>-</strong></td>
+            <td><strong>{{approvisionnement.resultat_total }} {{ approvisionnement.devise  }}</strong></td>
             <td></td>
         </tr>
     </tfoot>

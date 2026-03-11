@@ -1,0 +1,20 @@
+<div class="modal-header">
+    <button type="button" class="btn btn-close pull-right" data-dismiss="modal" aria-label="Close">x</button>
+    <h5 class="modal-title">{{ title }}</h5>
+</div>
+<form method="POST"
+      hx-post="{% url 'approvisionnement_delete' approvisionnement.pk %}"
+>
+    <div class="modal-body">
+        {% csrf_token %}
+        <h4>{{ message }}</h4>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">
+            <i class="{{ submit_icon }}"></i> {{ submit_label }}
+        </button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">
+            <i class="fa fa-times"></i> Annuler
+        </button>
+    </div>
+</form>

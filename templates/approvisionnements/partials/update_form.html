@@ -3,52 +3,86 @@
     <form id="updateForm"
           hx-post="{% url 'approvisionnement_line_update' appro_pk %}"
           hx-target="#linesTableContainer"
-          hx-swap="innerHTML"
-          hx-on:htmx:after-request="resetForms(event.target)">
+          hx-swap="innerHTML">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="update">
-        <input type="hidden" name="id" value="{{ detail_appro_pk  }}">
-        <div id="updateFormFields">
-            {% include "approvisionnements/partials/form_fields.html" with form=update_form %}
+        <input type="hidden" name="id" value="{{ detail_appro_pk }}">
+
+        <!-- Article verrouillé — non modifiable -->
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-cube"></i></span>
+                <input type="text"
+                       class="form-control"
+                       value="{{ article_nom }}"
+                       disabled
+                       style="background:#f5f5f5; color:#888; cursor:not-allowed; border-style:dashed;">
+            </div>
         </div>
+
+        <!-- Fournisseur verrouillé — non modifiable -->
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-list-ul"></i></span>
+                <input type="text"
+                       class="form-control"
+                       value="{{ fournisseur_nom }}"
+                       disabled
+                       style="background:#f5f5f5; color:#888; cursor:not-allowed; border-style:dashed;">
+            </div>
+        </div>
+
+        <!-- Champs modifiables -->
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-sort-numeric-asc"></i></span>
+                {{ update_form.qte }}
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-usd"></i>&nbsp;</span>
+                {{ update_form.prix }}
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                {{ update_form.date_peremption }}
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-file-text"></i></span>
+                {{ update_form.facture }}
+            </div>
+        </div>
+
+        {% if update_form.dynamic_frais_fields %}
+            <div class="cost-fields">
+                <h6 class="form-subtitle">Frais d'achat</h6>
+                <div class="row">
+                    {% for field in update_form.frais_fields %}
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <i class="fa {{ field.field.widget.attrs.data_icon }}"></i>
+                                    </span>
+                                    {{ field }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
         <button type="submit" class="btn btn-success btn-block">
-            <i class="fa fa-plus-circle icon-space"></i>Mettre à jour
+            <i class="fa fa-plus-circle icon-space"></i> Mettre à jour
         </button>
-        <button type="button" class="btn btn-secondary btn-block"
-                onclick="document.getElementById('updateFormContainer').innerHTML = ''; document.getElementById('addFormContainer').style.display = 'block';">
+        <button type="button" class="btn btn-secondary btn-block" id="btnCancelUpdate">
             <i class="fa fa-times icon-space"></i> Annuler
         </button>
     </form>
 </div>
-<script>
-    function initSimpleSelect(root = document) {
-        $(root).find('.js-simple-select').each(function () {
-            const $el = $(this);
-
-            if ($el.hasClass('select2-hidden-accessible')) {
-                // Déjà initialisé → on force un recalcul
-                $el.trigger('change.select2');
-                return;
-            }
-
-            $el.select2({ width: '100%' });
-        });
-    }
-
-     function resetForms(target) {
-        alert('RESET FORM EN COURS 2');
-        // Supprimer uniquement le formulaire update
-        $('#updateFormContainer').empty();
-
-        // Réafficher le formulaire add
-        const addContainer = document.getElementById('addFormContainer');
-        addContainer.style.display = 'block';
-
-        // Reset des champs
-        const form = document.getElementById('addForm');
-        if (form) form.reset();
-
-        // 🔑 Re-synchroniser Select2 sur le formulaire ADD
-        initSimpleSelect(addContainer);
-    }
-</script>

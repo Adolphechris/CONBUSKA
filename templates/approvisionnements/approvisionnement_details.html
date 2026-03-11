@@ -1,587 +1,381 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Approvisionnement {% endblock title %}
+{% block title %}Détails Approvisionnement{% endblock title %}
+
 {% block stylesheets %}
-{{block.super}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+{{ block.super }}
 <style>
-    /* En-tête avec logo */
-    .header {
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #e5e7eb;
-    }
+.right_col { min-height: 100vh; }
 
-    .logo-wrapper {
-      display: block;
-      overflow: hidden;
-    }
+/* ── Header gradient ──────────────────────────────────────────────── */
+.appro-header {
+    background: linear-gradient(135deg, #3498DB 0%, #2471A3 100%);
+    color: #fff; padding: 20px 24px; border-radius: 8px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(52,152,219,0.35);
+}
+.appro-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; color: #fff; }
+.appro-header p  { margin: 0; font-size: 12px; color: rgba(255,255,255,0.72); }
+.appro-header-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-right: 14px; flex-shrink: 0;
+}
 
-    .logo-container {
-        width: 48px;
-        height: 48px;
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 8px;
-        display: flex; /* Active flexbox */
-        align-items: center; /* Centre verticalement */
-        justify-content: center; /* Centre horizontalement */
-        margin-right: 15px;
-    }
+/* ── Cards ────────────────────────────────────────────────────────── */
+.ap-card {
+    background: #fff; border-radius: 8px; border: 1px solid #E6E9ED;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden;
+}
+.ap-card-header {
+    padding: 12px 18px; border-bottom: 1px solid #F0F0F0;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #FAFBFC;
+}
+.ap-card-title {
+    margin: 0; font-size: 13px; font-weight: 700; color: #2A3F54;
+    display: flex; align-items: center; gap: 8px; text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.ap-card-title i { color: #3498DB; }
+.ap-card-body { padding: 18px; }
 
-    .logo-container i {
-      font-size: 24px;
-    }
+/* ── Info fields ──────────────────────────────────────────────────── */
+.info-field label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .7px; color: #73879C; margin-bottom: 3px; display: block;
+}
+.info-field .info-val {
+    font-size: 14px; font-weight: 600; color: #2A3F54;
+}
+.info-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 600;
+    background: #EBF5FB; color: #2471A3;
+}
 
-    .header-text {
-      margin-left: 57px; /* 42px logo + 15px margin */
-    }
+/* ── Form area ────────────────────────────────────────────────────── */
+.add-form-container {
+    background: #F8F9FA; border: 1px solid #E6E9ED; border-radius: 8px;
+    padding: 16px;
+}
+.form-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: #2A3F54; margin: 0 0 14px;
+    padding-bottom: 10px; border-bottom: 2px solid #3498DB;
+    display: flex; align-items: center; gap: 8px;
+}
+.form-title i { color: #3498DB; }
+.form-subtitle {
+    font-size: 12px; font-weight: 600; color: #73879C;
+    margin: 12px 0 8px; text-transform: uppercase; letter-spacing: .4px;
+}
+.cost-fields {
+    background: #EBF5FB; border-radius: 6px; padding: 10px 12px;
+    margin-bottom: 14px; border: 1px solid #D6EAF8;
+}
+.form-group label.control-label {
+    font-size: 11px; color: #73879C; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px;
+}
+.form-control {
+    border-color: #D5D8DC; border-radius: 5px; height: 34px;
+    font-size: 13px; box-shadow: none;
+}
+.form-control:focus { border-color: #3498DB; box-shadow: 0 0 0 2px rgba(52,152,219,.15); }
+.input-group-addon {
+    background: #F2F3F4; color: #73879C; border-color: #D5D8DC; font-size: 12px;
+}
+.form-control-static { padding: 0; min-height: auto; margin-bottom: 4px; font-size: 13px; }
 
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-top: 0;
-      margin-bottom: 3px;
-    }
+/* ── Table ────────────────────────────────────────────────────────── */
+#tableApprovisionnement thead th {
+    background: #F5F7FA; color: #2A3F54; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 2px solid #E6E9ED; padding: 10px 10px; white-space: nowrap;
+}
+#tableApprovisionnement td {
+    padding: 9px 10px; vertical-align: middle; font-size: 12px;
+    border-bottom: 1px solid #F5F5F5; color: #2A3F54;
+}
+#tableApprovisionnement tbody tr:hover { background: #FAFBFC; }
+.total-row { background: #F5F7FA !important; }
+.total-row td {
+    border-top: 2px solid #E6E9ED !important; font-size: 12px;
+    font-weight: 700; color: #2A3F54;
+}
 
-    /* Panneaux personnalisés */
-    .custom-panel {
-      border: none;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin-bottom: 15px;
-    }
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.btn { font-weight: 500; border-radius: 5px; font-size: 13px; }
+.btn-primary  { background: #3498DB; border-color: #3498DB; }
+.btn-primary:hover, .btn-primary:focus  { background: #2471A3; border-color: #2471A3; }
+.btn-success  { background: #26B99A; border-color: #26B99A; }
+.btn-success:hover, .btn-success:focus  { background: #1E9B82; border-color: #1E9B82; }
+.btn-danger   { background: #E74C3C; border-color: #E74C3C; }
+.btn-danger:hover, .btn-danger:focus    { background: #C0392B; border-color: #C0392B; }
+.btn-default  { background: #fff; border-color: #D5D8DC; color: #2A3F54; }
+.btn-default:hover { background: #F8F9FA; }
+.btn-secondary { background: #95A5A6; border-color: #95A5A6; color: #fff; }
+.btn-secondary:hover { background: #7F8C8D; border-color: #7F8C8D; color: #fff; }
 
-    .panel-heading {
-      background-color: white;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 12px 15px;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-    }
+.action-bar {
+    background: #fff; border: 1px solid #E6E9ED; border-radius: 8px;
+    padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
 
-    .panel-heading.compact {
-      padding: 8px 12px;
-    }
+/* ── HTMX transitions ─────────────────────────────────────────────── */
+#addFormContainer, #updateFormContainer { transition: opacity .3s ease-in-out; }
+.hidden-form { display: none; opacity: 0; }
 
-    .panel-title {
-      font-weight: 600;
-      font-size: 16px;
-      color: #1f2937;
-      margin: 0;
-      line-height: 30px;
-    }
-
-    .panel-body {
-      padding: 15px;
-    }
-
-    .panel-body.compact {
-      padding: 10px;
-    }
-
-    /* Panneau mis en évidence */
-    .highlighted-panel {
-      border: 1px solid #d1d5db;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    .highlighted-panel .panel-heading {
-      background-color: #f9fafb;
-      border-bottom: 2px solid #e5e7eb;
-    }
-
-    /* Formulaire d'ajout */
-    .add-form-container {
-      background-color: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 15px;
-      height: 72%;
-    }
-
-    .form-title {
-      font-weight: 600;
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 0;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .form-subtitle {
-      font-weight: 600;
-      font-size: 13px;
-      color: #4b5563;
-      margin-top: 15px;
-      margin-bottom: 10px;
-    }
-
-    .cost-fields {
-      background-color: #f3f4f6;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .input-group-addon {
-      background-color: #f3f4f6;
-      color: #6b7280;
-      border-color: #d1d5db;
-    }
-
-    .form-control {
-      border-color: #d1d5db;
-      box-shadow: none;
-      height: 34px;
-    }
-
-    .form-control:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-    }
-
-    /* Tableau personnalisé */
-    .custom-table {
-      border-collapse: separate;
-      border-spacing: 0;
-      width: 100%;
-    }
-
-    .custom-table th {
-      background-color: #f3f4f6;
-      color: #1f2937;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: 0.05em;
-      padding: 10px;
-      border-top: 1px solid #e5e7eb;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .custom-table th:first-child {
-      border-left: 1px solid #e5e7eb;
-      border-top-left-radius: 6px;
-    }
-
-    .custom-table th:last-child {
-      border-right: 1px solid #e5e7eb;
-      border-top-right-radius: 6px;
-    }
-
-    .custom-table td {
-      padding: 10px;
-      border-bottom: 1px solid #e5e7eb;
-      color: #1f2937;
-      font-size: 13px;
-    }
-
-    .custom-table td:first-child {
-      border-left: 1px solid #e5e7eb;
-    }
-
-    .custom-table td:last-child {
-      border-right: 1px solid #e5e7eb;
-    }
-
-    .custom-table tbody tr:hover {
-      background-color: #f3f4f6;
-    }
-
-    .custom-table tbody tr:last-child td:first-child {
-      border-bottom-left-radius: 6px;
-    }
-
-    .custom-table tbody tr:last-child td:last-child {
-      border-bottom-right-radius: 6px;
-    }
-
-    .total-row {
-      background-color: #f9fafb;
-    }
-
-    .total-row td {
-      border-top: 2px solid #e5e7eb;
-      font-size: 14px;
-    }
-
-    /* Boutons d'action */
-    .action-buttons-container {
-      text-align: center;
-      margin: 20px 0;
-      padding: 15px;
-      background-color: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .action-buttons-container .btn {
-      margin: 0 10px;
-      min-width: 150px;
-    }
-
-    .btn {
-      font-weight: 500;
-      border-radius: 6px;
-    }
-
-    .btn-primary {
-      background-color: #3b82f6;
-      border-color: #3b82f6;
-    }
-
-    .btn-primary:hover,
-    .btn-primary:focus {
-      background-color: #2563eb;
-      border-color: #2563eb;
-    }
-
-    .btn-success {
-      background-color: #10b981;
-      border-color: #10b981;
-    }
-
-    .btn-success:hover,
-    .btn-success:focus {
-      background-color: #059669;
-      border-color: #059669;
-    }
-
-    .btn-default {
-      background-color: white;
-      border: 1px solid #e5e7eb;
-      color: #1f2937;
-    }
-
-    .btn-default:hover,
-    .btn-default:focus {
-      background-color: #f9fafb;
-    }
-
-    .action-btn {
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      line-height: 28px;
-      text-align: center;
-    }
-
-    /* Utilitaires */
-    .icon-space {
-      margin-right: 5px;
-    }
-
-    .text-medium {
-      font-weight: 500;
-    }
-
-    .vertical-middle {
-      vertical-align: middle !important;
-    }
-
-    .row-spacing-sm {
-      margin-bottom: 5px;
-    }
-
-    /* Formulaires compacts */
-    .form-group label.control-label {
-      font-size: 13px;
-      color: #6b7280;
-      font-weight: 500;
-      margin-bottom: 2px;
-    }
-
-    .form-control-static {
-      padding-top: 0;
-      padding-bottom: 0;
-      min-height: auto;
-      margin-bottom: 5px;
-    }
-
-    /* Responsive */
-    @media (max-width: 991px) {
-      .add-form-container {
-        margin-bottom: 20px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .content-wrapper {
-        padding: 15px 10px;
-      }
-
-      .btn {
-        padding: 6px 12px;
-      }
-
-      .action-buttons-container .btn {
-        margin-bottom: 10px;
-        width: 100%;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .custom-table th,
-      .custom-table td {
-        padding: 8px 6px;
-        font-size: 12px;
-      }
-
-      h1 {
-        font-size: 20px;
-      }
-
-      .panel-title {
-        font-size: 14px;
-      }
-
-      .btn-group {
-        display: flex;
-      }
-
-      .action-buttons-container {
-        padding: 10px;
-      }
-    }
-    #addFormContainer, #updateFormContainer {
-        transition: opacity 0.3s ease-in-out;
-    }
-    .hidden-form {
-        display: none;
-        opacity: 0;
-    }
+/* ── Action buttons in table ──────────────────────────────────────── */
+.action-btn {
+    width: 28px; height: 28px; padding: 0; line-height: 26px; text-align: center;
+}
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Approvisionnement / Editer approvisionnement </h5>
-                </div>
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- ── En-tête ─────────────────────────────────────────────────── -->
+    <div class="appro-header">
+        <div style="display:flex;align-items:center;">
+            <div class="appro-header-icon"><i class="fa fa-truck"></i></div>
+            <div>
+                <h2>Fiche d'approvisionnement</h2>
+                <p>Gestion des réceptions de marchandises</p>
             </div>
+        </div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);">
+            <i class="fa fa-hashtag"></i> {{ approvisionnement.numero }}
+        </div>
+    </div>
+
+    <!-- ── Informations du bon ─────────────────────────────────────── -->
+    <div class="ap-card">
+        <div class="ap-card-header">
+            <h6 class="ap-card-title"><i class="fa fa-info-circle"></i> Informations du bon</h6>
+            <a href="{% url 'approvisionnement_update' approvisionnement.pk %}"
+               class="btn btn-default btn-xs" id="btnModifier"
+               title="Modifier les informations">
+                <i class="fa fa-pencil"></i> Modifier
+            </a>
+        </div>
+        <div class="ap-card-body">
             <div class="row">
-                <div class="x_panel">
-                    <div class="headerx clearfix">
-                        <div class="logo-wrapper">
-                            <div class="logo-container pull-left">
-                                <i class="fa fa-truck"></i>
-                            </div>
-                            <div class="header-text">
-                                <h1>Fiche d'approvisionnement</h1>
-                                <p class="text-muted">Gestion des réceptions de marchandises</p>
-                            </div>
+                <div class="col-md-3 col-sm-6" style="margin-bottom:8px;">
+                    <div class="info-field">
+                        <label>N° Fiche d'approvisionnement</label>
+                        <div class="info-val">
+                            <span class="info-badge"><i class="fa fa-hashtag" style="margin-right:4px;font-size:11px;"></i>{{ approvisionnement.numero }}</span>
                         </div>
                     </div>
-                    <!-- Informations simplifiées du bon d'approvisionnement -->
-                    <div class="panel panel-default custom-panel">
-                        <div class="panel-heading compact">
-                            <div class="clearfix">
-                                <h5 class="panel-title pull-left"><i class="fa fa-info-circle icon-space"></i>Informations du bon</h5>
-                                <a href="{% url 'approvisionnement_update' approvisionnement.pk %}" class="btn btn-default btn-xs pull-right" id="btnModifier">
-                                    <i class="fa fa-pencil"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="panel-body compact">
-                            <div class="row">
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="form-group row-spacing-sm">
-                                        <label class="control-label">N° Fiche d'approvisionnement:</label>
-                                        <p class="form-control-static text-medium">{{ approvisionnement.numero }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="form-group row-spacing-sm">
-                                        <label class="control-label">Magasin de réception:</label>
-                                        <p class="form-control-static text-medium">{{ approvisionnement.magasin }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="form-group row-spacing-sm">
-                                        <label class="control-label">Devise:</label>
-                                        <p class="form-control-static text-medium">{{ approvisionnement.devise }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="form-group row-spacing-sm">
-                                        <label class="control-label">Taux:</label>
-                                        <p class="form-control-static text-medium">{{ approvisionnement.taux }}</p>
-                                    </div>
-                                </div>
-                          </div>
-                        </div>
-                      </div>
-
-                    <!-- Section principale avec formulaire et tableau -->
-                    <div class="panel panel-default custom-panel highlighted-panel">
-                        <div class="panel-heading">
-                            <h5 class="panel-title"><i class="fa fa-list-ul icon-space"></i>Détails de l'approvisionnement</h5>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row" id="formTableContainer">
-                                <!-- Formulaire d'ajout à gauche -->
-                                <div class="col-md-4">
-                                    <div id="addFormContainer">
-                                        {% include "approvisionnements/partials/add_form.html" %}
-                                    </div>
-                                    <div id="updateFormContainer"></div>
-                                </div>
-                                <!-- Tableau à droite -->
-                                <div class="col-md-8">
-                                    <div class="table-responsive" id="linesTableContainer">
-                                        {% include "approvisionnements/partials/lines_table.html" %}
-                                    </div>
-                                    <button type="button" class="btn btn-danger">
-                                        <i class="fa fa-file-pdf-o"></i>
-                                        Bon d'approvisionnement
-                                    </button>
-                                </div>
-                            </div>
+                </div>
+                <div class="col-md-3 col-sm-6" style="margin-bottom:8px;">
+                    <div class="info-field">
+                        <label>Magasin de réception</label>
+                        <div class="info-val">{{ approvisionnement.magasin }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6" style="margin-bottom:8px;">
+                    <div class="info-field">
+                        <label>Devise</label>
+                        <div class="info-val">
+                            <span class="info-badge" style="background:#EAFAF1;color:#1E8449;">{{ approvisionnement.devise }}</span>
                         </div>
                     </div>
-                    <div class="container-fluid text-right">
-                        <a class="btn btn-primary" href="{% url 'approvisionnement_save' approvisionnement.pk %}">
-                            <i class="fa fa-save"></i>
-                            Enregister approvisionnement
-                        </a>
-                        <a class="btn btn-default" href="">
-                            <i class="fa fa-trash"></i>
-                            Annuler approvisionnement
-                        </a>
+                </div>
+                <div class="col-md-3 col-sm-6" style="margin-bottom:8px;">
+                    <div class="info-field">
+                        <label>Taux</label>
+                        <div class="info-val">{{ approvisionnement.taux }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Modal Bootstrap -->
-    <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" id="modalContent">
-          <!-- Le contenu HTMX (formulaire de confirmation) sera injecté ici -->
+
+    <!-- ── Détails + formulaire ────────────────────────────────────── -->
+    <div class="ap-card">
+        <div class="ap-card-header">
+            <h6 class="ap-card-title"><i class="fa fa-list-ul"></i> Lignes d'approvisionnement</h6>
         </div>
-      </div>
+        <div class="ap-card-body">
+            <div class="row" id="formTableContainer">
+
+                <!-- Formulaire gauche -->
+                <div class="col-md-4">
+                    <div id="addFormContainer">
+                        {% include "approvisionnements/partials/add_form.html" %}
+                    </div>
+                    <div id="updateFormContainer"></div>
+                </div>
+
+                <!-- Tableau droite -->
+                <div class="col-md-8">
+                    <div class="table-responsive" id="linesTableContainer">
+                        {% include "approvisionnements/partials/lines_table.html" %}
+                    </div>
+                    <div style="margin-top:12px;">
+                        <button type="button" class="btn btn-danger btn-sm">
+                            <i class="fa fa-file-pdf-o"></i> Bon d'approvisionnement
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
-    <script>
-        function initDataTable() {
-            $('#tableApprovisionnement').DataTable({
-                destroy: true, // Important si tu réinitialises
-                dom: '<"top">rflt<"bottom"p><"clear">',
-                scrollY: 300,
-                paging: false,
-                autoWidth: true,
-                columnDefs: [
-                    { orderable: false, targets: 0 },
-                ],
-                language: {
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "sLengthMenu": "Afficher _MENU_ éléments",
-                    "sLoadingRecords": "Chargement...",
-                    "sProcessing": "Traitement...",
-                    "oPaginate": {
-                        "sFirst": "Premier",
-                        "sLast": "Dernier",
-                        "sNext": "Suivant",
-                        "sPrevious": "Précédent"
-                    },
-                    "oAria": {
-                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
-                    }
+    <!-- ── Barre d'actions ─────────────────────────────────────────── -->
+    <div class="action-bar">
+        <button class="btn btn-danger"
+                id="btnAnnuler"
+                hx-get="{% url 'approvisionnement_delete' approvisionnement.pk %}"
+                hx-target="#modalContent"
+                hx-trigger="click"
+                hx-swap="innerHTML">
+            <i class="fa fa-trash"></i> Annuler
+        </button>
+        <a class="btn btn-default" href="{% url 'approvisionnements' %}">
+            <i class="fa fa-check"></i> OK
+        </a>
+        {% if not approvisionnement.valide %}
+        <a class="btn btn-primary" href="{% url 'approvisionnement_save' approvisionnement.pk %}">
+            <i class="fa fa-save"></i> Valider
+        </a>
+        {% endif %}
+    </div>
+
+</div>
+</div>
+
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="modalContent">
+            <!-- Le contenu HTMX (formulaire de confirmation) sera injecté ici -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function initDataTable() {
+        $('#tableApprovisionnement').DataTable({
+            destroy: true,
+            dom: '<"top">rflt<"bottom"p><"clear">',
+            scrollY: 300,
+            paging: false,
+            autoWidth: true,
+            columnDefs: [
+                { orderable: false, targets: 0 },
+            ],
+            language: {
+                "sSearch": "Rechercher&nbsp;:",
+                "sInfoEmpty": "Aucun r&eacute;sultat disponible",
+                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                "sLengthMenu": "Afficher _MENU_ éléments",
+                "sLoadingRecords": "Chargement...",
+                "sProcessing": "Traitement...",
+                "oPaginate": {
+                    "sFirst": "Premier",
+                    "sLast": "Dernier",
+                    "sNext": "Suivant",
+                    "sPrevious": "Précédent"
                 },
-            });
+                "oAria": {
+                    "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                }
+            },
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        initDataTable();
+    });
+
+    function initSelect2(container) {
+        $(container).find('.js-simple-select').each(function () {
+            if ($(this).data('select2')) {
+                $(this).select2('destroy');
+            }
+            $(this).select2({ width: '100%' });
+        });
+    }
+
+    function initDatePicker(container) {
+        // daterangepicker retiré sur date_peremption : saisie libre MM/AAAA
+    }
+
+    function resetForms() {
+        const updateContainer = document.getElementById('updateFormContainer');
+        if (updateContainer) updateContainer.innerHTML = '';
+
+        const addContainer = document.getElementById('addFormContainer');
+        if (addContainer) {
+            addContainer.style.display = 'block';
+
+            const addForm = addContainer.querySelector('form');
+            if (addForm) {
+                addForm.reset();
+            }
+
+            initSelect2(addContainer);
+            $(addContainer).find('.js-simple-select').val(null).trigger('change');
+        }
+    }
+
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+        initSelect2(evt.detail.target);
+        initDatePicker(evt.detail.target);
+
+        if (evt.detail.target.id === 'linesTableContainer') {
+            initDataTable();
+            resetForms();
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            initDataTable();
-        });
+        if (evt.detail.target.id === 'modalContent') {
+            $('#mainModal').modal('show');
+        }
+    });
 
-        $(document).ready(function () {
+    document.body.addEventListener('closeModal', function() {
+        $('#mainModal').modal('hide');
+    });
 
-            function initSimpleSelect(root = document) {
-                $(root).find('.js-simple-select').each(function () {
-                    const $el = $(this);
+    $(document).on('click', '#btnCancelUpdate', function() {
+        resetForms();
+    });
 
-                    // Si déjà initialisé, on nettoie
-                    if ($el.hasClass('select2-hidden-accessible')) {
-                        return;
-                    }
+    // Masque de saisie MM/AAAA pour le champ date de péremption
+    // Binding sur document : fonctionne pour le formulaire initial et les swaps HTMX.
+    $(document).on('input', '.date-peremption-input', function () {
+        var cursor = this.selectionStart;
+        var raw = $(this).val().replace(/\D/g, '');
+        if (raw.length > 6) raw = raw.substr(0, 6);
+        var formatted = raw.length > 2 ? raw.substr(0, 2) + '/' + raw.substr(2) : raw;
+        if ($(this).val() !== formatted) {
+            $(this).val(formatted);
+            // Replacer le curseur après le slash auto-inséré
+            if (cursor === 3 && formatted.length === 3) this.setSelectionRange(3, 3);
+        }
+    });
 
-                    // ⚠️ Force le masquage (bug Select2 RC)
-                    $el.addClass('select2-hidden-accessible');
-                    $el.css({
-                        position: 'absolute',
-                        width: '1px',
-                        height: '1px',
-                        padding: 0,
-                        margin: '-1px',
-                        overflow: 'hidden',
-                        clip: 'rect(0, 0, 0, 0)',
-                        border: 0
-                    });
+    $('#menu_toggle').on('click', function() {
+        $('.dataTables_scrollHeadInner').css('width', '100%');
+        $('#tableApprovisionnement').css('width', '100%');
+        var table = $('#tableApprovisionnement').DataTable();
+        setTimeout(function () {
+            table.columns.adjust().draw();
+        },200);
+    });
 
-                    $el.select2({
-                        width: '100%'
-                    });
-                });
-            }
-
-            document.body.addEventListener('htmx:afterSwap', function(evt) {
-                initSimpleSelect(evt.target);
-
-                // Vérifie que c'est le bon container (optionnel)
-                if (evt.target && evt.target.id === "formTableContainer") {
-                    initDataTable();
-                }
-                if (evt.target.id === "modalContent") {
-                    $('#mainModal').modal('show');
-                }
-
-                $(evt.target).find('#id_date_peremption').daterangepicker({
-                    singleDatePicker: true,
-                    locale: { format: 'YYYY-MM-DD' }
-                });
-            });
-
-            function resetForms_old() {
-                alert('RESET FORM EN COURS');
-                // Supprimer uniquement le formulaire update
-                $('#updateFormContainer').empty();
-
-                // Réafficher le formulaire add (déjà présent)
-                $('#addFormContainer').show();
-
-                // Optionnel : reset des champs
-                $('#addForm')[0]?.reset();
-            }
-
-            $('#id_date_peremption').daterangepicker({
-                singleDatePicker: true,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            });
-
-            $('#menu_toggle').on('click', function() {
-                $('.dataTables_scrollHeadInner').css('width', '100%');
-                $('#tableApprovisionnement').css('width', '100%');
-                var table = $('#tableApprovisionnement').DataTable();
-                setTimeout(function () {
-                    table.columns.adjust().draw();
-                },200);
-            });
-
-            $('#approvisionnements').addClass('active');
-        });
-    </script>
+    $('#approvisionnements').addClass('active');
+</script>
 {% endblock content %}
