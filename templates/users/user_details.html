@@ -22,11 +22,20 @@
                             <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
                                 <div class="profile_img">
                                     <div id="crop-avatar">
-                                        <!-- Current avatar -->
-                                        <img class="img-responsive avatar-view" src="{{ user_details.photo.url }}" alt="{{ user.username }}">
+                                        <img class="img-responsive avatar-view" src="{{ user_details.photo.url }}" alt="{{ user_details.username }}">
                                     </div>
                                 </div>
                                 <h3>{{ user_details.username }}</h3>
+
+                                <!-- Statut du compte -->
+                                <p>
+                                    {% if user_details.is_active %}
+                                        <span class="label label-success"><i class="fa fa-check"></i> Compte actif</span>
+                                    {% else %}
+                                        <span class="label label-danger"><i class="fa fa-ban"></i> Compte désactivé</span>
+                                    {% endif %}
+                                </p>
+
                                 <ul class="list-unstyled user_data">
                                     <li>
                                         <i class="fa fa-user user-profile-icon"></i> {{ user_details.first_name }} {{ user_details.last_name }}
@@ -40,15 +49,44 @@
                                     <li>
                                         <i class="fa fa-briefcase user-profile-icon"></i> {{ user_details.type_profile }}
                                     </li>
+                                    <li>
+                                        <i class="fa fa-key user-profile-icon"></i>
+                                        {% if user_details.has_usable_password %}
+                                            Mot de passe défini
+                                        {% else %}
+                                            <span class="text-warning">Aucun mot de passe</span>
+                                        {% endif %}
+                                    </li>
                                 </ul>
 
-                                <a class="btn btn-success" href="">
-                                    <i class="fa fa-edit m-right-xs"></i> Modifier Profil
+                                <a class="btn btn-success btn-sm" href="{% url 'user_update' user_details.pk %}">
+                                    <i class="fa fa-edit m-right-xs"></i> Modifier
                                 </a>
+                                <a class="btn btn-warning btn-sm" href="{% url 'user_set_password' user_details.pk %}">
+                                    <i class="fa fa-key m-right-xs"></i> Mot de passe
+                                </a>
+                                <br /><br />
+
+                                <!-- Activer / Désactiver le compte -->
+                                {% if user_details.pk != request.user.pk %}
+                                <form method="post" action="{% url 'user_toggle_active' user_details.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    {% if user_details.is_active %}
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Désactiver le compte de {{ user_details.username }} ?')">
+                                            <i class="fa fa-ban"></i> Désactiver
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-success btn-sm"
+                                                onclick="return confirm('Réactiver le compte de {{ user_details.username }} ?')">
+                                            <i class="fa fa-check"></i> Réactiver
+                                        </button>
+                                    {% endif %}
+                                </form>
+                                {% endif %}
                                 <br />
                             </div>
                             <div class="col-md-9 col-sm-9 col-xs-12">
-
                             </div>
                         </div>
                     </div>

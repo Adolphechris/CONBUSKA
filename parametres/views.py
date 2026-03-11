@@ -1,12 +1,15 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import FormView, ListView, CreateView
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
+from django.views.generic import FormView, ListView, CreateView, DetailView
 from django.views.generic.edit import UpdateView
+from django.template.loader import render_to_string
+from django.shortcuts import redirect, render, HttpResponse
 from django.urls import reverse_lazy
-from .models import Parametre, Magasin
-from .forms import ParametresForm, ParametresEditForm, MagasinCreateForm
+from .models import Parametre, Magasin, TauxEchange
+from .forms import ParametresForm, ParametresEditForm, MagasinCreateForm, TauxEchangeForm
 
 
-class ParametresView(LoginRequiredMixin, FormView):
+class ParametresView(RoleRequiredMixin, FormView):
+    allowed_roles = [ROLE_ADMIN]
     model = Parametre
     context_object_name = 'parametres'
     form_class = ParametresForm
@@ -36,11 +39,11 @@ class ParametresView(LoginRequiredMixin, FormView):
         initial['ville'] = params.ville
         initial['telephone'] = params.telephone
         initial['email'] = params.email
-        initial['taux'] = params.taux
         return initial
 
 
-class ParametresUpdateView(LoginRequiredMixin, UpdateView):
+class ParametresUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Parametre
     context_object_name = 'parametres'
     form_class = ParametresEditForm
@@ -48,13 +51,15 @@ class ParametresUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'parametres/parametres_form.html'
 
 
-class MagasinsView(LoginRequiredMixin, ListView):
+class MagasinsView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = Magasin
     context_object_name = 'liste_magasins'
     template_name = 'parametres/magasins.html'
 
 
-class MagasinCreateView(LoginRequiredMixin, CreateView):
+class MagasinCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Magasin
     template_name = 'parametres/magasin_create_form.html'
     form_class = MagasinCreateForm
@@ -67,7 +72,8 @@ class MagasinCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class MagasinUpdateView(LoginRequiredMixin, UpdateView):
+class MagasinUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Magasin
     template_name = 'parametres/magasin_create_form.html'
     form_class = MagasinCreateForm
@@ -77,4 +83,101 @@ class MagasinUpdateView(LoginRequiredMixin, UpdateView):
         context['title'] = 'Modification magasin'
         context['title_page'] = 'Update'
         context['title_form'] = 'Formulaire de modification du magasin #{}'.format(self.get_object().nom)
+        return context
+
+
+class TauxEchangeListView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
+    model = TauxEchange
+    context_object_name = 'taux_list'
+    template_name = 'parametres/taux_echange_list.html'
+    ordering = ['-date_modification']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_form'] = TauxEchangeForm()
+        return context
+
+
+class TauxEchangeCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
+    model = TauxEchange
+    template_name = 'parametres/taux_echange_form.html'
+    form_class = TauxEchangeForm
+    success_url = reverse_lazy('taux_echange_list')
+
+    def form_valid(self, form):
+        self.object = form.save()
+        if self.request.headers.get('HX-Request') == 'true':
+            # Get the latest taux and render the taux content section
+            latest_taux = TauxEchange.objects.order_by('-date_modification').first()
+            html = render_to_string('parametres/taux_echange_list_partial.html', {
+                'latest_taux': latest_taux,
+                'taux_form': TauxEchangeForm()
+            })
+            return HttpResponse(html)
+        return redirect(self.success_url)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('HX-Request') == 'true':
+            return render(self.request, self.template_name, {'form': form})
+        return super().form_invalid(form)
+
+
+class TauxEchangeUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
+    model = TauxEchange
+    template_name = 'parametres/taux_echange_form.html'
+    form_class = TauxEchangeForm
+    success_url = reverse_lazy('taux_echange_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['taux'] = self.object
+        return context
+
+    def form_valid(self, form):
+        self.object = form.save()
+        if self.request.headers.get('HX-Request') == 'true':
+            latest_taux = TauxEchange.objects.order_by('-date_modification').first()
+            html = render_to_string('parametres/taux_echange_list_partial.html', {
+                'latest_taux': latest_taux
+            })
+            return HttpResponse(html)
+        return redirect(self.success_url)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('HX-Request') == 'true':
+            return render(self.request, self.template_name, {'form': form, 'taux': self.object})
+        return super().form_invalid(form)
+
+
+class TauxEchangeHistoryView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
+    model = TauxEchange
+    template_name = 'parametres/taux_echange_history.html'
+    context_object_name = 'taux'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        history = list(self.object.history.all().order_by('-history_date'))
+        for i, record in enumerate(history):
+            if i + 1 < len(history):
+                prev = history[i + 1]
+                # Use names without underscores
+                record.prev = prev
+                diff = {}
+                for field in self.model._meta.fields:
+                    field_name = field.name
+                    if field_name == 'date_modification':
+                        continue
+                    old = getattr(prev, field_name, None)
+                    new = getattr(record, field_name, None)
+                    if old != new:
+                        diff[field_name] = {'old': old, 'new': new}
+                record.diff = diff
+            else:
+                record.prev = None
+                record.diff = {}
+        context['history_records'] = history
         return context

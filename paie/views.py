@@ -1,8 +1,8 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import ListView, DetailView, FormView
+from django.views.generic import ListView, DetailView, FormView, View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django_filters.views import FilterView
 from .models import Agent, Paie
@@ -13,7 +13,8 @@ import datetime
 from .filters import AgentFilter
 
 
-class AgentsView(LoginRequiredMixin, FilterView):
+class AgentsView(RoleRequiredMixin, FilterView):
+    allowed_roles = [ROLE_ADMIN]
     model = Agent
     context_object_name = 'liste_agents'
     template_name = 'paie/agents.html'
@@ -23,7 +24,8 @@ class AgentsView(LoginRequiredMixin, FilterView):
         return Agent.objects.all().order_by('nom')
 
 
-class AgentDetailsView(LoginRequiredMixin, DetailView):
+class AgentDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Agent
     context_object_name = 'agent'
     template_name = 'paie/agent_details.html'
@@ -38,19 +40,22 @@ class AgentDetailsView(LoginRequiredMixin, DetailView):
         return context
 
 
-class AgentCreateView(LoginRequiredMixin, CreateView):
+class AgentCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Agent
     template_name = 'paie/agent_create_form.html'
     form_class = AgentCreateForm
 
 
-class AgentUpdateView(LoginRequiredMixin, UpdateView):
+class AgentUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Agent
     template_name = 'paie/agent_create_form.html'
     form_class = AgentCreateForm
 
 
-class AgentDeleteView(LoginRequiredMixin, DeleteView):
+class AgentDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Agent
     template_name = 'paie/agent_confirm_delete.html'
     success_url = reverse_lazy('agents')
@@ -64,7 +69,8 @@ class AgentDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class PaieAgentCreateView(LoginRequiredMixin, FormView):
+class PaieAgentCreateView(RoleRequiredMixin, FormView):
+    allowed_roles = [ROLE_ADMIN]
     """
        Cette vue permet de selectionner une periode de paie basée sur l'année et le mois. Ex: 2025-07.
         Ensuite elle fait le calcul de Paie pour un agent.
@@ -83,7 +89,11 @@ class PaieAgentCreateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         mois = form.cleaned_data['mois']
-        absence = form.cleaned_data['absence']
+        absence = form.cleaned_data.get('absence')
+        if absence is None:
+            absence = 0
+        absence = max(0, min(26, int(absence)))
+
         jap = 26
         jp = jap - absence
 
@@ -94,9 +104,22 @@ class PaieAgentCreateView(LoginRequiredMixin, FormView):
 
         agent = self.get_agent()
 
+        # Empêcher les doublons : une seule paie par agent et par mois
+        mois_normalise = mois.replace(day=1)
+        paie_existante = Paie.objects.filter(
+            agent=agent,
+            mois__year=mois_normalise.year,
+            mois__month=mois_normalise.month
+        ).first()
+        if paie_existante:
+            messages.warning(
+                self.request,
+                f"Une paie existe déjà pour {agent.nom} en {mois_normalise.strftime('%B %Y')}. "
+                f"Vous avez été redirigé vers cette paie."
+            )
+            return redirect('paie_agent_details', pk=paie_existante.pk, agent_pk=agent.pk)
+
         rubrique_avance = RubriqueCaisse.objects.get(nom="Avance sur salaire")
-        print(rubrique_avance, mois.year, mois.month)
-        print(agent)
 
         total_avance = (
             MouvementCaisseAgent.objects
@@ -108,18 +131,15 @@ class PaieAgentCreateView(LoginRequiredMixin, FormView):
             )
             .aggregate(total=Sum('mouvement_caisse__montant'))
         )
-        print("######### ", total_avance.get('total') or 0)
-        print("######### ", agent.salaire, agent.salaire / jap * jp)
-
         total_avance = total_avance.get('total') or 0
-
-        print("#####**** ", total_avance, type(total_avance))
+        # Toujours soustraire l'avance (utiliser la valeur absolue pour gérer
+        # les conventions de signe différentes selon le type de mouvement)
+        total_avance = abs(total_avance) if total_avance else 0
 
         montant_percu = (agent.salaire / jap * jp) - total_avance
-        print(montant_percu)
 
         paie_instance = Paie.objects.create(
-            mois=mois.replace(day=1),
+            mois=mois_normalise,
             agent=agent,
             salaire=agent.salaire,
             montant_percu=round(montant_percu),
@@ -134,7 +154,8 @@ class PaieAgentCreateView(LoginRequiredMixin, FormView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class PaieAgentDetailsView(LoginRequiredMixin, DetailView):
+class PaieAgentDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Paie
     context_object_name = 'paie'
     template_name = 'paie/paie_details.html'
@@ -191,7 +212,7 @@ class PaieAgentDetailsView(LoginRequiredMixin, DetailView):
             }
         ]
 
-        total_remuneration = paie.montant_percu + avance_salaire + transport + restauration + assistance
+        total_remuneration = paie.montant_percu - avance_salaire + transport + restauration + assistance
 
         return details_paie, total_remuneration
 
@@ -205,7 +226,8 @@ class PaieAgentDetailsView(LoginRequiredMixin, DetailView):
 
 
 '''
-class PaieCreateView(LoginRequiredMixin, FormView):
+class PaieCreateView(RoleRequiredMixin, FormView):
+    allowed_roles = [ROLE_ADMIN]
     """
         Cette vue permet de selectionner une periode de paie basée sur l'année et le mois. Ex: 2025-07.
         Ensuite elle crée l'instance de Paie et génère les DetailsPaie pour tous les agents.
@@ -244,7 +266,8 @@ class PaieCreateView(LoginRequiredMixin, FormView):
 
 
 
-class PaieDetailsView(LoginRequiredMixin, DetailView):
+class PaieDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Paie
     context_object_name = 'paie'
     template_name = 'paie/paie_details.html'
@@ -274,7 +297,8 @@ class PaieDetailsView(LoginRequiredMixin, DetailView):
         return context
 
 
-class PaieAgentCreateView(LoginRequiredMixin, CreateView):
+class PaieAgentCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = DetailsPaie
     template_name = 'paie/paie_agent_create_form.html'
     form_class = PaieCreateForm
@@ -306,7 +330,19 @@ class PaieAgentCreateView(LoginRequiredMixin, CreateView):
         return context
 '''
 
-class ListePaiesView(LoginRequiredMixin, ListView):
+class PaieAgentDeleteView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN]
+    """Suppression d'une paie pour un agent."""
+
+    def post(self, request, pk, agent_pk):
+        paie = get_object_or_404(Paie, pk=pk, agent_id=agent_pk)
+        paie.delete()
+        messages.success(request, f"La paie de {paie.mois.strftime('%B %Y')} a été supprimée.")
+        return redirect('agent_details', pk=agent_pk)
+
+
+class ListePaiesView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = Paie
     context_object_name = 'liste_paies'
     template_name = 'paie/paies.html'

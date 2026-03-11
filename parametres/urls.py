@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import ParametresView, ParametresUpdateView, MagasinsView, MagasinCreateView, MagasinUpdateView
+from .views import (
+    ParametresView, ParametresUpdateView,
+    MagasinsView, MagasinCreateView, MagasinUpdateView,
+    TauxEchangeListView, TauxEchangeCreateView, TauxEchangeUpdateView, TauxEchangeHistoryView,
+)
 
 urlpatterns = [
     path('', ParametresView.as_view(), name='parametres'),
@@ -7,4 +11,8 @@ urlpatterns = [
     path('magasins/', MagasinsView.as_view(), name='magasins'),
     path('magasin/create', MagasinCreateView.as_view(), name='magasin_create'),
     path('magasin/<int:pk>/update', MagasinUpdateView.as_view(), name='magasin_update'),
+    path('taux/', TauxEchangeListView.as_view(), name='taux_echange_list'),
+    path('taux/create', TauxEchangeCreateView.as_view(), name='taux_echange_create'),
+    path('taux/<int:pk>/update', TauxEchangeUpdateView.as_view(), name='taux_echange_update'),
+    path('taux/<int:pk>/history', TauxEchangeHistoryView.as_view(), name='taux_echange_history'),
 ]

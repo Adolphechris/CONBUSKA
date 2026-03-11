@@ -69,5 +69,5 @@ class Paie(models.Model):
         total = self.montant_percu
         for i in qs:
             if i.rubrique.nom.lower() in ["transport", "restauration", "assistance sociale"]:
-                total += i.montant
+                total += i.mouvement_caisse.montant
         return total

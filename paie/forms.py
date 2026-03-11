@@ -26,9 +26,15 @@ class PaieCreateForm(forms.ModelForm):
         required=True,
         label="Mois de la paie"
     )
+    absence = forms.IntegerField(
+        min_value=0,
+        max_value=26,
+        initial=0,
+        required=False,
+        label="Jours d'absence",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'})
+    )
+
     class Meta:
         model = Paie
         exclude = ['agent', 'salaire', 'jap', 'jp', 'montant_percu', 'cree_par', 'modifie_par', 'valide']
-        widgets = {
-            'absence': forms.NumberInput(attrs={'class': 'form-control'}),
-        }

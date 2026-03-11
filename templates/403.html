@@ -1,0 +1,23 @@
+{% extends "base/base.html" %}
+
+{% block title %}Accès refusé{% endblock title %}
+
+{% block content %}
+<div class="right_col" role="main">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="x_panel">
+                <div class="x_content text-center" style="padding: 60px 20px;">
+                    <i class="fa fa-lock" style="font-size: 80px; color: #e74c3c; margin-bottom: 20px; display: block;"></i>
+                    <h2>Accès refusé</h2>
+                    <p class="lead">Vous n'avez pas les droits nécessaires pour accéder à cette page.</p>
+                    <p>Contactez votre administrateur si vous pensez qu'il s'agit d'une erreur.</p>
+                    <a href="{% url 'index' %}" class="btn btn-primary" style="margin-top: 20px;">
+                        <i class="fa fa-home"></i> Retour au tableau de bord
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

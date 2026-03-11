@@ -43,47 +43,46 @@
                                             <th class="column-title"> </th>
                                             <th class="column-title"> Nom d'utilisateur</th>
                                             <th class="column-title"> Nom complet</th>
-                                            <th class="column-title"> Telephone </th>
-                                            <th class="column-title"> Email</th>
-                                            <th class="column-title"> Type</th>
-                                            <th class="column-title"> A un mot de passe valide ?</th>
-                                            <th class="column-title"> Action</th>
+                                            <th class="column-title"> Rôle</th>
+                                            <th class="column-title"> Statut</th>
+                                            <th class="column-title"> Mot de passe</th>
+                                            <th class="column-title"> Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for user in users %}
-										    <tr>
+                                            <tr class="{% if not user.is_active %}danger{% endif %}">
                                                 <td>{{ user.id }}</td>
                                                 <td>{{ user.username }}</td>
                                                 <td>{{ user.first_name }} {{ user.last_name }}</td>
-                                                <td>{{ user.telephone }}</td>
-                                                <td>{{ user.email }}</td>
                                                 <td>{{ user.type_profile }}</td>
                                                 <td>
+                                                    {% if user.is_active %}
+                                                        <span class="label label-success">Actif</span>
+                                                    {% else %}
+                                                        <span class="label label-danger">Désactivé</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
                                                     {% if user.has_usable_password %}
-                                                        <i class="fa fa-check"></i>
+                                                        <i class="fa fa-check" style="color:#26B99A;"></i>
+                                                    {% else %}
+                                                        <i class="fa fa-times" style="color:#e74c3c;"></i>
                                                     {% endif %}
                                                 </td>
                                                 <td>
                                                     <a href="{{ user.id }}" class="btn btn-warning btn-xs">
-                                                        <i class="fa fa-eye"></i>
-                                                        Détails
+                                                        <i class="fa fa-eye"></i> Détails
                                                     </a>
                                                     <a href="{% url 'user_update' user.pk %}" class="btn btn-info btn-xs">
-                                                        <i class="fa fa-edit"></i>
-                                                        Modifier
+                                                        <i class="fa fa-edit"></i> Modifier
                                                     </a>
                                                     <a href="{% url 'user_set_password' user.pk %}" class="btn btn-default btn-xs">
-                                                        <i class="fa fa-password"></i>
-                                                        Réinitialiser Mot de passe
-                                                    </a>
-                                                    <a href="" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-trash-alt"></i>
-                                                        Supprimer
+                                                        <i class="fa fa-key"></i> Mot de passe
                                                     </a>
                                                 </td>
-										    </tr>
-									    {% endfor %}
+                                            </tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>

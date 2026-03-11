@@ -1,0 +1,78 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Paramètres | Taux d'échange {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'parametres' %}">Paramètres</a> / Taux d'échange</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Taux d'échange<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="content table-responsive display">
+                                <div class="row">
+                                    <button type="button" class="btn btn-link pull-right creer">
+                                        <a href="{% url 'taux_echange_create' %}">
+                                            <i class="fa fa-plus"></i>
+                                            NOUVEAU TAUX
+                                        </a>
+                                    </button>
+                                </div>
+                                <table id="tableTaux" class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Devise source</th>
+                                            <th class="column-title"> Devise cible</th>
+                                            <th class="column-title"> Taux</th>
+                                            <th class="column-title"> Date d'application</th>
+                                            <th class="column-title"> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in taux_list %}
+                                            <tr>
+                                                <td>{{ item.get_devise_source_display }}</td>
+                                                <td>{{ item.get_devise_cible_display }}</td>
+                                                <td>{{ item.taux }}</td>
+                                                <td>{{ item.effective_date|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    <a href="{% url 'taux_echange_update' item.pk %}" class="btn btn-info btn-xs">
+                                                        <i class="fa fa-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                    <a href="{% url 'taux_echange_history' item.pk %}" class="btn btn-warning btn-xs">
+                                                        <i class="fa fa-history"></i>
+                                                        Historique
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center">Aucun taux d'échange configuré.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#taux_echange').addClass('active');
+        });
+    </script>
+{% endblock content %}

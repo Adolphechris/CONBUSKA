@@ -1,5 +1,5 @@
 from django import forms
-from .models import Parametre, Magasin
+from .models import Parametre, Magasin, TauxEchange
 
 
 class ParametresForm(forms.ModelForm):
@@ -20,7 +20,6 @@ class ParametresForm(forms.ModelForm):
             'ville': forms.TextInput(attrs={'class': 'form-control', 'disabled': True}),
             'telephone': forms.TextInput(attrs={'class': 'form-control', 'disabled': True}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'disabled': True}),
-            'taux': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Taux', 'disabled': True}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -46,7 +45,6 @@ class ParametresEditForm(forms.ModelForm):
             'ville': forms.TextInput(attrs={'class': 'form-control'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'taux': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Taux'}),
         }
 
 
@@ -59,3 +57,32 @@ class MagasinCreateForm(forms.ModelForm):
             'description': forms.TextInput(attrs={'class': 'form-control'}),
             'localisation': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+class TauxEchangeForm(forms.ModelForm):
+    class Meta:
+        model   = TauxEchange
+        exclude = ['date_creation', 'date_modification']
+        widgets = {
+            'devise_source':  forms.Select(attrs={'class': 'form-control'}),
+            'devise_cible':   forms.Select(attrs={'class': 'form-control'}),
+            'taux':           forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step':  '0.0001',
+                'min':   '0',
+            }),
+            'effective_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type':  'date',
+            }),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        source = cleaned.get('devise_source')
+        cible  = cleaned.get('devise_cible')
+        if source and cible and source == cible:
+            raise forms.ValidationError(
+                "La devise source et la devise cible ne peuvent pas être identiques."
+            )
+        return cleaned

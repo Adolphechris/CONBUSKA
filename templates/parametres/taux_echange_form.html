@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Paramètres | {% if object %}Modifier{% else %}Ajouter{% endif %} taux d'échange {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'parametres' %}">Paramètres</a> / <a href="{% url 'taux_echange_list' %}">Taux d'échange</a> / {% if object %}Modification{% else %}Nouveau{% endif %}</h5>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h4>{% if object %}Modifier{% else %}Ajouter{% endif %} un taux d'échange</h4>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <form class="form-horizontal form-label-left" method="post" novalidate>
+                            {% csrf_token %}
+                            {% for field in form.visible_fields %}
+                                <div class="form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12">
+                                        {{ field.label }}
+                                    </label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        {{ field }}
+                                        {% for error in field.errors %}
+                                            <span style="color: red;">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="ln_solid"></div>
+                            <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+                                <input type="submit" class="btn btn-info valider" value="Valider">
+                                <a href="{% url 'taux_echange_list' %}">
+                                    <button type="button" class="btn btn-danger">Annuler</button>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#taux_echange').addClass('active');
+        });
+    </script>
+{% endblock content %}

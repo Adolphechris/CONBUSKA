@@ -30,3 +30,10 @@ class UserProfileEditView(LoginRequiredMixin, UpdateView):
 class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     success_url = reverse_lazy('user_profile')
     template_name = 'users/password_change_form.html'
+
+    def form_valid(self, form):
+        user = self.request.user
+        if user.force_password_change:
+            user.force_password_change = False
+            user.save(update_fields=['force_password_change'])
+        return super().form_valid(form)

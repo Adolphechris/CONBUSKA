@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %} Paramètres | Historique taux d'échange {% endblock title %}
+
+{% block content %}
+    <div class="right_col" role="main">
+        <div class="">
+            <div class="page-title">
+                <div class="title_left">
+                    <h5><a href="{% url 'parametres' %}">Paramètres</a> / <a href="{% url 'taux_echange_list' %}">Taux d'échange</a> / Historique</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Historique des modifications - {{ taux.devise_source }} → {{ taux.devise_cible }}<small></small></h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div class="table-responsive">
+                                <table class="table table-striped jambo_table bulk_action">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th class="column-title"> Date</th>
+                                            <th class="column-title"> Utilisateur</th>
+                                            <th class="column-title"> Type</th>
+                                            <th class="column-title"> Détails</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in history_records %}
+                                            <tr>
+                                                <td>{{ record.history_date|date:"d/m/Y H:i" }}</td>
+                                                <td>{{ record.history_user|default:"Système" }}</td>
+                                                <td>
+                                                    {% if record.history_type == '+' %}
+                                                        Création
+                                                    {% elif record.history_type == '~' %}
+                                                        Modification
+                                                    {% elif record.history_type == '-' %}
+                                                        Suppression
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if record.history_type == '~' and record.diff %}
+                                                        <button class="btn btn-xs btn-info" type="button" data-toggle="collapse" data-target="#changes-{{ record.history_id }}">
+                                                            <i class="fa fa-eye"></i> Voir les changements
+                                                        </button>
+                                                        <div class="collapse mt-2" id="changes-{{ record.history_id }}">
+                                                            <ul class="list-unstyled">
+                                                                {% for field, values in record.diff.items %}
+                                                                    <li><strong>{{ field }}:</strong> {{ values.old }} → {{ values.new }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="ln_solid"></div>
+                            <a href="{% url 'taux_echange_list' %}" class="btn btn-default">
+                                <i class="fa fa-arrow-left"></i> Retour à la liste
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#taux_echange').addClass('active');
+        });
+    </script>
+{% endblock content %}

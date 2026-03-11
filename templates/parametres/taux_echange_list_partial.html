@@ -1,0 +1,20 @@
+{% if latest_taux %}
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Dernier taux :</strong> {{ latest_taux.devise_source }} → {{ latest_taux.devise_cible }} : {{ latest_taux.taux }} (à partir du {{ latest_taux.effective_date|date:"d/m/Y" }})</p>
+        </div>
+    </div>
+    <div class="btn-group">
+        <a href="{% url 'taux_echange_update' latest_taux.pk %}" class="btn btn-primary btn-sm">
+            <i class="fa fa-edit"></i> Modifier
+        </a>
+        <a href="{% url 'taux_echange_history' latest_taux.pk %}" class="btn btn-warning btn-sm">
+            <i class="fa fa-history"></i> Historique
+        </a>
+    </div>
+{% else %}
+    <p class="text-muted">Aucun taux d'échange configuré.</p>
+    <a href="{% url 'taux_echange_create' %}" class="btn btn-primary btn-sm">
+        <i class="fa fa-plus"></i> Ajouter un taux
+    </a>
+{% endif %}
