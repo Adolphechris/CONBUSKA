@@ -1,12 +1,16 @@
+import logging
+
 from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import TemplateView, RedirectView, View
 from django.urls import reverse_lazy
+from users.permissions import RoleRequiredMixin, ALL_ROLES
 import json
 from operator import itemgetter
 from itertools import groupby
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 from clients.models import Client
 from fournisseurs.models import Fournisseur
 from creanciers.models import Creancier, Debiteur
@@ -21,8 +25,9 @@ from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 
 
-class DashboardAdminView(LoginRequiredMixin, TemplateView):
+class DashboardAdminView(RoleRequiredMixin, TemplateView):
     template_name = 'dashboard/dashboard.html'
+    allowed_roles = ALL_ROLES
 
     @staticmethod
     def calculate_ca(day):
@@ -49,7 +54,7 @@ class DashboardAdminView(LoginRequiredMixin, TemplateView):
         ca_yesterday = self.calculate_ca(yesterday)
         difference = ca_today - ca_yesterday
 
-        print(ca_today, ca_yesterday, difference)
+        logger.debug("CA today=%s yesterday=%s diff=%s", ca_today, ca_yesterday, difference)
 
         if ca_yesterday == 0:
             stat = Decimal('100') if ca_today > 0 else Decimal('0')
@@ -86,7 +91,6 @@ class DashboardAdminView(LoginRequiredMixin, TemplateView):
         qs = self.ventes_par_mois()
 
         for item in qs:
-            print('### ', item)
             mois = item['mois']
             total = item['total_lignes'] or 0
             data[mois - 1] = float(total)  # -1 car liste commence à 0
@@ -152,33 +156,192 @@ class DashboardAdminView(LoginRequiredMixin, TemplateView):
             .count()
         )
 
+    # ── Nouveaux calculs ───────────────────────────────────────────────────
+
+    @staticmethod
+    def get_solde_caisses():
+        """Retourne (total_solde, liste de dicts par caisse ouverte)."""
+        from caisse.models import CaisseCourante
+        caisses = CaisseCourante.objects.filter(est_ouverte=True).select_related('caisse')
+        result = []
+        total = Decimal('0')
+        for cc in caisses:
+            entrees = cc.mouvements.filter(type_mouvement='ENTREE').aggregate(
+                t=Coalesce(Sum('montant'), Value(0),
+                           output_field=DecimalField(max_digits=14, decimal_places=2))
+            )['t']
+            sorties = cc.mouvements.filter(type_mouvement='SORTIE').aggregate(
+                t=Coalesce(Sum('montant'), Value(0),
+                           output_field=DecimalField(max_digits=14, decimal_places=2))
+            )['t']
+            solde = cc.solde_initial + entrees - sorties
+            total += solde
+            result.append({
+                'cc': cc,
+                'nom': cc.caisse.nom,
+                'solde_initial': cc.solde_initial,
+                'entrees': entrees,
+                'sorties': sorties,
+                'solde': solde,
+            })
+        return total, result
+
+    @staticmethod
+    def get_creances_dettes():
+        """Retourne (total_creances, total_dettes) en FC."""
+        total_c = sum(c.solde() for c in Creancier.objects.all())
+        total_d = sum(d.solde() for d in Debiteur.objects.all())
+        return Decimal(str(total_c or 0)), Decimal(str(total_d or 0))
+
+    @staticmethod
+    def get_paie_mois():
+        """Total des montants perçus sur les fiches de paie du mois courant."""
+        from paie.models import Paie
+        now = timezone.now()
+        return Paie.objects.filter(
+            mois__year=now.year, mois__month=now.month
+        ).aggregate(
+            total=Coalesce(Sum('montant_percu'), Value(0),
+                           output_field=DecimalField(max_digits=14, decimal_places=2))
+        )['total']
+
+    @staticmethod
+    def get_categories_chart():
+        """Labels + données pour le donut répartition des ventes par catégorie (année en cours)."""
+        current_year = datetime.now().year
+        qs = list(
+            DetailsFacture.objects
+            .filter(facture__date_facture__year=current_year)
+            .values('article__categorie__nom')
+            .annotate(total=Sum(
+                F('qte') * F('prix'),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ))
+            .order_by('-total')[:7]
+        )
+        labels = [item['article__categorie__nom'] or 'Sans catégorie' for item in qs]
+        data = [float(item['total'] or 0) for item in qs]
+        return labels, data
+
+    @staticmethod
+    def get_depenses_chart():
+        """12 totaux mensuels de dépenses caisse (SORTIE) pour l'année en cours."""
+        from caisse.models import MouvementCaisse
+        current_year = datetime.now().year
+        qs = (
+            MouvementCaisse.objects
+            .filter(date_mouvement__year=current_year, type_mouvement='SORTIE')
+            .annotate(mois=ExtractMonth('date_mouvement'))
+            .values('mois')
+            .annotate(total=Coalesce(Sum('montant'), Value(0),
+                                     output_field=DecimalField(max_digits=14, decimal_places=2)))
+            .order_by('mois')
+        )
+        data = [0] * 12
+        for item in qs:
+            data[item['mois'] - 1] = float(item['total'] or 0)
+        return data
+
+    @staticmethod
+    def get_stat_variation(count_this: int, count_last: int) -> float:
+        if count_last == 0:
+            return 100.0 if count_this > 0 else 0.0
+        return round((count_this - count_last) / count_last * 100, 1)
+
+    # ── Context ────────────────────────────────────────────────────────────
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data['clients'] = Client.objects.count()
-        context_data['fournisseurs'] = Fournisseur.objects.count()
-        context_data['creanciers'] = Creancier.objects.count()
-        context_data['debiteurs'] = Debiteur.objects.count()
-        context_data['factures'] = Facture.objects.count()
-        context_data['articles'] = self.articles_critiques()
-        context_data['commandes'] = Commande.objects.count()
-        context_data['current_year'] = datetime.now().year
 
-        context_data['mois_labels'] = self.get_mois()
-        context_data['chart_data'] = self.get_ventes_chart()
+        now = timezone.localtime(timezone.now())
+        today = now.date()
+        current_year = now.year
+        current_month = now.month
+        first_this_month = today.replace(day=1)
+        last_month_date = first_this_month - timedelta(days=1)
+
+        # ── KPI Ligne 1 : financier ───────────────────────────────────────
+        solde_caisses_total, caisses_detail = self.get_solde_caisses()
+        context_data['solde_caisses_total'] = solde_caisses_total
+        context_data['caisses_detail'] = caisses_detail
 
         ca, stat_ca = self.get_ca()
         context_data['ca'] = ca
         context_data['stat_ca'] = round(stat_ca, 2)
 
-        context_data['top_articles'] = self.top_articles()
+        context_data['factures_jour_count'] = Facture.objects.filter(date_facture=today).count()
+
+        total_creances, total_dettes = self.get_creances_dettes()
+        context_data['total_creances'] = total_creances
+        context_data['total_dettes'] = total_dettes
+
+        # ── KPI Ligne 2 : opérationnel ────────────────────────────────────
+        context_data['articles'] = self.articles_critiques()
+
+        commandes_ce_mois = Commande.objects.filter(
+            date_creation__year=current_year,
+            date_creation__month=current_month,
+        ).count()
+        commandes_mois_dernier = Commande.objects.filter(
+            date_creation__year=last_month_date.year,
+            date_creation__month=last_month_date.month,
+        ).count()
+        context_data['commandes'] = Commande.objects.count()
+        context_data['commandes_ce_mois'] = commandes_ce_mois
+        context_data['stat_commandes'] = self.get_stat_variation(
+            commandes_ce_mois, commandes_mois_dernier
+        )
+
+        factures_nv_qs = Facture.objects.filter(
+            valide=False, actif=True
+        ).prefetch_related('facture_client__client')
+        context_data['factures_non_validees_count'] = factures_nv_qs.count()
+        context_data['factures_non_validees'] = factures_nv_qs.order_by('-date_facture')[:5]
+
+        context_data['paie_mois'] = self.get_paie_mois()
+
+        # Comptages historiques (compatibilité)
+        context_data['clients'] = Client.objects.count()
+        context_data['fournisseurs'] = Fournisseur.objects.count()
+        context_data['creanciers'] = Creancier.objects.count()
+        context_data['debiteurs'] = Debiteur.objects.count()
+        context_data['factures'] = Facture.objects.count()
+
+        # ── Graphiques ────────────────────────────────────────────────────
+        context_data['current_year'] = current_year
+        context_data['mois_labels'] = self.get_mois()
+        context_data['chart_data'] = self.get_ventes_chart()
+        context_data['depenses_chart_data'] = self.get_depenses_chart()
+
+        categories_labels, categories_data = self.get_categories_chart()
+        context_data['categories_labels'] = categories_labels
+        context_data['categories_data'] = categories_data
+
+        # ── Top articles + progress bars dynamiques ───────────────────────
+        articles_ca = self.top_articles()
+        context_data['top_articles'] = articles_ca
+        first_article = articles_ca.first()
+        context_data['top_articles_max'] = (
+            first_article['total_ca'] if first_article else Decimal('1')
+        )
+
+        # ── Panels opérationnels ──────────────────────────────────────────
+        context_data['commandes_recentes'] = (
+            Commande.objects.select_related('fournisseur').order_by('-date_creation')[:5]
+        )
         context_data['articles_expiration'] = self.articles_expiration()
+
+        # ── Journal d'activités ───────────────────────────────────────────
+        from logs.models import ActivityLog
+        context_data['recent_logs'] = ActivityLog.objects.select_related('user').all()[:10]
 
         return context_data
 
 
 
-class DashboardBaseView(LoginRequiredMixin, View):
+class DashboardBaseView(RoleRequiredMixin, View):
     login_url = '/login/'
+    allowed_roles = ALL_ROLES
     admin_view = staticmethod(DashboardAdminView.as_view())
 
     def dispatch(self, request, *args, **kwargs):

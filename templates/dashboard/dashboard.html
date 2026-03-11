@@ -326,335 +326,555 @@
 {% endblock stylesheets %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="clearfix"></div>
-            <!-- Statistics Cards -->
-            <div class="row">
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-blue">
-                        <div class="stat-icon">
-                            <i class="fa fa-users"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ clients }}</div>
-                            <div class="stat-label">Clients</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
+<div class="right_col" role="main">
+<div class="">
+<div class="clearfix"></div>
 
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-green">
-                        <div class="stat-icon">
-                            <i class="fa fa-truck"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ fournisseurs }}</div>
-                            <div class="stat-label">Fournisseurs</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
+<!-- ══════════════════════════════════════════════════════════════════════
+     LIGNE 1 — KPIs financiers
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
 
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-orange">
-                        <div class="stat-icon">
-                            <i class="fa fa-money"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ creanciers }}</div>
-                            <div class="stat-label">Créanciers</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-down"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-red">
-                        <div class="stat-icon">
-                            <i class="fa fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ debiteurs }}</div>
-                            <div class="stat-label">Débiteurs</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
+    <!-- Solde total des caisses -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'caisses' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon"><i class="fa fa-bank"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ solde_caisses_total|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
+                <div class="stat-label">Solde des caisses</div>
             </div>
-
-            <div class="row">
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-purple">
-                        <div class="stat-icon">
-                            <i class="fa fa-cubes"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ articles }}</div>
-                            <div class="stat-label">Articles critiques</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-teal">
-                        <div class="stat-icon">
-                            <i class="fa fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ commandes }}</div>
-                            <div class="stat-label">Commandes</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-pink">
-                        <div class="stat-icon">
-                            <i class="fa fa-file-text"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ factures }}</div>
-                            <div class="stat-label">Factures</div>
-                        </div>
-                        <div class="stat-footer">
-                            <i class="fa fa-arrow-up"></i> 0% ce mois
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card stat-card-cyan">
-                        <div class="stat-icon">
-                            <i class="fa fa-line-chart"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-number">{{ ca }}FC</div>
-                            <div class="stat-label">CA</div>
-                        </div>
-                        <div class="stat-footer">
-                            {% if stat_ca > 0 %}
-                                <i class="fa fa-arrow-up"></i> {{ stat_ca }}% Aujourd'hui
-                            {% else %}
-                                <i class="fa fa-arrow-down"></i> {{ stat_ca }}% Aujourd'hui
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-footer">
+                <i class="fa fa-unlock"></i> {{ caisses_detail|length }} caisse{{ caisses_detail|length|pluralize }} ouverte{{ caisses_detail|length|pluralize }}
             </div>
-            <!-- Charts Section -->
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="fa fa-bar-chart"></i> Ventes Mensuelles {{ current_year }}</h3>
-                        </div>
-                        <div class="panel-body">
-                            <canvas id="ventesChart" height="80"></canvas>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        </a>
+    </div>
 
-                <div class="col-md-4">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="fa fa-star"></i> Articles les Plus Vendus</h3>
-                        </div>
-                        <div class="panel-body">
-                            <ul class="top-products-list">
-                                {% for article in top_articles %}
-                                    <li>
-                                        <div class="product-info">
-                                            <span class="product-name">{{ article.article__designation }}</span>
-                                            <span class="product-sales">{{ article.total_ca }}</span>
-                                        </div>
-                                        <div class="ca_articles">
-                                            <div class="" style="width: 85%"></div>
-                                        </div>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <!-- CA du jour -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'rapport_ventes' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-cyan">
+            <div class="stat-icon"><i class="fa fa-line-chart"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ ca|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
+                <div class="stat-label">CA du jour</div>
             </div>
+            <div class="stat-footer">
+                {% if stat_ca > 0 %}
+                    <i class="fa fa-arrow-up" style="color:#1abb9c;"></i> +{{ stat_ca }}% vs hier
+                {% elif stat_ca < 0 %}
+                    <i class="fa fa-arrow-down" style="color:#e74c3c;"></i> {{ stat_ca }}% vs hier
+                {% else %}
+                    <i class="fa fa-minus"></i> Stable vs hier
+                {% endif %}
+            </div>
+        </div>
+        </a>
+    </div>
 
-            <!-- Expiring Products and Recent Activities -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="panel panel-warning">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="fa fa-clock-o"></i> Articles Expirant Bientôt</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Article</th>
-                                            <th>Quantité</th>
-                                            <th>Date d'Expiration</th>
-                                            <th>Magasin</th>
-                                            <th>Statut</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for stock in articles_expiration %}
-                                            <tr>
-                                                <td>{{ stock.article.designation }}</td>
-                                                <td>{{ stock.qte }}</td>
-                                                <td>{{ stock.date_peremption }}</td>
-                                                <td>{{ stock.magasin.nom }}</td>
-                                                <td><span class="label label-danger">Urgent</span></td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Factures du jour -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'factures' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-pink">
+            <div class="stat-icon"><i class="fa fa-file-text"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ factures_jour_count }}</div>
+                <div class="stat-label">Factures du jour</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fa fa-calendar"></i> {{ factures }} au total
+            </div>
+        </div>
+        </a>
+    </div>
 
-                <div class="col-md-6">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="fa fa-history"></i> Activités Récentes</h3>
-                        </div>
-                        <div class="panel-body">
-                            <ul class="activity-list">
-                                <li>
-                                    <div class="activity-icon activity-success">
-                                        <i class="fa fa-check"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <strong>Nouvelle commande #1234</strong>
-                                        <p>Client: Jordi K. - Montant: $1,250</p>
-                                        <span class="activity-time">Il y a 5 minutes</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="activity-icon activity-info">
-                                        <i class="fa fa-truck"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <strong>Arrivage reçu</strong>
-                                        <p>Fournisseur: Psaro - 150 articles</p>
-                                        <span class="activity-time">Il y a 23 minutes</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="activity-icon activity-warning">
-                                        <i class="fa fa-exclamation"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <strong>Stock faible</strong>
-                                        <p>Article: Jus Mojo - Reste: 5 unités</p>
-                                        <span class="activity-time">Il y a 1 heure</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="activity-icon activity-primary">
-                                        <i class="fa fa-file-text"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <strong>Facture générée #FAC-2025-089</strong>
-                                        <p>Client: Patient - Montant: FC33,450</p>
-                                        <span class="activity-time">Il y a 2 heures</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="activity-icon activity-danger">
-                                        <i class="fa fa-money"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <strong>Remboursement crédit</strong>
-                                        <p>Client: Jean-Luc - Montant: FC89000</p>
-                                        <span class="activity-time">Il y a 3 heures</span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <!-- Créances en cours -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'creanciers' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-orange">
+            <div class="stat-icon"><i class="fa fa-money"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ total_creances|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
+                <div class="stat-label">Créances en cours</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fa fa-exchange"></i> {{ creanciers }} créancier{{ creanciers|pluralize }}
+            </div>
+        </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     LIGNE 2 — KPIs opérationnels
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
+
+    <!-- Articles critiques -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'articles' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-purple">
+            <div class="stat-icon"><i class="fa fa-cubes"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ articles }}</div>
+                <div class="stat-label">Articles critiques</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fa fa-exclamation-triangle" style="color:#e74c3c;"></i> Sous le seuil
+            </div>
+        </div>
+        </a>
+    </div>
+
+    <!-- Commandes ce mois -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'commandes' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-teal">
+            <div class="stat-icon"><i class="fa fa-shopping-cart"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ commandes_ce_mois }}</div>
+                <div class="stat-label">Commandes ce mois</div>
+            </div>
+            <div class="stat-footer">
+                {% if stat_commandes > 0 %}
+                    <i class="fa fa-arrow-up" style="color:#1abb9c;"></i> +{{ stat_commandes }}% vs mois dernier
+                {% elif stat_commandes < 0 %}
+                    <i class="fa fa-arrow-down" style="color:#e74c3c;"></i> {{ stat_commandes }}% vs mois dernier
+                {% else %}
+                    <i class="fa fa-minus"></i> Stable vs mois dernier
+                {% endif %}
+            </div>
+        </div>
+        </a>
+    </div>
+
+    <!-- Factures non validées -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'factures' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-red">
+            <div class="stat-icon"><i class="fa fa-exclamation-circle"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ factures_non_validees_count }}</div>
+                <div class="stat-label">Factures en attente</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fa fa-clock-o"></i> Non validées
+            </div>
+        </div>
+        </a>
+    </div>
+
+    <!-- Paie du mois -->
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'agents' %}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon"><i class="fa fa-users"></i></div>
+            <div class="stat-content">
+                <div class="stat-number">{{ paie_mois|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
+                <div class="stat-label">Paie du mois</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fa fa-calendar-check-o"></i> Montants perçus
+            </div>
+        </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     GRAPHIQUES — Ligne 1 : Ventes mensuelles + Donut catégories
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
+
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-bar-chart"></i> Ventes Mensuelles {{ current_year }}</h3>
+            </div>
+            <div class="panel-body">
+                <canvas id="ventesChart" height="90"></canvas>
             </div>
         </div>
     </div>
-    <script>
-        $(document).ready(() => {
-            // Graphique Ventes
-            var ctx = document.getElementById('ventesChart').getContext('2d');
-            var ventesChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: {{ mois_labels|safe }},
-                    datasets: [{
-                       label: "Chiffre d'affaires (FC)",
-                       data: {{ chart_data|safe }},
-                       borderColor: '#26B99A',
-                       backgroundColor: 'rgba(38,185,154,0.2)',
-                       tension: 0.3,
-                       fill: true
-                    }]
-                },
-                options: {
-                  responsive: true,
-                  scales: {
-                    y: { beginAtZero: true }
-                  }
-                }
-            });
 
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-pie-chart"></i> Ventes par Catégorie</h3>
+            </div>
+            <div class="panel-body" style="position:relative;">
+                {% if categories_data %}
+                    <canvas id="categoriesChart" height="160"></canvas>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:40px 0;">
+                        <i class="fa fa-pie-chart fa-2x" style="opacity:.3;display:block;margin-bottom:8px;"></i>
+                        Aucune vente enregistrée
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-          /*const ctx = document.getElementById('salesChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: ['Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct'],
-              datasets: [{
-                label: 'Ventes ($)',
-                data: [1200, 1900, 3000, 2500, 2200, 3200],
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     GRAPHIQUES — Ligne 2 : Dépenses vs CA + Top articles
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
+
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-area-chart"></i> CA vs Dépenses — {{ current_year }}</h3>
+            </div>
+            <div class="panel-body">
+                <canvas id="depensesChart" height="90"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-star"></i> Articles les Plus Vendus</h3>
+            </div>
+            <div class="panel-body">
+                {% if top_articles %}
+                <ul class="top-products-list">
+                    {% for article in top_articles %}
+                    <li>
+                        <div class="product-info">
+                            <span class="product-name">{{ article.article__designation }}</span>
+                            <span class="product-sales">{{ article.total_ca|floatformat:0 }} FC</span>
+                        </div>
+                        <div class="ca_articles" style="background:#e8e8e8;border-radius:3px;height:6px;overflow:hidden;">
+                            <div style="width:{% widthratio article.total_ca top_articles_max 100 %}%;height:100%;background:#26B99A;border-radius:3px;"></div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:20px;">Aucune vente</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PANELS — Ligne 1 : État caisses | Commandes récentes | Fact. en attente
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
+
+    <!-- État des caisses ouvertes -->
+    <div class="col-md-4">
+        <div class="panel panel-success">
+            <div class="panel-heading" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="panel-title"><i class="fa fa-bank"></i> État des Caisses</h3>
+                <a href="{% url 'caisses' %}" class="btn btn-xs btn-default"><i class="fa fa-list"></i> Voir tout</a>
+            </div>
+            <div class="panel-body" style="padding:0;">
+                {% if caisses_detail %}
+                <table class="table table-hover" style="margin:0;">
+                    <thead>
+                        <tr>
+                            <th style="font-size:11px;padding:8px 12px;">Caisse</th>
+                            <th style="font-size:11px;padding:8px 12px;text-align:right;">Solde actuel</th>
+                            <th style="font-size:11px;padding:8px 12px;text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in caisses_detail %}
+                        <tr>
+                            <td style="padding:8px 12px;font-size:12px;">
+                                <i class="fa fa-unlock" style="color:#1abb9c;margin-right:4px;"></i>
+                                {{ item.nom }}
+                            </td>
+                            <td style="padding:8px 12px;font-size:13px;font-weight:700;text-align:right;color:#2a3f54;">
+                                {{ item.solde|floatformat:0 }} FC
+                            </td>
+                            <td style="padding:8px 12px;text-align:center;">
+                                <a href="{% url 'caisse_details' item.cc.pk %}" class="btn btn-xs btn-warning">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:25px;">
+                        <i class="fa fa-lock fa-2x" style="opacity:.3;display:block;margin-bottom:8px;"></i>
+                        Aucune caisse ouverte
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Commandes récentes -->
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="panel-title"><i class="fa fa-shopping-cart"></i> Commandes Récentes</h3>
+                <a href="{% url 'commandes' %}" class="btn btn-xs btn-default"><i class="fa fa-list"></i> Voir tout</a>
+            </div>
+            <div class="panel-body" style="padding:0;">
+                {% if commandes_recentes %}
+                <table class="table table-hover" style="margin:0;">
+                    <tbody>
+                        {% for cmd in commandes_recentes %}
+                        <tr>
+                            <td style="padding:8px 12px;">
+                                <span style="font-size:12px;font-weight:600;color:#2a3f54;">#{{ cmd.numero }}</span><br>
+                                <span style="font-size:11px;color:#73879c;">{{ cmd.fournisseur }}</span>
+                            </td>
+                            <td style="padding:8px 12px;text-align:right;">
+                                <span style="font-size:12px;font-weight:700;color:#2a3f54;">{{ cmd.total_commande|floatformat:0 }}</span><br>
+                                <span style="font-size:11px;color:#73879c;">{{ cmd.devise }} — {{ cmd.date_commande|date:"d/m/Y" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:25px;">Aucune commande</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Factures non validées -->
+    <div class="col-md-4">
+        <div class="panel panel-danger">
+            <div class="panel-heading" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="panel-title"><i class="fa fa-exclamation-circle"></i> Factures en Attente</h3>
+                <a href="{% url 'factures' %}" class="btn btn-xs btn-default"><i class="fa fa-list"></i> Voir tout</a>
+            </div>
+            <div class="panel-body" style="padding:0;">
+                {% if factures_non_validees %}
+                <table class="table table-hover" style="margin:0;">
+                    <tbody>
+                        {% for fac in factures_non_validees %}
+                        <tr>
+                            <td style="padding:8px 12px;">
+                                <span style="font-size:12px;font-weight:600;color:#2a3f54;">Fact. #{{ fac.numero }}</span><br>
+                                <span style="font-size:11px;color:#73879c;">
+                                    {% if fac.facture_client %}{{ fac.facture_client.client }}
+                                    {% elif fac.client_comptoir %}{{ fac.client_comptoir }}
+                                    {% else %}—{% endif %}
+                                </span>
+                            </td>
+                            <td style="padding:8px 12px;text-align:right;">
+                                <span style="font-size:12px;font-weight:700;color:#e74c3c;">{{ fac.total|floatformat:0 }} FC</span><br>
+                                <span style="font-size:11px;color:#73879c;">{{ fac.date_facture|date:"d/m/Y" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:25px;">
+                        <i class="fa fa-check-circle" style="color:#1abb9c;"></i> Toutes les factures sont validées
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PANELS — Ligne 2 : Articles expirant | Activités récentes
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="row">
+
+    <div class="col-md-6">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-clock-o"></i> Articles Expirant Bientôt <small style="font-weight:400;">(3 mois)</small></h3>
+            </div>
+            <div class="panel-body" style="padding:0;">
+                {% if articles_expiration %}
+                <div class="table-responsive">
+                    <table class="table table-hover" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Article</th>
+                                <th>Qté</th>
+                                <th>Expiration</th>
+                                <th>Magasin</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in articles_expiration %}
+                            <tr>
+                                <td>{{ stock.article.designation }}</td>
+                                <td>{{ stock.qte }}</td>
+                                <td>{{ stock.date_peremption|date:"d/m/Y" }}</td>
+                                <td>{{ stock.magasin.nom }}</td>
+                                <td><span class="label label-danger">Urgent</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <div class="text-center text-muted" style="padding:30px;">
+                        <i class="fa fa-check-circle fa-2x" style="color:#1abb9c;opacity:.6;display:block;margin-bottom:8px;"></i>
+                        Aucun article n'expire dans les 3 prochains mois
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="panel-title"><i class="fa fa-history"></i> Activités Récentes</h3>
+                <a href="{% url 'logs' %}" class="btn btn-xs btn-default"><i class="fa fa-list"></i> Tout voir</a>
+            </div>
+            <div class="panel-body" style="padding:10px 15px;">
+                {% if recent_logs %}
+                <ul class="activity-list" style="margin:0;padding:0;list-style:none;">
+                    {% for log in recent_logs %}
+                    <li style="display:flex;align-items:flex-start;padding:7px 0;border-bottom:1px solid #f0f0f0;">
+                        <div class="activity-icon {{ log.color_class }}" style="flex-shrink:0;width:32px;height:32px;font-size:13px;">
+                            <i class="fa {{ log.icon }}"></i>
+                        </div>
+                        <div class="activity-content" style="margin-left:10px;flex:1;min-width:0;">
+                            <strong style="display:block;font-size:11px;">
+                                <span class="label label-default" style="margin-right:3px;">{{ log.get_module_display }}</span>
+                                {{ log.get_action_display }}
+                            </strong>
+                            <p style="margin:1px 0;font-size:11px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                {{ log.description }}
+                            </p>
+                            <span style="font-size:10px;color:#aaa;">
+                                <i class="fa fa-clock-o"></i> {{ log.created_at|timesince }} — {{ log.user|default:"Système" }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center text-muted" style="padding:20px;">
+                    <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:8px;opacity:.4;"></i>
+                    Aucune activité enregistrée
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</div><!-- /.right_col inner -->
+</div><!-- /.right_col -->
+
+{{ mois_labels|json_script:"dashboard-mois-labels" }}
+{{ chart_data|json_script:"dashboard-chart-data" }}
+{{ depenses_chart_data|json_script:"dashboard-depenses-data" }}
+{{ categories_labels|json_script:"dashboard-categories-labels" }}
+{{ categories_data|json_script:"dashboard-categories-data" }}
+
+<script>
+$(document).ready(function () {
+    $('#index').addClass('active');
+
+    var moisLabels = JSON.parse(document.getElementById('dashboard-mois-labels').textContent);
+    var ventesData = JSON.parse(document.getElementById('dashboard-chart-data').textContent);
+    var depensesData = JSON.parse(document.getElementById('dashboard-depenses-data').textContent);
+
+    // ── Graphique 1 : Ventes mensuelles (line) ──────────────────────────────
+    new Chart(document.getElementById('ventesChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: moisLabels,
+            datasets: [{
+                label: "CA (FC)",
+                data: ventesData,
                 borderColor: '#26B99A',
-                backgroundColor: 'rgba(38,185,154,0.2)',
+                backgroundColor: 'rgba(38,185,154,0.15)',
                 tension: 0.3,
-                fill: true
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: { legend: { display: false } }
+                fill: true,
+                pointBackgroundColor: '#26B99A',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // ── Graphique 2 : Donut catégories ──────────────────────────────────────
+    {% if categories_data %}
+    var categoriesLabels = JSON.parse(document.getElementById('dashboard-categories-labels').textContent);
+    var categoriesData = JSON.parse(document.getElementById('dashboard-categories-data').textContent);
+    new Chart(document.getElementById('categoriesChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: categoriesLabels,
+            datasets: [{
+                data: categoriesData,
+                backgroundColor: [
+                    '#26B99A','#3498DB','#E74C3C','#F39C12',
+                    '#9B59B6','#1ABC9C','#E67E22'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } }
             }
-          });*/
+        }
+    });
+    {% endif %}
 
-          // Graphique Stock
-          /*const stockCtx = document.getElementById('stockPieChart').getContext('2d');
-          new Chart(stockCtx, {
-            type: 'doughnut',
-            data: {
-              labels: ['Produits finis', 'En transit', 'Défectueux'],
-              datasets: [{
-                data: [65, 25, 10],
-                backgroundColor: ['#26B99A', '#3498DB', '#E74C3C']
-              }]
+    // ── Graphique 3 : CA vs Dépenses (bar groupé) ───────────────────────────
+    new Chart(document.getElementById('depensesChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: moisLabels,
+            datasets: [
+                {
+                    label: "CA (FC)",
+                    data: ventesData,
+                    backgroundColor: 'rgba(38,185,154,0.75)',
+                    borderColor: '#26B99A',
+                    borderWidth: 1,
+                },
+                {
+                    label: "Dépenses caisse (FC)",
+                    data: depensesData,
+                    backgroundColor: 'rgba(231,76,60,0.65)',
+                    borderColor: '#E74C3C',
+                    borderWidth: 1,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true },
+                x: { stacked: false }
             },
-            options: { responsive: true }
-          });*/
-
-          $('#index').addClass('active');
-        })
-    </script>
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+});
+</script>
 {% endblock content %}
