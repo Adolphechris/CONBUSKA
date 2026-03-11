@@ -1,130 +1,304 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Agent {% endblock title %}
+{% block title %}Agent — {{ agent.nom }}{% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  .det-banner {
+    background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+    border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .det-banner-left { display: flex; align-items: center; gap: 20px; }
+  .det-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,.25); border: 3px solid rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: #fff;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .det-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .det-banner-info h2 { color: #fff; margin: 0 0 4px 0; font-size: 22px; font-weight: 700; }
+  .det-banner-info .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .det-badge { background: rgba(255,255,255,.18); color: rgba(255,255,255,.9); border-radius: 20px; padding: 2px 12px; font-size: 12px; }
+  .det-meta-item { color: rgba(255,255,255,.8); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .det-banner-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .det-btn { background: rgba(255,255,255,.2); color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 8px; padding: 8px 18px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background .2s; }
+  .det-btn:hover { background: rgba(255,255,255,.35); color: #fff; text-decoration: none; }
+  .det-btn.back { background: rgba(0,0,0,.12); border-color: rgba(255,255,255,.2); }
+  .det-btn.primary-action { background: rgba(255,255,255,.9); color: #8E44AD; border-color: transparent; font-weight: 600; }
+  .det-btn.primary-action:hover { background: #fff; color: #7d3c98; }
+
+  .kpi-tile { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.07); padding: 16px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .kpi-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0; }
+  .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
+
+  /* ── Tabs ──────────────────────────────────────────────────── */
+  .det-tabs-wrap {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .det-tabs-nav {
+    display: flex; border-bottom: 2px solid #eee;
+    background: #f8f9fa; padding: 0 16px;
+  }
+  .det-tabs-nav .tab-link {
+    padding: 13px 20px; font-size: 13px; font-weight: 600; color: #888;
+    text-decoration: none; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; display: flex; align-items: center; gap: 7px;
+    transition: color .2s, border-color .2s;
+  }
+  .det-tabs-nav .tab-link.active { color: #9B59B6; border-bottom-color: #9B59B6; }
+  .det-tabs-nav .tab-link:hover { color: #8E44AD; }
+
+  .det-tab-pane { display: none; padding: 0; }
+  .det-tab-pane.active { display: block; }
+
+  .tab-action-bar { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: flex-end; }
+
+  /* ── Tables ─────────────────────────────────────────────────── */
+  .det-panel-body table { margin: 0; }
+  .det-panel-body table thead th { background: #f8f9fa; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 2px solid #eee; padding: 10px 12px; }
+  .det-panel-body table tbody td { padding: 9px 12px; font-size: 13px; vertical-align: middle; }
+  .det-panel-body table tbody tr:hover { background: #fafbfc; }
+  .det-footer-bar { padding: 10px 18px; background: #f8f9fa; border-top: 2px solid #eee; display: flex; justify-content: flex-end; font-size: 13px; font-weight: 700; color: #2c3e50; }
+</style>
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5><a href="{% url 'agents' %}">Agents</a> / Détails Agent </h5>
-                </div>
-            </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="col-md-3 col-sm-3 col-xs-12 profile_left">
-                            <div class="profile_img">
-                                <div id="crop-avatar">
-                                    <!-- Current avatar -->
-                                    <img class="img-circle" src="{{ agent.photo.url }}"
-                                         alt="Avatar" title="Change the avatar" width="240">
-                                </div>
-                            </div>
-                            <h4><strong>{{ agent.nom }} / {{ agent.matricule }}</strong></h4>
-                            <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-birthday-cake"></i> Date de naissance: {{ agent.date_naissance }}</li>
-                                <li><i class="fa fa-calendar"></i> Date d'engagement: {{ agent.date_engagement }}</li>
-                                <li><i class="fa fa-map-marker"></i> Addresse: {{ agent.adresse }}</li>
-                                <li><i class="fa fa-phone"></i> Telephone: {{ agent.telephone }}</li>
-                                <li><i class="fa fa-envelope"></i> Email: {{ agent.email }}</li>
-                            </ul>
-                            <hr>
-                            <ul class="list-unstyled user_data">
-                                <li><i class="fa fa-dot-circle-o user-profile-icon"></i> Salaire: {{ agent.salaire }}FC</li>
-                            </ul>
-                            <br />
-                            <a href="{% url 'agent_update' agent.pk %}" class="btn btn-primary btn-lg">
-                                 <i class="fa fa-edit"></i>
-                                 Modifier
-                            </a>
-                        </div>
+<div class="right_col" role="main">
+  <div class="">
 
-                        <div class="col-md-9 col-sm-9 col-xs-12">
-                            <div class="" role="tabpanel" data-example-id="togglable-tabs">
-                                <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                                    <li role="presentation" class="active"><a href="#tab_content1" id="paie-tab" role="tab" data-toggle="tab" aria-expanded="true">Historique de paie</a></li>
-                                    <li role="presentation" class=""><a href="#tab_content2" role="tab" id="mouvement-tab" data-toggle="tab" aria-expanded="false">Mouvements</a></li>
-                                </ul>
-                                <div id="myTabContent" class="tab-content">
-                                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="paie-tab">
-                                        <button type="button" class="btn btn-link pull-right creer">
-                                            <a href="{% url 'paie_agent_create' agent.pk %}">
-                                                <i class="fa fa-plus"></i>
-                                                COMMENCER LA PAIE
-                                            </a>
-                                        </button>
-                                        <table id="tablePaie" class="table table-striped jambo_table bulk_action">
-                                            <thead>
-                                                <tr class="headings">
-                                                    <th class="column-title"> No.</th>
-                                                    <th class="column-title"> Mois</th>
-                                                    <th class="column-title"> Jours prestés</th>
-                                                    <th class="column-title"> Salaire net perçu</th>
-                                                    <th class="column-title"> Rémunération totale perçue</th>
-                                                    <th class="column-title"> Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in paie_list %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.mois }}</td>
-                                                        <td>{{ i.jp }}</td>
-                                                        <td>{{ i.montant_percu }} FC</td>
-                                                        <td>{{ i.remuneration_totale }} FC</td>
-                                                        <td>
-                                                            <a href="{% url 'paie_agent_details' i.pk agent.pk %}" class="btn btn-warning btn-xs">
-                                                                <i class="fa fa-eye"></i>
-                                                                Voir les détails
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div role="tabpanel" class="tab-pane fade" id="tab_content2" aria-labelledby="mouvement-tab">
-                                        <table id="tableMouvements" class="table table-striped jambo_table bulk_action">
-                                            <thead>
-                                                <tr class="headings">
-                                                    <th class="column-title"> No.</th>
-                                                    <th class="column-title"> Date paiement</th>
-                                                    <th class="column-title"> Montant</th>
-                                                    <th class="column-title"> Percepteur</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in paiements %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.date_paiement }}</td>
-                                                        <td>{{ i.montant|floatformat }}</td>
-                                                        <td>{{ i.cree_par }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total_row">
-                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ total_paiements|floatformat  }}</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Gradient Banner ───────────────────────────────────── -->
+    <div class="det-banner">
+      <div class="det-banner-left">
+        <div class="det-avatar">
+          {% if agent.photo %}
+            <img src="{{ agent.photo.url }}" alt="{{ agent.nom }}">
+          {% else %}
+            {{ agent.nom|slice:":1"|upper }}
+          {% endif %}
         </div>
+        <div class="det-banner-info">
+          <h2>{{ agent.nom }}</h2>
+          <div class="meta">
+            <span class="det-badge">{{ agent.matricule }}</span>
+            {% if agent.date_engagement %}<span class="det-meta-item"><i class="fa fa-calendar"></i>Engagé le {{ agent.date_engagement|date:"d/m/Y" }}</span>{% endif %}
+            {% if agent.telephone %}<span class="det-meta-item"><i class="fa fa-phone"></i>{{ agent.telephone }}</span>{% endif %}
+            {% if agent.email %}<span class="det-meta-item"><i class="fa fa-envelope"></i>{{ agent.email }}</span>{% endif %}
+            <span class="det-badge"><i class="fa fa-money"></i> {{ agent.salaire|floatformat:0 }} FC/mois</span>
+          </div>
+        </div>
+      </div>
+      <div class="det-banner-actions">
+        <a href="{% url 'agents' %}" class="det-btn back"><i class="fa fa-arrow-left"></i> Retour</a>
+        <a href="{% url 'agent_update' agent.pk %}" class="det-btn"><i class="fa fa-pencil"></i> Modifier</a>
+        <a href="{% url 'paie_agent_create' agent.pk %}" class="det-btn primary-action">
+          <i class="fa fa-play-circle"></i> Commencer la paie
+        </a>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#agents').addClass('active');
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── Breadcrumb ─────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 4px 0 12px; margin: 0;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li><a href="{% url 'agents' %}">Agents</a></li>
+      <li class="active">{{ agent.nom }}</li>
+    </ol>
+
+    <!-- ── KPI Row ────────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #9B59B6, #8E44AD);">
+            <i class="fa fa-money"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Salaire de base</div>
+            <div class="kpi-value">{{ agent.salaire|floatformat:0 }} FC</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #3498DB, #2980B9);">
+            <i class="fa fa-calendar-check-o"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Mois de paie</div>
+            <div class="kpi-value">{{ paie_list|length }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #27ae60, #219a52);">
+            <i class="fa fa-bank"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Total versé (mouvements)</div>
+            <div class="kpi-value">{{ total_paiements|floatformat:0 }} FC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tabs ──────────────────────────────────────────────── -->
+    <div class="det-tabs-wrap">
+      <div class="det-tabs-nav">
+        <a href="#" class="tab-link active" data-tab="tab-paie">
+          <i class="fa fa-list-alt"></i> Historique de paie
+        </a>
+        <a href="#" class="tab-link" data-tab="tab-mvts">
+          <i class="fa fa-exchange"></i> Mouvements de caisse
+        </a>
+      </div>
+
+      <!-- Tab Paie -->
+      <div id="tab-paie" class="det-tab-pane active">
+        <div class="det-panel-body">
+          <div class="table-responsive">
+            <table id="tablePaie" class="table table-hover" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Mois</th>
+                  <th class="text-right">Jours prestés</th>
+                  <th class="text-right">Salaire net perçu</th>
+                  <th class="text-right">Rémunération totale</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in paie_list %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ i.mois|date:"F Y" }}</td>
+                    <td class="text-right">{{ i.jp }} j</td>
+                    <td class="text-right">{{ i.montant_percu|floatformat:0 }} FC</td>
+                    <td class="text-right">{{ i.remuneration_totale|floatformat:0 }} FC</td>
+                    <td class="text-center">
+                      <a href="{% url 'paie_agent_details' i.pk agent.pk %}" class="btn btn-warning btn-xs">
+                        <i class="fa fa-eye"></i> Détails
+                      </a>
+                      <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target="#modalDeletePaie{{ i.pk }}">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted" style="padding: 40px;">
+                      <i class="fa fa-calendar-o" style="font-size:32px; margin-bottom:10px; display:block; opacity:.4;"></i>
+                      Aucun historique de paie.<br>
+                      <a href="{% url 'paie_agent_create' agent.pk %}" class="btn btn-sm" style="margin-top:12px; background:#9B59B6; color:#fff; border-radius:6px;">
+                        <i class="fa fa-play-circle"></i> Commencer la paie
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Mouvements -->
+      <div id="tab-mvts" class="det-tab-pane">
+        <div class="det-panel-body">
+          <div class="table-responsive">
+            <table id="tableMouvements" class="table table-hover" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Date</th>
+                  <th class="text-right">Montant</th>
+                  <th>Percepteur</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in paiements %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ i.date_paiement|date:"d/m/Y" }}</td>
+                    <td class="text-right">{{ i.montant|floatformat:0 }} FC</td>
+                    <td>{{ i.cree_par }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted" style="padding:24px;">Aucun mouvement enregistré.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="det-footer-bar">
+          <span>Total versé : <strong>{{ total_paiements|floatformat:0 }} FC</strong></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Modals de suppression paie ─────────────────────────────── -->
+{% for i in paie_list %}
+<div class="modal fade" id="modalDeletePaie{{ i.pk }}" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="border-radius: 10px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none;">
+        <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: .8;">&times;</button>
+        <h4 class="modal-title"><i class="fa fa-trash"></i> Supprimer la paie</h4>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous supprimer la paie de <strong>{{ i.mois|date:"F Y" }}</strong> pour <strong>{{ agent.nom }}</strong> ?</p>
+        <p class="text-danger" style="font-size:12px;"><i class="fa fa-exclamation-triangle"></i> Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer" style="background: #f8f9fa;">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+        <form action="{% url 'paie_agent_delete' i.pk agent.pk %}" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i> Supprimer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  var dtFR = {
+    search: "Rechercher :",
+    searchPlaceholder: "Rechercher...",
+    lengthMenu: "Afficher _MENU_ lignes",
+    info: "_START_–_END_ sur _TOTAL_",
+    infoEmpty: "0 résultat",
+    zeroRecords: "Aucun résultat",
+    emptyTable: "Aucune donnée",
+    paginate: { first:"«", last:"»", next:"›", previous:"‹" }
+  };
+  $(document).ready(function() {
+    $('#agents').addClass('current-page');
+    $('#paie').addClass('active');
+    let parent = document.getElementById('paie');
+    if (parent) parent.childNodes[2].style.display = 'block';
+
+    $('#tablePaie').DataTable({ language: dtFR, order: [[1,'desc']], dom: 'rft<"bottom"p>' });
+    $('#tableMouvements').DataTable({ language: dtFR, order: [[1,'desc']], dom: 'rft<"bottom"p>' });
+
+    // Custom tabs
+    $('.tab-link').on('click', function(e) {
+      e.preventDefault();
+      var target = $(this).data('tab');
+      $('.tab-link').removeClass('active');
+      $(this).addClass('active');
+      $('.det-tab-pane').removeClass('active');
+      $('#' + target).addClass('active');
+    });
+  });
+</script>
+{% endblock %}

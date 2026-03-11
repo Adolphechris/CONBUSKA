@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import redirect, get_object_or_404
@@ -7,13 +7,15 @@ from .models import Commande, DetailsCommande
 from .forms import CommandeCreateForm, ArticleCommandeAddForm, ArticleCommandeUpdateForm
 
 
-class CommandesView(LoginRequiredMixin, ListView):
+class CommandesView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     context_object_name = 'liste_commandes'
     template_name = 'commandes/commandes.html'
 
 
-class CommandeCreateView(LoginRequiredMixin, CreateView):
+class CommandeCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     template_name = 'commandes/commande_form.html'
     form_class = CommandeCreateForm
@@ -31,7 +33,8 @@ class CommandeCreateView(LoginRequiredMixin, CreateView):
         context['cancel_url'] = reverse('commandes')
         return context
 
-class CommandeUpdateView(LoginRequiredMixin, UpdateView):
+class CommandeUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     template_name = 'commandes/commande_form.html'
     form_class = CommandeCreateForm
@@ -44,7 +47,8 @@ class CommandeUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class CommandeDeleteView(LoginRequiredMixin, DeleteView):
+class CommandeDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     template_name = 'commandes/commande_confirm_delete.html'
     success_url = reverse_lazy('commandes')
@@ -57,7 +61,8 @@ class CommandeDeleteView(LoginRequiredMixin, DeleteView):
         context['submit_label'] = 'Valider'
         return context
 
-class CommandeSaveView(LoginRequiredMixin, TemplateView):
+class CommandeSaveView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     template_name = 'commandes/commande_confirm_save.html'
     success_url = reverse_lazy('commandes')
@@ -80,7 +85,8 @@ class CommandeSaveView(LoginRequiredMixin, TemplateView):
         return redirect('commandes')
 
 
-class CommandeDetailView(LoginRequiredMixin, DetailView):
+class CommandeDetailView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Commande
     context_object_name = 'commande'
     template_name = 'commandes/commande_details.html'
@@ -95,7 +101,8 @@ class CommandeDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ArticleCommandeAddView(LoginRequiredMixin, CreateView):
+class ArticleCommandeAddView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = DetailsCommande
     context_object_name = 'article_commande'
     template_name = 'commandes/add_article_form.html'
@@ -116,7 +123,8 @@ class ArticleCommandeAddView(LoginRequiredMixin, CreateView):
         return context
 
 
-class ArticleCommandeUpdateView(LoginRequiredMixin, UpdateView):
+class ArticleCommandeUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = DetailsCommande
     template_name = 'commandes/edit_article_form.html'
     form_class = ArticleCommandeUpdateForm

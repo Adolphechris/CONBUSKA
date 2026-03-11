@@ -1,4 +1,3 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -7,13 +6,20 @@ from .models import Client
 from caisse.models import MouvementCaisseClient
 from .forms import ClientCreateForm
 from .filters import ClientFilter
+from users.permissions import (
+    RoleRequiredMixin,
+    ROLE_ADMIN, ROLE_FACTURIER, ROLE_CAISSIER, ROLE_GERANT_MAGASIN,
+)
+
+_ALL_CLIENT_ROLES = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_CAISSIER, ROLE_GERANT_MAGASIN]
 
 
-class ClientsView(LoginRequiredMixin, FilterView):
+class ClientsView(RoleRequiredMixin, FilterView):
     model = Client
     context_object_name = 'liste_clients'
     template_name = 'clients/clients.html'
     filterset_class = ClientFilter
+    allowed_roles = _ALL_CLIENT_ROLES
 
     def get_queryset(self):
         return Client.objects.all().order_by('nom')
@@ -25,16 +31,17 @@ class ClientsView(LoginRequiredMixin, FilterView):
         return context
 
 
-class ClientDetailsView(LoginRequiredMixin, DetailView):
+class ClientDetailsView(RoleRequiredMixin, DetailView):
     model = Client
     context_object_name = 'client'
     template_name = 'clients/client_details.html'
+    allowed_roles = _ALL_CLIENT_ROLES
 
     def get_paiements(self):
         return MouvementCaisseClient.objects.filter(client=self.get_object())
 
     def get_context_data(self, **kwargs):
-        client =  self.get_object()
+        client = self.get_object()
         context = super().get_context_data(**kwargs)
         context['paiements'] = client.paiements()
         context['factures'] = client.factures()
@@ -43,22 +50,25 @@ class ClientDetailsView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ClientCreateView(LoginRequiredMixin, CreateView):
+class ClientCreateView(RoleRequiredMixin, CreateView):
     model = Client
     template_name = 'clients/client_create_form.html'
     form_class = ClientCreateForm
+    allowed_roles = [ROLE_ADMIN]
 
 
-class ClientUpdateView(LoginRequiredMixin, UpdateView):
+class ClientUpdateView(RoleRequiredMixin, UpdateView):
     model = Client
     template_name = 'clients/client_create_form.html'
     form_class = ClientCreateForm
+    allowed_roles = [ROLE_ADMIN]
 
 
-class ClientDeleteView(LoginRequiredMixin, DeleteView):
+class ClientDeleteView(RoleRequiredMixin, DeleteView):
     model = Client
     template_name = 'clients/client_confirm_delete.html'
     success_url = reverse_lazy('clients')
+    allowed_roles = [ROLE_ADMIN]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -8,25 +8,32 @@ from .forms import FournisseurCreateForm
 from .filters import FournisseurFilter
 
 
-class FournisseursView(LoginRequiredMixin, FilterView):
+class FournisseursView(RoleRequiredMixin, FilterView):
+    allowed_roles = [ROLE_ADMIN]
     model = Fournisseur
     context_object_name = 'liste_fournisseurs'
     template_name = 'fournisseurs/fournisseurs.html'
     filterset_class = FournisseurFilter
 
     def get_queryset(self):
-        return Fournisseur.objects.filter(actif=True)
+        return Fournisseur.objects.filter(actif=True).order_by('nom')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        fournisseurs = Fournisseur.objects.filter(actif=True).order_by('nom')
-        context['f_systemes'] = fournisseurs.filter(is_system=True)
-        context['f_ordinaires'] = fournisseurs.filter(is_system=False)
-        context['total_solde'] = sum(fournisseur.solde() for fournisseur in fournisseurs)
+
+        filtered_qs = self.object_list
+
+        context['f_systemes'] = filtered_qs.filter(is_system=True)
+        context['f_ordinaires'] = filtered_qs.filter(is_system=False)
+
+        # Calcul du solde total basé uniquement sur les résultats filtrés
+        context['total_solde'] = sum(f.solde() for f in filtered_qs)
+
         return context
 
 
-class FournisseurDetailsView(LoginRequiredMixin, DetailView):
+class FournisseurDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Fournisseur
     context_object_name = 'fournisseur'
     template_name = 'fournisseurs/fournisseur_details.html'
@@ -43,19 +50,22 @@ class FournisseurDetailsView(LoginRequiredMixin, DetailView):
         return context
 
 
-class FournisseurCreateView(LoginRequiredMixin, CreateView):
+class FournisseurCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Fournisseur
     template_name = 'fournisseurs/fournisseur_create_form.html'
     form_class = FournisseurCreateForm
 
 
-class FournisseurUpdateView(LoginRequiredMixin, UpdateView):
+class FournisseurUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Fournisseur
     template_name = 'fournisseurs/fournisseur_create_form.html'
     form_class = FournisseurCreateForm
 
 
-class FournisseurDeleteView(LoginRequiredMixin, DeleteView):
+class FournisseurDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Fournisseur
     template_name = 'fournisseurs/fournisseur_confirm_delete.html'
     success_url = reverse_lazy('fournisseurs')

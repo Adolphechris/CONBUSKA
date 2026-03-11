@@ -1,256 +1,318 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Fournisseurs {% endblock title %}
+{% block title %}Fournisseurs{% endblock %}
+
 {% block stylesheets %}
-{{block.super}}
+{{ block.super }}
 <style>
-    .info-box {
-        display: flex;
-        background: #f7f7f7;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #e0e0e0;
-    }
+  .ec-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .ec-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.14); transform: translateY(-2px); }
 
-    .info-box-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 28px;
-        border-radius: 8px;
-    }
+  .ec-card-top {
+    background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+    padding: 20px 16px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .ec-card-top.sys {
+    background: linear-gradient(135deg, #7f8c8d 0%, #636e72 100%);
+    padding: 14px 16px;
+  }
+  .ec-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: #fff;
+    flex-shrink: 0; overflow: hidden;
+    border: 2px solid rgba(255,255,255,.5);
+  }
+  .ec-avatar.sm { width: 44px; height: 44px; font-size: 16px; }
+  .ec-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .ec-card-top-info { flex: 1; }
+  .ec-card-top-info h4 { color: #fff; margin: 0 0 2px 0; font-size: 15px; font-weight: 700; }
+  .ec-card-top-info h4.sm { font-size: 13px; }
+  .ec-code-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.2);
+    color: rgba(255,255,255,.9);
+    border-radius: 20px; padding: 1px 10px; font-size: 11px;
+  }
+  .ec-sys-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.85);
+    border-radius: 20px; padding: 1px 8px; font-size: 10px;
+  }
+  .ec-card-body { padding: 14px 16px 10px; }
+  .ec-info-list { list-style: none; padding: 0; margin: 0; }
+  .ec-info-list li {
+    font-size: 12px; color: #666; padding: 3px 0;
+    display: flex; align-items: flex-start; gap: 7px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .ec-info-list li:last-child { border-bottom: none; }
+  .ec-info-list li i { color: #F39C12; width: 14px; margin-top: 1px; flex-shrink: 0; }
+  .ec-info-list li i.sys { color: #7f8c8d; }
+  .ec-card-footer {
+    padding: 10px 16px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ec-solde { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+  .ec-solde.positive { color: #27ae60; }
+  .ec-solde.negative { color: #e74c3c; }
+  .ec-actions { display: flex; gap: 6px; }
+  .ec-actions a {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+    transition: opacity .2s;
+  }
+  .ec-actions a:hover { opacity: .85; }
+  .ec-btn-view { background: #F39C12; color: #fff; }
+  .ec-btn-view.sys { background: #7f8c8d; color: #fff; }
+  .ec-btn-edit { background: #f0f0f0; color: #555; }
+  .ec-btn-del  { background: #fee; color: #e74c3c; }
 
-    .info-box-content {
-        margin-left: 10px;
-    }
+  .kpi-tile {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .kpi-icon {
+    width: 46px; height: 46px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; flex-shrink: 0;
+  }
+  .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
 
-    .info-box-number {
-        font-size: 22px;
-        font-weight: bold;
-    }
+  .filter-bar {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    padding: 14px 20px; margin-bottom: 20px;
+    display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px;
+  }
+  .filter-bar .form-group { margin: 0; }
+  .filter-bar label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 4px; }
+  .filter-bar input, .filter-bar select {
+    border: 1px solid #ddd; border-radius: 6px;
+    padding: 6px 10px; font-size: 13px; height: 34px;
+  }
+  .filter-bar .btn-filter {
+    background: #F39C12; color: #fff; border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 13px; height: 34px; cursor: pointer;
+  }
+  .filter-bar .btn-filter:hover { background: #E67E22; }
+  .filter-bar .btn-reset {
+    background: #f0f0f0; color: #555; border: none; border-radius: 6px;
+    padding: 6px 12px; font-size: 13px; height: 34px; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+  }
 
-    .uniform-img {
-        width: 150px;      /* largeur fixe */
-        height: 150px;     /* hauteur fixe */
-        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
-    }
-
-    .uniform-img-sys {
-        width: 100px;      /* largeur fixe */
-        height: 100px;     /* hauteur fixe */
-        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
-    }
-
-    .profile_details:nth-child(3n) {
-        clear: none !important;
-    }
+  .section-divider {
+    display: flex; align-items: center; gap: 12px; margin: 28px 0 20px;
+  }
+  .section-divider-line { flex: 1; height: 1px; background: #e0e0e0; }
+  .section-divider-label {
+    font-size: 12px; font-weight: 600; color: #7f8c8d;
+    text-transform: uppercase; letter-spacing: .8px;
+    background: #f8f9fa; padding: 4px 12px; border-radius: 20px;
+    border: 1px solid #e0e0e0;
+  }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Fournisseurs</h5>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Liste des fournisseurs<small></small></h2>
-                            <button type="button" class="btn btn-link pull-right creer">
-                                <a href="{% url 'fournisseur_create' %}">
-                                    <i class="fa fa-plus"></i>
-                                    NOUVEAU FOURNISSEUR
-                                </a>
-                            </button>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div class="row">
-                                <div class="col-md-8 col-sm-4 col-xs-12">
-                                    <form class="form-horizontal" action="" method="get">
-                                        {% for field in filter.form %}
-                                            <div class="form-group">
-                                                <label class="col-md-3 control-label">
-                                                    {{ field.label }}
-                                                </label>
-                                                <div class="col-md-6">
-                                                    {{ field }}
-                                                </div>
-                                            </div>
-                                        {% endfor %}
+<div class="right_col" role="main">
+  <div class="">
 
-                                        <!-- Bouton aligné avec les champs -->
-                                        <div class="form-group">
-                                            <div class="col-md-offset-3 col-md-6">
-                                                <button type="submit" class="btn btn-info">
-                                                    Valider
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="col-md-4 col-sm-4 col-xs-12 pull-right">
-                                    <div class="info-box">
-                                        <span class="info-box-icon bg-green"><i class="fa fa-money"></i></span>
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">TOTAL SOLDES FOURNISSEURS:</span><br>
-                                            <span class="info-box-number">{{ total_solde|floatformat:0 }} FC</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <br>
-
-                            <div class="row">
-                            {% for fournisseur in f_ordinaires %}
-                                <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
-                                    <div class="well profile_view">
-                                        <div class="col-sm-12">
-                                            <h4 class="brief"><i>Fournisseur</i></h4>
-                                            <div class="left col-xs-7">
-                                                <h2>{{ fournisseur.nom }}</h2>
-                                                <p><strong>Tuteur: </strong> {{ fournisseur.tuteur }} </p>
-                                                <ul class="list-unstyled">
-                                                  <li><i class="fa fa-map-marker"></i> Addresse: {{ fournisseur.adresse }}</li>
-                                                  <li><i class="fa fa-phone"></i> Telephone #: {{ fournisseur.telephone }}</li>
-                                                  <li><i class="fa fa-envelope"></i> Email: {{ fournisseur.email }}</li>
-                                                </ul>
-                                            </div>
-                                            <div class="right col-xs-5 text-center">
-                                                <img src="{{ fournisseur.photo.url }}" alt="..." class="img-circle img-responsive uniform-img">
-                                            </div>
-                                        </div>
-                                        <div class="col-xs-12 bottom text-center">
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <h4 class="ratings"><i class="fa fa-plus"></i> {{ fournisseur.solde }}FC</h4>
-                                            </div>
-                                            <div class="col-xs-12 col-sm-6 emphasis">
-                                                <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
-                                                  <i class="fa fa-user"> </i> Voir le profil
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                            </div>
-                            <hr style="border-top: 3px double #8c8b8b; margin: 40px 0;">
-                            {% if f_systemes %}
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <h3>Fournisseurs Systèmes</h3>
-                                    </div>
-                                    {% for fournisseur in f_systemes %}
-                                        <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
-                                            <div class="well profile_view">
-                                                <div class="col-sm-12">
-                                                    <h4 class="brief"><i>Fournisseur</i></h4>
-                                                    <div class="left col-xs-7">
-                                                        <h2>{{ fournisseur.nom }}</h2>
-                                                    </div>
-                                                    <div class="right col-xs-5 text-center">
-                                                        <img src="{{ fournisseur.photo.url }}" alt="..." class="img-circle img-responsive uniform-img-sys">
-                                                    </div>
-                                                </div>
-                                                <div class="col-xs-12 bottom text-center">
-                                                    <div class="col-xs-12 col-sm-6 emphasis">
-                                                        <h4 class="ratings"><i class="fa fa-plus"></i> {{ fournisseur.solde }}FC</h4>
-                                                    </div>
-                                                    <div class="col-xs-12 col-sm-6 emphasis">
-                                                        <a  href="{% url 'fournisseur_details' fournisseur.pk %}" class="btn btn-primary btn-xs">
-                                                          <i class="fa fa-user"> </i> Voir les détails
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <!--<div class="content table-responsive display">
-                                <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'fournisseur_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            NOUVEAU FOURNISSEUR
-                                        </a>
-                                    </button>
-                                </div>
-                                <table id="Fournisseurs" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title"> Code</th>
-                                            <th class="column-title"> Photo</th>
-                                            <th class="column-title"> Nom</th>
-                                            <th class="column-title"> Tuteur</th>
-                                            <th class="column-title"> Email</th>
-                                            <th class="column-title"> Telephone </th>
-                                            <th class="column-title"> Adresse</th>
-                                            <th class="column-title"> Ville</th>
-                                            <th class="column-title"> Pays</th>
-                                            <th class="column-title"> RCCM</th>
-                                            <th class="column-title"> ID.NAT</th>
-                                            <th class="column-title"> IMPOT</th>
-                                            <th class="column-title"> TVA</th>
-                                            <th class="column-title"> Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for fournisseur in liste_fournisseurs %}
-										    <tr>
-                                                <td>{{ fournisseur.code }}</td>
-                                                <td class="img_container">
-                                                    <img src="{{ fournisseur.photo.url }}" alt="..." class="">
-                                                </td>
-                                                <td>{{ fournisseur.nom }}</td>
-                                                <td>{{ fournisseur.tuteur }}</td>
-                                                <td>{{ fournisseur.email }}</td>
-                                                <td>{{ fournisseur.telephone }}</td>
-                                                <td>{{ fournisseur.adresse }}</td>
-                                                <td>{{ fournisseur.ville }}</td>
-                                                <td>{{ fournisseur.pays }}</td>
-                                                <td>{{ fournisseur.rccm }}</td>
-                                                <td>{{ fournisseur.id_nat }}</td>
-                                                <td>{{ fournisseur.impot }}</td>
-                                                <td>{{ fournisseur.tva }}</td>
-                                                <td>
-                                                    <a href="{{ fournisseur.get_absolute_url }}" class="btn btn-warning btn-xs">
-                                                        <i class="fa fa-eye"></i>
-                                                        Details
-                                                    </a>
-                                                    <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="btn btn-info btn-xs">
-                                                        <i class="fa fa-edit"></i>
-                                                        Modifier
-                                                    </a>
-                                                    <a href="{% url 'fournisseur_delete' fournisseur.pk %}" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-trash-alt"></i>
-                                                        Supprimer
-                                                    </a>
-                                                </td>
-										    </tr>
-									    {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>-->
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Gradient Banner ────────────────────────────────────── -->
+    <div style="background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%); border-radius: 12px; padding: 24px 28px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div style="background: rgba(255,255,255,.15); border-radius: 12px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+          <i class="fa fa-truck" style="color: white; font-size: 24px;"></i>
         </div>
+        <div>
+          <h2 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Fournisseurs</h2>
+          <p style="color: rgba(255,255,255,.8); margin: 4px 0 0 0; font-size: 13px;">Gestion des fournisseurs</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: rgba(255,255,255,.15); color: rgba(255,255,255,.9); border-radius: 20px; padding: 4px 14px; font-size: 13px;">
+          {{ f_ordinaires|length }} ordinaire{{ f_ordinaires|length|pluralize }} · {{ f_systemes|length }} système{{ f_systemes|length|pluralize }}
+        </span>
+        <a href="{% url 'fournisseur_create' %}" style="background: rgba(255,255,255,.2); color: white; border: 1px solid rgba(255,255,255,.4); border-radius: 8px; padding: 7px 16px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fa fa-plus"></i> Nouveau Fournisseur
+        </a>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#fournisseurs').addClass('active');
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── Breadcrumb ──────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 4px 0 12px; margin: 0; border-radius: 0;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li class="active">Fournisseurs</li>
+    </ol>
+
+    <!-- ── KPI Row ─────────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #F39C12, #E67E22);">
+            <i class="fa fa-truck"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Fournisseurs ordinaires</div>
+            <div class="kpi-value">{{ f_ordinaires|length }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #7f8c8d, #636e72);">
+            <i class="fa fa-cog"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Fournisseurs système</div>
+            <div class="kpi-value">{{ f_systemes|length }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+            <i class="fa fa-money"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Total soldes</div>
+            <div class="kpi-value">{{ total_solde|floatformat:0 }} FC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Filter Bar ──────────────────────────────────────────── -->
+    <form method="get" action="">
+      <div class="filter-bar">
+        {% for field in filter.form %}
+          <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn-filter"><i class="fa fa-search"></i> Filtrer</button>
+        <a href="?" class="btn-reset"><i class="fa fa-times"></i> Réinitialiser</a>
+      </div>
+    </form>
+
+    <!-- ── Fournisseurs Ordinaires ─────────────────────────────── -->
+    <div class="row">
+      {% for fournisseur in f_ordinaires %}
+        <div class="col-md-4 col-sm-6 col-xs-12">
+          <div class="ec-card">
+            <div class="ec-card-top">
+              <div class="ec-avatar">
+                {% if fournisseur.photo %}
+                  <img src="{{ fournisseur.photo.url }}" alt="{{ fournisseur.nom }}">
+                {% else %}
+                  {{ fournisseur.nom|slice:":1"|upper }}
+                {% endif %}
+              </div>
+              <div class="ec-card-top-info">
+                <h4>{{ fournisseur.nom }}</h4>
+                <span class="ec-code-badge">#{{ fournisseur.code }}</span>
+              </div>
+            </div>
+            <div class="ec-card-body">
+              <ul class="ec-info-list">
+                {% if fournisseur.tuteur %}
+                  <li><i class="fa fa-user"></i>{{ fournisseur.tuteur }}</li>
+                {% endif %}
+                {% if fournisseur.telephone %}
+                  <li><i class="fa fa-phone"></i>{{ fournisseur.telephone }}</li>
+                {% endif %}
+                {% if fournisseur.email %}
+                  <li><i class="fa fa-envelope"></i>{{ fournisseur.email }}</li>
+                {% endif %}
+                {% if fournisseur.adresse %}
+                  <li><i class="fa fa-map-marker"></i>{{ fournisseur.adresse }}{% if fournisseur.ville %}, {{ fournisseur.ville }}{% endif %}</li>
+                {% endif %}
+              </ul>
+            </div>
+            <div class="ec-card-footer">
+              <div class="ec-solde {% if fournisseur.solde >= 0 %}positive{% else %}negative{% endif %}">
+                <i class="fa fa-money"></i>
+                {{ fournisseur.solde|floatformat:0 }} FC
+              </div>
+              <div class="ec-actions">
+                <a href="{% url 'fournisseur_details' fournisseur.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>
+                <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="ec-btn-edit"><i class="fa fa-pencil"></i></a>
+                <a href="{% url 'fournisseur_delete' fournisseur.pk %}" class="ec-btn-del"><i class="fa fa-trash"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-md-12">
+          <div style="text-align: center; padding: 40px 20px; color: #aaa;">
+            <i class="fa fa-truck" style="font-size: 36px; margin-bottom: 12px; display: block;"></i>
+            <p>Aucun fournisseur ordinaire trouvé.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Fournisseurs Système ────────────────────────────────── -->
+    {% if f_systemes %}
+      <div class="section-divider">
+        <div class="section-divider-line"></div>
+        <div class="section-divider-label"><i class="fa fa-cog"></i> Fournisseurs Système</div>
+        <div class="section-divider-line"></div>
+      </div>
+      <div class="row">
+        {% for fournisseur in f_systemes %}
+          <div class="col-md-4 col-sm-6 col-xs-12">
+            <div class="ec-card">
+              <div class="ec-card-top sys">
+                <div class="ec-avatar sm">
+                  {% if fournisseur.photo %}
+                    <img src="{{ fournisseur.photo.url }}" alt="{{ fournisseur.nom }}">
+                  {% else %}
+                    {{ fournisseur.nom|slice:":1"|upper }}
+                  {% endif %}
+                </div>
+                <div class="ec-card-top-info">
+                  <h4 class="sm">{{ fournisseur.nom }}</h4>
+                  <span class="ec-sys-badge"><i class="fa fa-cog"></i> Système</span>
+                </div>
+              </div>
+              <div class="ec-card-footer">
+                <div class="ec-solde {% if fournisseur.solde >= 0 %}positive{% else %}negative{% endif %}">
+                  <i class="fa fa-money"></i>
+                  {{ fournisseur.solde|floatformat:0 }} FC
+                </div>
+                <div class="ec-actions">
+                  <a href="{% url 'fournisseur_details' fournisseur.pk %}" class="ec-btn-view sys"><i class="fa fa-eye"></i> Voir</a>
+                  <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="ec-btn-edit"><i class="fa fa-pencil"></i></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+<script>
+  $(document).ready(function() { $('#fournisseurs').addClass('active'); });
+</script>
+{% endblock %}

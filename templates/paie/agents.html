@@ -1,196 +1,227 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Agents {% endblock title %}
+{% block title %}Agents{% endblock %}
+
 {% block stylesheets %}
-{{block.super}}
+{{ block.super }}
 <style>
+  .ec-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    overflow: hidden; margin-bottom: 20px;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .ec-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.14); transform: translateY(-2px); }
+  .ec-card-top {
+    background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+    padding: 20px 16px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .ec-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: #fff;
+    flex-shrink: 0; overflow: hidden;
+    border: 2px solid rgba(255,255,255,.5);
+  }
+  .ec-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .ec-card-top-info { flex: 1; }
+  .ec-card-top-info h4 { color: #fff; margin: 0 0 2px 0; font-size: 15px; font-weight: 700; }
+  .ec-matricule-badge {
+    display: inline-block; background: rgba(255,255,255,.2);
+    color: rgba(255,255,255,.9); border-radius: 20px; padding: 1px 10px; font-size: 11px;
+  }
+  .ec-card-body { padding: 14px 16px 10px; }
+  .ec-info-list { list-style: none; padding: 0; margin: 0; }
+  .ec-info-list li {
+    font-size: 12px; color: #666; padding: 3px 0;
+    display: flex; align-items: flex-start; gap: 7px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .ec-info-list li:last-child { border-bottom: none; }
+  .ec-info-list li i { color: #9B59B6; width: 14px; margin-top: 1px; flex-shrink: 0; }
+  .ec-card-footer {
+    padding: 10px 16px; background: #f8f9fa; border-top: 1px solid #eee;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ec-salaire {
+    font-size: 14px; font-weight: 700; color: #8E44AD;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ec-actions { display: flex; gap: 6px; }
+  .ec-actions a {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+    transition: opacity .2s;
+  }
+  .ec-actions a:hover { opacity: .85; }
+  .ec-btn-view { background: #9B59B6; color: #fff; }
+  .ec-btn-edit { background: #f0f0f0; color: #555; }
+  .ec-btn-del  { background: #fee; color: #e74c3c; }
 
+  .kpi-tile {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    padding: 16px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .kpi-icon {
+    width: 46px; height: 46px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; flex-shrink: 0;
+  }
+  .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
 
-    .info-box {
-        display: flex;
-        background: #f7f7f7;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #e0e0e0;
-    }
-
-    .info-box-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 28px;
-        border-radius: 8px;
-    }
-
-    .info-box-content {
-        margin-left: 10px;
-    }
-
-    .info-box-number {
-        font-size: 22px;
-        font-weight: bold;
-    }
-
-    .uniform-img {
-        width: 150px;      /* largeur fixe */
-        height: 150px;     /* hauteur fixe */
-        object-fit: cover; /* pour que l'image remplisse le cadre sans déformer */
-    }
+  .filter-bar {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    padding: 14px 20px; margin-bottom: 20px;
+    display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px;
+  }
+  .filter-bar .form-group { margin: 0; }
+  .filter-bar label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 4px; }
+  .filter-bar input, .filter-bar select {
+    border: 1px solid #ddd; border-radius: 6px;
+    padding: 6px 10px; font-size: 13px; height: 34px;
+  }
+  .filter-bar .btn-filter {
+    background: #9B59B6; color: #fff; border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 13px; height: 34px; cursor: pointer;
+  }
+  .filter-bar .btn-filter:hover { background: #8E44AD; }
+  .filter-bar .btn-reset {
+    background: #f0f0f0; color: #555; border: none; border-radius: 6px;
+    padding: 6px 12px; font-size: 13px; height: 34px; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+  }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Agents</h5>
-                </div>
-            </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Liste des agents<small></small></h2>
-                            <div class="row">
-                                <button type="button" class="btn btn-link pull-right creer">
-                                    <a href="{% url 'agent_create' %}">
-                                        <i class="fa fa-plus"></i>
-                                        NOUVEL AGENT
-                                    </a>
-                                </button>
-                            </div>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div class="row">
-                                <div class="col-md-12 col-sm-4 col-xs-12">
-                                    <form class="form-horizontal" action="" method="get">
-                                        {% for field in filter.form %}
-                                            <div class="form-group">
-                                                <label class="col-md-2 control-label">
-                                                    {{ field.label }}
-                                                </label>
-                                                <div class="col-md-4">
-                                                    {{ field }}
-                                                </div>
-                                            </div>
-                                        {% endfor %}
+<div class="right_col" role="main">
+  <div class="">
 
-                                        <!-- Bouton aligné avec les champs -->
-                                        <div class="form-group">
-                                            <div class="col-md-offset-3 col-md-6">
-                                                <button type="submit" class="btn btn-info">
-                                                    Valider
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                            <br>
-                            <div class="row">
-                                {% for agent in liste_agents %}
-                                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details">
-                                        <div class="well profile_view">
-                                            <div class="col-sm-12">
-                                                <h4 class="brief"><i>Agent</i></h4>
-                                                <div class="left col-xs-7">
-                                                    <h2>{{ agent.nom }}</h2>
-                                                    <p>{{ agent.matricule }} </p>
-                                                    <ul class="list-unstyled">
-                                                      <li><i class="fa fa-birthday-cake"></i> Date de naissance: 01/08/1992</li>
-                                                      <li><i class="fa fa-calendar"></i> Date d'engagement: 12/01/2022</li>
-                                                      <li><i class="fa fa-map-marker"></i> Addresse: {{ agent.adresse }}</li>
-                                                      <li><i class="fa fa-phone"></i> Telephone #: {{ agent.telephone }}</li>
-                                                      <li><i class="fa fa-envelope"></i> Email: {{ agent.email }}</li>
-                                                    </ul>
-                                                </div>
-                                                <div class="right col-xs-5 text-center">
-                                                    <img src="{{ agent.photo.url }}" alt="..." class="img-circle img-responsive uniform-img">
-                                                </div>
-                                            </div>
-                                            <div class="col-xs-12 bottom text-center">
-                                                <div class="col-xs-12 col-sm-6 emphasis">
-                                                    <h4 class="ratings"><i class="fa fa-money"></i>Salaire: {{ agent.salaire }} FC</h4>
-                                                </div>
-                                                <div class="col-xs-12 col-sm-6 emphasis">
-                                                    <a  href="{% url 'agent_details' agent.pk %}" class="btn btn-primary btn-xs">
-                                                      <i class="fa fa-user"> </i> Voir le profil
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <!--<div class="content table-responsive display">
-                                <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'agent_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            NOUVEL AGENT
-                                        </a>
-                                    </button>
-                                </div>
-                                <table id="tableAgents" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title"> Matricule</th>
-                                            <th class="column-title"> Photo</th>
-                                            <th class="column-title"> Nom</th>
-                                            <th class="column-title"> Email</th>
-                                            <th class="column-title"> Telephone </th>
-                                            <th class="column-title"> Adresse</th>
-                                            <th class="column-title"> Ville</th>
-                                            <th class="column-title"> Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for agent in liste_agents %}
-										    <tr>
-                                                <td>{{ agent.matricule }}</td>
-                                                <td class="img_container">
-                                                    <img src="{{ agent.photo.url }}" alt="..." class="">
-                                                </td>
-                                                <td>{{ agent.nom }}</td>
-                                                <td>{{ agent.email }}</td>
-                                                <td>{{ agent.telephone }}</td>
-                                                <td>{{ agent.adresse }}</td>
-                                                <td>{{ agent.ville }}</td>
-                                                <td>
-                                                    <a href="{{ agent.get_absolute_url }}" class="btn btn-warning btn-xs">
-                                                        <i class="fa fa-eye"></i>
-                                                        Details
-                                                    </a>
-                                                    <a href="{% url 'agent_update' agent.pk %}" class="btn btn-info btn-xs">
-                                                        <i class="fa fa-edit"></i>
-                                                        Modifier
-                                                    </a>
-                                                    <a href="{% url 'agent_delete' agent.pk %}" class="btn btn-danger btn-xs">
-                                                        <i class="fa fa-trash-alt"></i>
-                                                        Supprimer
-                                                    </a>
-                                                </td>
-										    </tr>
-									    {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>-->
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Gradient Banner ────────────────────────────────────── -->
+    <div style="background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); border-radius: 12px; padding: 24px 28px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div style="background: rgba(255,255,255,.15); border-radius: 12px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+          <i class="fa fa-id-badge" style="color: white; font-size: 24px;"></i>
         </div>
+        <div>
+          <h2 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Agents</h2>
+          <p style="color: rgba(255,255,255,.8); margin: 4px 0 0 0; font-size: 13px;">Gestion du personnel et de la paie</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: rgba(255,255,255,.15); color: rgba(255,255,255,.9); border-radius: 20px; padding: 4px 14px; font-size: 13px;">
+          {{ liste_agents|length }} agent{{ liste_agents|length|pluralize }}
+        </span>
+        <a href="{% url 'agent_create' %}" style="background: rgba(255,255,255,.2); color: white; border: 1px solid rgba(255,255,255,.4); border-radius: 8px; padding: 7px 16px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fa fa-plus"></i> Nouvel Agent
+        </a>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#agents').addClass('active');
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── Breadcrumb ──────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 4px 0 12px; margin: 0; border-radius: 0;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li class="active">Agents</li>
+    </ol>
+
+    <!-- ── KPI Row ─────────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-12 col-sm-12">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #9B59B6, #8E44AD);">
+            <i class="fa fa-id-badge"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Effectif total</div>
+            <div class="kpi-value">{{ liste_agents|length }} agent{{ liste_agents|length|pluralize }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Filter Bar ──────────────────────────────────────────── -->
+    <form method="get" action="">
+      <div class="filter-bar">
+        {% for field in filter.form %}
+          <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn-filter"><i class="fa fa-search"></i> Filtrer</button>
+        <a href="?" class="btn-reset"><i class="fa fa-times"></i> Réinitialiser</a>
+      </div>
+    </form>
+
+    <!-- ── Cards Grid ─────────────────────────────────────────── -->
+    <div class="row">
+      {% for agent in liste_agents %}
+        <div class="col-md-4 col-sm-6 col-xs-12">
+          <div class="ec-card">
+            <div class="ec-card-top">
+              <div class="ec-avatar">
+                {% if agent.photo %}
+                  <img src="{{ agent.photo.url }}" alt="{{ agent.nom }}">
+                {% else %}
+                  {{ agent.nom|slice:":1"|upper }}
+                {% endif %}
+              </div>
+              <div class="ec-card-top-info">
+                <h4>{{ agent.nom }}</h4>
+                <span class="ec-matricule-badge">{{ agent.matricule }}</span>
+              </div>
+            </div>
+            <div class="ec-card-body">
+              <ul class="ec-info-list">
+                {% if agent.date_engagement %}
+                  <li><i class="fa fa-calendar"></i>Engagé le {{ agent.date_engagement|date:"d/m/Y" }}</li>
+                {% endif %}
+                {% if agent.telephone %}
+                  <li><i class="fa fa-phone"></i>{{ agent.telephone }}</li>
+                {% endif %}
+                {% if agent.email %}
+                  <li><i class="fa fa-envelope"></i>{{ agent.email }}</li>
+                {% endif %}
+                {% if agent.adresse %}
+                  <li><i class="fa fa-map-marker"></i>{{ agent.adresse }}{% if agent.ville %}, {{ agent.ville }}{% endif %}</li>
+                {% endif %}
+              </ul>
+            </div>
+            <div class="ec-card-footer">
+              <div class="ec-salaire">
+                <i class="fa fa-money"></i>
+                {{ agent.salaire|floatformat:0 }} FC/mois
+              </div>
+              <div class="ec-actions">
+                <a href="{% url 'agent_details' agent.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>
+                <a href="{% url 'agent_update' agent.pk %}" class="ec-btn-edit"><i class="fa fa-pencil"></i></a>
+                <a href="{% url 'agent_delete' agent.pk %}" class="ec-btn-del"><i class="fa fa-trash"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-md-12">
+          <div style="text-align: center; padding: 60px 20px; color: #aaa;">
+            <i class="fa fa-id-badge" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+            <p style="font-size: 16px;">Aucun agent trouvé.</p>
+            <a href="{% url 'agent_create' %}" class="btn btn-sm" style="background: #9B59B6; color: white; border-radius: 6px;">
+              <i class="fa fa-plus"></i> Ajouter un agent
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+<script>
+  $(document).ready(function() { $('#agents').addClass('active'); });
+</script>
+{% endblock %}

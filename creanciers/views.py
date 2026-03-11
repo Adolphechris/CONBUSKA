@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -8,7 +8,8 @@ from .forms import CreancierCreateForm, DebiteurCreateForm
 from .filters import CreancierFilter, DebiteurFilter
 
 
-class CreanciersView(LoginRequiredMixin, FilterView):
+class CreanciersView(RoleRequiredMixin, FilterView):
+    allowed_roles = [ROLE_ADMIN]
     model = Creancier
     context_object_name = 'liste_creanciers'
     template_name = 'creanciers/creanciers.html'
@@ -24,25 +25,29 @@ class CreanciersView(LoginRequiredMixin, FilterView):
         return context
 
 
-class CreancierDetailsView(LoginRequiredMixin, DetailView):
+class CreancierDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Creancier
     context_object_name = 'creancier'
     template_name = 'creanciers/creancier_details.html'
 
 
-class CreancierCreateView(LoginRequiredMixin, CreateView):
+class CreancierCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Creancier
     template_name = 'creanciers/creancier_create_form.html'
     form_class = CreancierCreateForm
 
 
-class CreancierUpdateView(LoginRequiredMixin, UpdateView):
+class CreancierUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Creancier
     template_name = 'creanciers/creancier_create_form.html'
     form_class = CreancierCreateForm
 
 
-class CreancierDeleteView(LoginRequiredMixin, DeleteView):
+class CreancierDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Creancier
     template_name = 'creanciers/creancier_confirm_delete.html'
     success_url = reverse_lazy('clients')
@@ -56,7 +61,8 @@ class CreancierDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class DebiteursView(LoginRequiredMixin, FilterView):
+class DebiteursView(RoleRequiredMixin, FilterView):
+    allowed_roles = [ROLE_ADMIN]
     model = Debiteur
     context_object_name = 'liste_debiteurs'
     template_name = 'creanciers/debiteurs.html'
@@ -72,25 +78,29 @@ class DebiteursView(LoginRequiredMixin, FilterView):
         return context
 
 
-class DebiteurDetailsView(LoginRequiredMixin, DetailView):
+class DebiteurDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Debiteur
     context_object_name = 'debiteur'
     template_name = 'creanciers/debiteur_details.html'
 
 
-class DebiteurCreateView(LoginRequiredMixin, CreateView):
+class DebiteurCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Debiteur
     template_name = 'creanciers/debiteur_create_form.html'
     form_class = DebiteurCreateForm
 
 
-class DebiteurUpdateView(LoginRequiredMixin, UpdateView):
+class DebiteurUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Debiteur
     template_name = 'creanciers/debiteur_create_form.html'
     form_class = DebiteurCreateForm
 
 
-class DebiteurDeleteView(LoginRequiredMixin, DeleteView):
+class DebiteurDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Debiteur
     template_name = 'creanciers/debiteur_confirm_delete.html'
     success_url = reverse_lazy('debiteurs')

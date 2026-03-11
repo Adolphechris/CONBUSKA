@@ -1,198 +1,213 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Débiteur {% endblock title %}
+{% block title %}Débiteur — {{ debiteur.nom }}{% endblock %}
+
 {% block stylesheets %}
-{{block.super}}
+{{ block.super }}
 <style>
-    .total-row {
-      background-color: #f9fafb;
-    }
+  .det-banner {
+    background: linear-gradient(135deg, #26B99A 0%, #1ABC9C 100%);
+    border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .det-banner-left { display: flex; align-items: center; gap: 20px; }
+  .det-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,.25); border: 3px solid rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: #fff;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .det-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .det-banner-info h2 { color: #fff; margin: 0 0 4px 0; font-size: 22px; font-weight: 700; }
+  .det-banner-info .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .det-badge { background: rgba(255,255,255,.18); color: rgba(255,255,255,.9); border-radius: 20px; padding: 2px 12px; font-size: 12px; }
+  .det-meta-item { color: rgba(255,255,255,.8); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .det-banner-actions { display: flex; gap: 10px; align-items: center; }
+  .det-btn { background: rgba(255,255,255,.2); color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 8px; padding: 8px 18px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background .2s; }
+  .det-btn:hover { background: rgba(255,255,255,.35); color: #fff; text-decoration: none; }
+  .det-btn.back { background: rgba(0,0,0,.12); border-color: rgba(255,255,255,.2); }
 
-    .total-row td {
-      border-top: 2px solid #e5e7eb;
-      font-size: 14px;
-    }
+  .kpi-tile { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.07); padding: 16px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .kpi-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0; }
+  .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
+  .kpi-value.negative { color: #e74c3c; }
+  .kpi-value.positive { color: #27ae60; }
 
-    .supplier-details h4 {
-        font-size: 20px;
-        font-weight: 600;
-        color: #2A3F54;
-        margin-bottom: 15px;
-        margin-top: 0;
-    }
-
-    .supplier-details .info-item {
-        margin-bottom: 10px;
-        color: #73879C;
-        font-size: 14px;
-    }
-
-    .supplier-details .info-item i {
-        width: 20px;
-        color: #1ABB9C;
-    }
-
-    .balance-box {
-        background: linear-gradient(135deg, #1ABB9C 0%, #159A80 100%);
-        color: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        margin: 20px 0;
-        text-align: center;
-    }
-
-    .balance-box h3 {
-        margin: 0 0 5px 0;
-        font-size: 16px;
-        font-weight: 400;
-        opacity: 0.9;
-    }
-
-    .balance-box .amount {
-        font-size: 32px;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .balance-box.negative {
-        background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
-    }
+  .det-panel { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 20px; }
+  .det-panel-header { padding: 14px 18px; background: linear-gradient(135deg, #26B99A 0%, #1ABC9C 100%); display: flex; align-items: center; gap: 10px; color: #fff; font-size: 14px; font-weight: 600; }
+  .det-panel-body table { margin: 0; }
+  .det-panel-body table thead th { background: #f8f9fa; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 2px solid #eee; padding: 10px 12px; }
+  .det-panel-body table tbody td { padding: 9px 12px; font-size: 13px; vertical-align: middle; }
+  .det-panel-body table tbody tr:hover { background: #fafbfc; }
+  .det-panel-footer { padding: 10px 18px; background: #f8f9fa; border-top: 2px solid #eee; display: flex; justify-content: flex-end; font-size: 13px; font-weight: 700; color: #2c3e50; }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5><a href="{% url 'debiteurs' %}">Débiteurs</a> / Détails débiteur </h5>
-                </div>
-            </div>
-            <div class="clearfix"></div>
-            <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
-                     <div class="x_panel">
-                         <div class="x_content">
-                             <div class="row supplier-details">
-                                 <div class="profile_img text-center">
-                                    <div id="crop-avatar">
-                                        <!-- Current avatar -->
-                                        <img class="img-circle" src="{{ debiteur.photo.url }}"
-                                             alt="Avatar" title="Change the avatar" width="240">
-                                    </div>
-                                 </div>
-                                 <h4><strong>{{ debiteur.nom }} / {{ debiteur.code }}</strong></h4>
-                                 <hr>
-                                 <ul class="list-unstyled user_data">
-                                    <li class="info-item"><i class="fa fa-map-marker"></i> Addresse: {{ debiteur.adresse }}</li>
-                                    <li class="info-item"><i class="fa fa-phone"></i> Telephone: {{ debiteur.telephone }}</li>
-                                    <li class="info-item"><i class="fa fa-envelope"></i> Email: {{ debiteur.email }}</li>
-                                 </ul>
-                                 <hr>
-                                 <!-- Balance Box -->
-                                 <div class="balance-box">
-                                    <h3>Solde Débiteur</h3>
-                                    <p class="amount">{{ debiteur.solde|floatformat:'2' }} FC</p>
-                                 </div>
+<div class="right_col" role="main">
+  <div class="">
 
-                                 <!-- Edit Button -->
-                                 <a href="{% url 'debiteur_update' debiteur.pk %}" class="btn btn-primary btn-block btn-lg">
-                                     <i class="fa fa-edit"></i>
-                                     Modifier
-                                 </a>
-                             </div>
-                         </div>
-                     </div>
-                </div>
-
-                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
-                    <div class="row">
-                        <div class="col-md-6 col-sm-12">
-                            <div class="x_panel">
-                                <div class="table-header">
-                                    <i class="fa fa-file-text-o"></i> Flux des prêts
-                                </div>
-                                <div class="x_content" style="padding: 0;">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>N°</th>
-                                                    <th>Date</th>
-                                                    <th>Montant prêté</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in debiteur.prets %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.mouvement_caisse.date_mouvement }}</td>
-                                                        <td>{{ i.mouvement_caisse.montant }}FC</td>
-
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total_row">
-                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ debiteur.total_prets|floatformat }}FC</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-sm-12">
-                            <div class="x_panel">
-                                <div class="table-header">
-                                    <i class="fa fa-money"></i> Flux des remboursements
-                                </div>
-                                <div class="x_content" style="padding: 0;">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>N°</th>
-                                                    <th>Date</th>
-                                                    <th>Montant Payé</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for i in debiteur.paiements %}
-                                                    <tr>
-                                                        <td>{{ forloop.counter }}</td>
-                                                        <td>{{ i.mouvement_caisse.date_mouvement }}</td>
-                                                        <td>{{ i.mouvement_caisse.montant }}FC</td>
-
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="total_row">
-                                                    <td colspan="2" class="text-right"><strong>Total:</strong></td>
-                                                    <td><strong>{{ debiteur.total_paiements|floatformat }}FC</strong></td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Gradient Banner ───────────────────────────────────── -->
+    <div class="det-banner">
+      <div class="det-banner-left">
+        <div class="det-avatar">
+          {% if debiteur.photo %}
+            <img src="{{ debiteur.photo.url }}" alt="{{ debiteur.nom }}">
+          {% else %}
+            {{ debiteur.nom|slice:":1"|upper }}
+          {% endif %}
         </div>
+        <div class="det-banner-info">
+          <h2>{{ debiteur.nom }}</h2>
+          <div class="meta">
+            <span class="det-badge">#{{ debiteur.code }}</span>
+            {% if debiteur.telephone %}<span class="det-meta-item"><i class="fa fa-phone"></i>{{ debiteur.telephone }}</span>{% endif %}
+            {% if debiteur.email %}<span class="det-meta-item"><i class="fa fa-envelope"></i>{{ debiteur.email }}</span>{% endif %}
+            {% if debiteur.adresse %}<span class="det-meta-item"><i class="fa fa-map-marker"></i>{{ debiteur.adresse }}{% if debiteur.ville %}, {{ debiteur.ville }}{% endif %}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="det-banner-actions">
+        <a href="{% url 'debiteurs' %}" class="det-btn back"><i class="fa fa-arrow-left"></i> Retour</a>
+        <a href="{% url 'debiteur_update' debiteur.pk %}" class="det-btn"><i class="fa fa-pencil"></i> Modifier</a>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#debiteurs').addClass('current-page');
-            $('#cr_db').addClass('active');
-            let parent = document.getElementById('cr_db');
-            parent.childNodes[2].style.display = 'block';
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── Breadcrumb ─────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 4px 0 12px; margin: 0;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li><a href="{% url 'debiteurs' %}">Débiteurs</a></li>
+      <li class="active">{{ debiteur.nom }}</li>
+    </ol>
+
+    <!-- ── KPI Row ────────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #26B99A, #1ABC9C);">
+            <i class="fa fa-arrow-down"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Total prêts accordés</div>
+            <div class="kpi-value">{{ debiteur.total_prets|floatformat:0 }} FC</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #27ae60, #219a52);">
+            <i class="fa fa-reply"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Total remboursé</div>
+            <div class="kpi-value">{{ debiteur.total_paiements|floatformat:0 }} FC</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-4">
+        <div class="kpi-tile">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, {% if debiteur.solde < 0 %}#e74c3c, #c0392b{% else %}#26B99A, #1ABC9C{% endif %});">
+            <i class="fa fa-balance-scale"></i>
+          </div>
+          <div>
+            <div class="kpi-label">Créance restante</div>
+            <div class="kpi-value {% if debiteur.solde < 0 %}negative{% else %}positive{% endif %}">
+              {{ debiteur.solde|floatformat:0 }} FC
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tables ─────────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-6 col-sm-12">
+        <div class="det-panel">
+          <div class="det-panel-header">
+            <i class="fa fa-arrow-down"></i> Flux des prêts accordés
+          </div>
+          <div class="det-panel-body">
+            <div class="table-responsive">
+              <table id="tablePrets" class="table table-hover" style="margin:0;">
+                <thead>
+                  <tr><th>N°</th><th>Date</th><th class="text-right">Montant prêté</th></tr>
+                </thead>
+                <tbody>
+                  {% for i in debiteur.prets %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
+                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun prêt enregistré.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="det-panel-footer">
+            <span>Total : <strong>{{ debiteur.total_prets|floatformat:0 }} FC</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-sm-12">
+        <div class="det-panel">
+          <div class="det-panel-header">
+            <i class="fa fa-reply"></i> Flux des remboursements
+          </div>
+          <div class="det-panel-body">
+            <div class="table-responsive">
+              <table id="tableRembours" class="table table-hover" style="margin:0;">
+                <thead>
+                  <tr><th>N°</th><th>Date</th><th class="text-right">Montant remboursé</th></tr>
+                </thead>
+                <tbody>
+                  {% for i in debiteur.paiements %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
+                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun remboursement enregistré.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="det-panel-footer">
+            <span>Total : <strong>{{ debiteur.total_paiements|floatformat:0 }} FC</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  var dtFR = {
+    search: "Rechercher :",
+    searchPlaceholder: "Rechercher...",
+    lengthMenu: "Afficher _MENU_ lignes",
+    info: "_START_–_END_ sur _TOTAL_",
+    infoEmpty: "0 résultat",
+    zeroRecords: "Aucun résultat",
+    emptyTable: "Aucune donnée",
+    paginate: { first:"«", last:"»", next:"›", previous:"‹" }
+  };
+  $(document).ready(function() {
+    $('#debiteurs').addClass('current-page');
+    $('#cr_db').addClass('active');
+    let parent = document.getElementById('cr_db');
+    if (parent) parent.childNodes[2].style.display = 'block';
+    $('#tablePrets').DataTable({ language: dtFR, order: [[1,'desc']], dom: 'rft<"bottom"p>' });
+    $('#tableRembours').DataTable({ language: dtFR, order: [[1,'desc']], dom: 'rft<"bottom"p>' });
+  });
+</script>
+{% endblock %}
