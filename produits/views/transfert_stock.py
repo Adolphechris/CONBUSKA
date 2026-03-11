@@ -1,26 +1,30 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN, user_has_role
 from django.views.generic import ListView, DetailView, FormView, View, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.utils.functional import cached_property
 from django.db import transaction
 from django.db.models import Prefetch
+from django.core.exceptions import PermissionDenied
 from produits.models import TransfertStock, DetailsTransfertStock, ReservationTransfertLot
 from produits.forms import TransfertCreateForm, ArticleTransfertAddForm, ArticleTransfertUpdateForm
 from produits.services import TransfertService
 
 
-class HistoriqueTransfertStockView(LoginRequiredMixin, ListView):
+class HistoriqueTransfertStockView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = TransfertStock
     context_object_name = 'historique_transfert_stock'
     template_name = 'produits/transfert/transferts.html'
 
 
-class TransfertCreateView(LoginRequiredMixin, CreateView):
+class TransfertCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = TransfertStock
     template_name = 'produits/transfert/transfert_form.html'
     form_class = TransfertCreateForm
@@ -39,7 +43,8 @@ class TransfertCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class TransfertDetailView(LoginRequiredMixin, DetailView):
+class TransfertDetailView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = TransfertStock
     context_object_name = "transfert"
     template_name = "produits/transfert/transfert_details.html"
@@ -70,8 +75,11 @@ class TransfertDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
+@login_required
 @require_GET
 def get_form_update_transfert(request, pk):
+    if not user_has_role(request.user, ROLE_ADMIN):
+        raise PermissionDenied
     instance = get_object_or_404(DetailsTransfertStock, pk=pk)
     form = ArticleTransfertUpdateForm(instance=instance)
     return render(request, "produits/transfert/partials/_update_form.html",
@@ -82,8 +90,9 @@ def is_htmx(request):
     return request.headers.get("HX-Request", "").lower() == "true"
 
 
-class TransfertLineCreateView(LoginRequiredMixin, View):
+class TransfertLineCreateView(RoleRequiredMixin, View):
 
+    allowed_roles = [ROLE_ADMIN]
     def post(self, request, pk):
         if not is_htmx(request):
             return JsonResponse({"error": "HTMX required"}, status=400)
@@ -130,8 +139,9 @@ class TransfertLineCreateView(LoginRequiredMixin, View):
         return HttpResponse(html)
 
 
-class TransfertLineUpdateView(LoginRequiredMixin, View):
+class TransfertLineUpdateView(RoleRequiredMixin, View):
 
+    allowed_roles = [ROLE_ADMIN]
     def post(self, request, pk):
         if not request.headers.get("HX-Request"):
             return JsonResponse({"error": "HTMX required"}, status=400)
@@ -190,7 +200,8 @@ class TransfertLineUpdateView(LoginRequiredMixin, View):
         return HttpResponse(html)
 
 
-class TransfertLineDeleteView(LoginRequiredMixin, DeleteView):
+class TransfertLineDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = DetailsTransfertStock
     template_name = 'produits/transfert/transfert_confirm_delete.html'
 
@@ -227,7 +238,8 @@ class TransfertLineDeleteView(LoginRequiredMixin, DeleteView):
         return redirect(self.get_success_url())
 
 
-class TransfertSaveView(LoginRequiredMixin, TemplateView):
+class TransfertSaveView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN]
     model = TransfertStock
     template_name = 'produits/transfert/transfert_confirm_save.html'
     success_url = reverse_lazy('transferts_stock')

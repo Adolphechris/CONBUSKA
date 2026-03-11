@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -6,31 +6,36 @@ from produits.models import Unite
 from produits.forms import UniteCreateForm
 
 
-class UniteView(LoginRequiredMixin, ListView):
+class UniteView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
     model = Unite
     context_object_name = 'liste_unites'
     template_name = 'produits/unite/unites.html'
 
 
-class UniteDetailsView(LoginRequiredMixin, DetailView):
+class UniteDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN]
     model = Unite
     context_object_name = 'unite'
     template_name = 'produits/unite/unite_details.html'
 
 
-class UniteCreateView(LoginRequiredMixin, CreateView):
+class UniteCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Unite
     template_name = 'produits/unite/unite_create_form.html'
     form_class = UniteCreateForm
 
 
-class UniteUpdateView(LoginRequiredMixin, UpdateView):
+class UniteUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Unite
     template_name = 'produits/unite/unite_create_form.html'
     form_class = UniteCreateForm
 
 
-class UniteDeleteView(LoginRequiredMixin, DeleteView):
+class UniteDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Unite
     template_name = 'produits/unite/unite_confirm_delete.html'
     success_url = reverse_lazy('unites')

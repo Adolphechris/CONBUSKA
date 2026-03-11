@@ -4,7 +4,6 @@ from django.db.models.aggregates import Sum, Coalesce
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from parametres.models import Magasin
-from common.utils import is_duplicate
 from django.templatetags.static import static
 from django.db import transaction
 import datetime
@@ -102,23 +101,29 @@ class Article(models.Model):
             .aggregate(total=Sum("qte"))["total"] or 0
         )
 
+    def _get_taux(self):
+        from parametres.models import get_taux_usd_cdf
+        return get_taux_usd_cdf()
+
     @property
     def prix_vente_devise(self):
+        taux = self._get_taux()
         if self.devise == '$':
-            prix_vente_fc = self.prix_vente * 2800
+            prix_vente_fc = self.prix_vente * taux
             prix_vente_usd = self.prix_vente
         else:
-            prix_vente_usd = round(self.prix_vente / 2800, 2)
+            prix_vente_usd = round(self.prix_vente / taux, 2)
             prix_vente_fc = self.prix_vente
         return prix_vente_fc, prix_vente_usd
 
     @property
     def prix_vente_gros_devise(self):
+        taux = self._get_taux()
         if self.devise == '$':
-            prix_vente_gros_fc = self.prix_vente_gros * 2800
+            prix_vente_gros_fc = self.prix_vente_gros * taux
             prix_vente_gros_usd = self.prix_vente_gros
         else:
-            prix_vente_gros_usd = round(self.prix_vente_gros / 2800, 2)
+            prix_vente_gros_usd = round(self.prix_vente_gros / taux, 2)
             prix_vente_gros_fc = self.prix_vente_gros
         return prix_vente_gros_fc, prix_vente_gros_usd
 
@@ -191,6 +196,9 @@ class MouvementStock(models.Model):
 
     source_type = models.CharField(max_length=50)
     source_id = models.PositiveIntegerField()
+
+    annule_mouvement = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
+                                         related_name='compensatoires')
 
     date_creation = models.DateTimeField(auto_now_add=True)
     objects = models.Manager()

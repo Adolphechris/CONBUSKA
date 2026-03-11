@@ -1239,28 +1239,18 @@ footer {
                                         <ul class="nav navbar-right panel_toolbox">
                                             <li>
                                                 <div class="btn-group" style="margin-right: 10px;">
-                                                    <button type="button" class="btn btn-sm btn-default">Tous</button>
-                                                    <button type="button" class="btn btn-sm btn-success">Entrées</button>
-                                                    <button type="button" class="btn btn-sm btn-danger">Sorties</button>
+                                                    <button type="button" class="btn btn-sm btn-default active" id="btnFiltreAll">Tous</button>
+                                                    <button type="button" class="btn btn-sm btn-success" id="btnFiltreEntrees">Entrées</button>
+                                                    <button type="button" class="btn btn-sm btn-danger" id="btnFiltreSorties">Sorties</button>
                                                 </div>
                                             </li>
                                             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
-                                            <li class="dropdown">
-                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                                    <i class="fa fa-wrench"></i>
-                                                </a>
-                                                <ul class="dropdown-menu" role="menu">
-                                                    <li><a href="#"><i class="fa fa-download"></i> Exporter</a></li>
-                                                    <li><a href="#"><i class="fa fa-print"></i> Imprimer</a></li>
-                                                    <li><a href="#"><i class="fa fa-filter"></i> Filtrer</a></li>
-                                                </ul>
-                                            </li>
                                         </ul>
                                         <div class="clearfix"></div>
                                     </div>
                                     <div class="x_content">
                                         <div class="table-responsive">
-                                            <table class="table table-striped table-bordered jambo_table">
+                                            <table id="tableMovements" class="table table-striped table-bordered jambo_table">
                                                 <thead>
                                                     <tr class="headings">
                                                         <th class="column-title"><i class="fa fa-calendar"></i> Date</th>
@@ -1277,7 +1267,7 @@ footer {
                                                     {% for item in mouvements %}
                                                         <tr>
                                                             <td>{{ item.date|date:"d/m/Y" }}</td>
-                                                            <td>
+                                                            <td data-type="{{ item.type }}">
                                                                 {% if item.type == 'SORTIE' %}
                                                                     <span class="label label-danger"><i class="fa fa-arrow-down"></i> Sortie</span>
                                                                 {% else %}
@@ -1298,25 +1288,6 @@ footer {
                                             </table>
                                         </div>
 
-                                        <!-- Pagination -->
-                                        <div class="row">
-                                            <div class="col-sm-5">
-                                                <div class="dataTables_info">Affichage de 1 à 6 sur 156 entrées</div>
-                                            </div>
-                                            <div class="col-sm-7">
-                                                <div class="dataTables_paginate paging_simple_numbers">
-                                                    <ul class="pagination">
-                                                        <li class="paginate_button previous disabled"><a href="#">Précédent</a></li>
-                                                        <li class="paginate_button active"><a href="#">1</a></li>
-                                                        <li class="paginate_button"><a href="#">2</a></li>
-                                                        <li class="paginate_button"><a href="#">3</a></li>
-                                                        <li class="paginate_button"><a href="#">4</a></li>
-                                                        <li class="paginate_button"><a href="#">5</a></li>
-                                                        <li class="paginate_button next"><a href="#">Suivant</a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1325,15 +1296,130 @@ footer {
 
                     <!-- Statistiques Tab -->
                     <div role="tabpanel" class="tab-pane fade" id="stats">
+                        <!-- KPIs -->
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-green"><i class="fa fa-shopping-cart"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Chiffre d'affaires</span>
+                                        <span class="info-box-number">{{ stats.ca_total }} {{ article.devise }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-aqua"><i class="fa fa-percent"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Marge brute</span>
+                                        <span class="info-box-number">{{ stats.marge_brute }} {{ article.devise }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-yellow"><i class="fa fa-file-text-o"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Lignes de vente</span>
+                                        <span class="info-box-number">{{ stats.nb_sorties }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-red"><i class="fa fa-truck"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Lignes d'appro</span>
+                                        <span class="info-box-number">{{ stats.nb_entrees }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Graphique mouvements -->
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="x_panel">
                                     <div class="x_title">
-                                        <h2><i class="fa fa-line-chart"></i> Statistiques</h2>
+                                        <h2><i class="fa fa-bar-chart"></i> Mouvements mensuels (12 derniers mois)</h2>
                                         <div class="clearfix"></div>
                                     </div>
                                     <div class="x_content">
-                                        <p class="text-muted">Les statistiques seront affichées ici...</p>
+                                        {% if stats.chart_labels %}
+                                            <canvas id="statsChart" height="80"></canvas>
+                                        {% else %}
+                                            <p class="text-muted text-center" style="padding: 40px 0;">Aucune donnée disponible.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Rentabilité -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-percent"></i> Rentabilité</h2>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Prix d'achat actuel</strong></td>
+                                                    <td>{{ article.prix_achat }} {{ article.devise }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Prix de vente</strong></td>
+                                                    <td>{{ article.prix_vente }} {{ article.devise }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Marge unitaire</strong></td>
+                                                    <td>{{ article.prix_vente }} - {{ article.prix_achat }} {{ article.devise }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Rentabilité</strong></td>
+                                                    <td>
+                                                        {% if rentabilite %}
+                                                            <span class="label {% if rentabilite > 0 %}label-success{% else %}label-danger{% endif %}">
+                                                                {{ rentabilite }}%
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-muted">N/A</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2><i class="fa fa-exchange"></i> Résumé des flux</h2>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Total reçu</strong></td>
+                                                    <td><span class="text-success">{{ entrees }} {{ article.unite }}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Total vendu</strong></td>
+                                                    <td><span class="text-danger">{{ sorties }} {{ article.unite }}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Stock actuel</strong></td>
+                                                    <td><span class="badge badge-primary">{{ article.stock }} {{ article.unite }}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Conso. mensuelle</strong></td>
+                                                    <td>{{ consommation_moyenne }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -1346,11 +1432,40 @@ footer {
                             <div class="col-md-12">
                                 <div class="x_panel">
                                     <div class="x_title">
-                                        <h2><i class="fa fa-truck"></i> Fournisseurs</h2>
+                                        <h2><i class="fa fa-truck"></i> Fournisseurs ayant livré cet article</h2>
                                         <div class="clearfix"></div>
                                     </div>
                                     <div class="x_content">
-                                        <p class="text-muted">Les informations sur les fournisseurs seront affichées ici...</p>
+                                        {% if fournisseurs_data %}
+                                            <div class="table-responsive">
+                                                <table id="tableFournisseurs" class="table table-striped table-bordered jambo_table">
+                                                    <thead>
+                                                        <tr class="headings">
+                                                            <th class="column-title"><i class="fa fa-building"></i> Fournisseur</th>
+                                                            <th class="column-title text-center"><i class="fa fa-truck"></i> Livraisons</th>
+                                                            <th class="column-title text-right"><i class="fa fa-cubes"></i> Qté totale</th>
+                                                            <th class="column-title text-right"><i class="fa fa-money"></i> Dernier prix</th>
+                                                            <th class="column-title text-center"><i class="fa fa-calendar"></i> Dernière livraison</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for f in fournisseurs_data %}
+                                                            <tr>
+                                                                <td><strong>{{ f.nom }}</strong></td>
+                                                                <td class="text-center"><span class="badge badge-primary">{{ f.nb_livraisons }}</span></td>
+                                                                <td class="text-right">{{ f.qte_totale }} {{ article.unite }}</td>
+                                                                <td class="text-right">{{ f.dernier_prix }} {{ f.devise }}</td>
+                                                                <td class="text-center">{{ f.derniere_date|date:"d/m/Y" }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted text-center" style="padding: 40px 0;">
+                                                <i class="fa fa-info-circle"></i> Aucun approvisionnement enregistré pour cet article.
+                                            </p>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1369,7 +1484,10 @@ footer {
             </div>
         </div>
     </div>
-    <script>
+        {{ stats.chart_labels|json_script:"article-stats-labels" }}
+        {{ stats.chart_entrees|json_script:"article-stats-entrees" }}
+        {{ stats.chart_sorties|json_script:"article-stats-sorties" }}
+        <script>
         $(document).ready(() => {
             // Galerie d'images
             var currentImageIndex = 0
@@ -1418,6 +1536,100 @@ footer {
             $('#articles').addClass('active');
             let parent = document.getElementById('articles');
             parent.childNodes[2].style.display = 'block';
+
+            // DataTable mouvements
+            var tableMovements = $('#tableMovements').DataTable({
+                destroy: true,
+                pageLength: 15,
+                order: [[0, 'desc']],
+                language: {
+                    sSearch: "Rechercher&nbsp;:",
+                    sInfoEmpty: "Aucun résultat",
+                    sZeroRecords: "Aucun élément à afficher",
+                    sEmptyTable: "Aucune donnée disponible",
+                    sLengthMenu: "Afficher _MENU_ lignes",
+                    oPaginate: { sFirst: "Premier", sLast: "Dernier", sNext: "Suivant", sPrevious: "Précédent" }
+                },
+            });
+
+            // Filtres Tous / Entrées / Sorties
+            $('#btnFiltreAll').on('click', function () {
+                tableMovements.column(1).search('').draw();
+                $(this).addClass('active');
+                $('#btnFiltreEntrees, #btnFiltreSorties').removeClass('active');
+            });
+            $('#btnFiltreEntrees').on('click', function () {
+                tableMovements.column(1).search('Entr').draw();
+                $(this).addClass('active');
+                $('#btnFiltreAll, #btnFiltreSorties').removeClass('active');
+            });
+            $('#btnFiltreSorties').on('click', function () {
+                tableMovements.column(1).search('Sortie').draw();
+                $(this).addClass('active');
+                $('#btnFiltreAll, #btnFiltreEntrees').removeClass('active');
+            });
+
+            // Réinitialiser le DataTable quand l'onglet Stock est activé
+            $('a[href="#stock"]').on('shown.bs.tab', function () {
+                tableMovements.columns.adjust().draw();
+            });
+
+            // DataTable fournisseurs
+            if ($('#tableFournisseurs').length) {
+                $('#tableFournisseurs').DataTable({
+                    destroy: true,
+                    pageLength: 10,
+                    language: {
+                        sSearch: "Rechercher&nbsp;:",
+                        sInfoEmpty: "Aucun résultat",
+                        sZeroRecords: "Aucun élément",
+                        sEmptyTable: "Aucune donnée",
+                        sLengthMenu: "Afficher _MENU_ lignes",
+                        oPaginate: { sFirst: "Premier", sLast: "Dernier", sNext: "Suivant", sPrevious: "Précédent" }
+                    },
+                });
+                $('a[href="#suppliers"]').on('shown.bs.tab', function () {
+                    $('#tableFournisseurs').DataTable().columns.adjust().draw();
+                });
+            }
+
+            // Chart.js Statistiques
+            {% if stats.chart_labels %}
+            $('a[href="#stats"]').on('shown.bs.tab', function () {
+                if (window._statsChartInit) return;
+                window._statsChartInit = true;
+                var chartLabels = JSON.parse(document.getElementById('article-stats-labels').textContent);
+                var chartEntrees = JSON.parse(document.getElementById('article-stats-entrees').textContent);
+                var chartSorties = JSON.parse(document.getElementById('article-stats-sorties').textContent);
+                var ctx = document.getElementById('statsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: 'Entrées',
+                                data: chartEntrees,
+                                backgroundColor: 'rgba(38, 185, 154, 0.7)',
+                                borderColor: '#26b99a',
+                                borderWidth: 1,
+                            },
+                            {
+                                label: 'Sorties',
+                                data: chartSorties,
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                borderColor: '#e74c3c',
+                                borderWidth: 1,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { yAxes: [{ ticks: { beginAtZero: true } }] }
+                    }
+                });
+            });
+            {% endif %}
         })
     </script>
 {% endblock content %}

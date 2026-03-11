@@ -1,21 +1,33 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Articles {% endblock title %}
+{% block title %} Fiche de stock {% endblock title %}
 
 {% block content %}
 <div class="right_col" role="main">
     <div class="">
         <div class="page-title">
             <div class="title_left">
-                <h5>Articles</h5>
+                <h5>Articles / Fiche de stock</h5>
+            </div>
+            <div class="title_right">
+                <form method="get" class="form-inline" id="magasinFilterForm">
+                    <label for="magasinSelect" class="control-label" style="margin-right: 8px;">Magasin :</label>
+                    <select name="magasin" id="magasinSelect" class="form-control" onchange="this.form.submit()">
+                        {% for m in magasins %}
+                            <option value="{{ m.pk }}" {% if magasin_courant and magasin_courant.pk == m.pk %}selected{% endif %}>
+                                {{ m.nom }}{% if m.is_principal %} (principal){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
             </div>
         </div>
         <div class="row">
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Fiche de stock ce jour<small></small></h2>
+                        <h2>Fiche de stock{% if magasin_courant %} – {{ magasin_courant.nom }}{% endif %}<small></small></h2>
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">

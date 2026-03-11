@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from users.permissions import RoleRequiredMixin, ROLE_ADMIN, ROLE_GERANT_STOCK, ROLE_GERANT_MAGASIN
 from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
@@ -9,10 +9,13 @@ from approvisionnements.models import DetailsApprovisionnement
 from factures.models import DetailsFacture
 from django.db.models import Sum
 from dateutil.relativedelta import relativedelta
+from collections import defaultdict
 import datetime
+import decimal
 
 
-class ArticleView(LoginRequiredMixin, ListView):
+class ArticleView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN, ROLE_GERANT_STOCK, ROLE_GERANT_MAGASIN]
     model = Article
     context_object_name = 'liste_articles'
     template_name = 'produits/article/articles.html'
@@ -21,7 +24,8 @@ class ArticleView(LoginRequiredMixin, ListView):
         return Article.objects.all().order_by('designation')
 
 
-class ArticleDetailsView(LoginRequiredMixin, DetailView):
+class ArticleDetailsView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN, ROLE_GERANT_STOCK, ROLE_GERANT_MAGASIN]
     model = Article
     context_object_name = 'article'
     template_name = 'produits/article/article_details.html'
@@ -117,6 +121,70 @@ class ArticleDetailsView(LoginRequiredMixin, DetailView):
 
         return round((pv - pa) / pa * 100, 2)
 
+    def get_fournisseurs_data(self):
+        article = self.object
+        fournisseurs_map = {}
+        details = (DetailsApprovisionnement.objects
+                   .filter(article=article)
+                   .select_related('fournisseur', 'approvisionnement')
+                   .order_by('date_creation'))
+        for detail in details:
+            fourn = detail.fournisseur
+            if not fourn:
+                continue
+            fid = fourn.pk
+            if fid not in fournisseurs_map:
+                fournisseurs_map[fid] = {
+                    'nom': fourn.nom,
+                    'nb_livraisons': 0,
+                    'qte_totale': 0,
+                    'dernier_prix': 0,
+                    'derniere_date': None,
+                    'devise': detail.approvisionnement.devise,
+                }
+            fournisseurs_map[fid]['nb_livraisons'] += 1
+            fournisseurs_map[fid]['qte_totale'] += detail.qte
+            fournisseurs_map[fid]['dernier_prix'] = detail.prix
+            fournisseurs_map[fid]['derniere_date'] = detail.date_creation.date()
+            fournisseurs_map[fid]['devise'] = detail.approvisionnement.devise
+        return list(fournisseurs_map.values())
+
+    def get_stats(self, mouvements):
+        article = self.object
+        ca_total = decimal.Decimal(0)
+        marge_brute = decimal.Decimal(0)
+        nb_sorties = 0
+        nb_entrees = 0
+        monthly_entrees = defaultdict(int)
+        monthly_sorties = defaultdict(int)
+
+        for m in mouvements:
+            month_key = m['date'].strftime('%Y-%m')
+            if m['type'] == 'SORTIE':
+                nb_sorties += 1
+                qty = abs(m['qte'])
+                prix = decimal.Decimal(str(m['prix'] or 0))
+                ca_total += qty * prix
+                pa = article.prix_achat or 0
+                marge_brute += qty * (prix - pa)
+                monthly_sorties[month_key] += qty
+            else:
+                nb_entrees += 1
+                monthly_entrees[month_key] += m['qte']
+
+        all_months = sorted(set(list(monthly_entrees.keys()) + list(monthly_sorties.keys())))
+        last_12 = all_months[-12:]
+
+        return {
+            'ca_total': round(ca_total, 2),
+            'marge_brute': round(marge_brute, 2),
+            'nb_sorties': nb_sorties,
+            'nb_entrees': nb_entrees,
+            'chart_labels': last_12,
+            'chart_entrees': [monthly_entrees.get(m, 0) for m in last_12],
+            'chart_sorties': [monthly_sorties.get(m, 0) for m in last_12],
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         entrees = (DetailsApprovisionnement.objects.filter(article=self.object).
@@ -131,22 +199,27 @@ class ArticleDetailsView(LoginRequiredMixin, DetailView):
         context['sorties'] = sorties
         context['mouvements'] = mouvements
         context['consommation_moyenne'] = self.consommation_moyenne(mouvements)
+        context['fournisseurs_data'] = self.get_fournisseurs_data()
+        context['stats'] = self.get_stats(mouvements)
         return context
 
 
-class ArticleCreateView(LoginRequiredMixin, CreateView):
+class ArticleCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Article
     template_name = 'produits/article/article_create_form.html'
     form_class = ArticleCreateForm
 
 
-class ArticleUpdateView(LoginRequiredMixin, UpdateView):
+class ArticleUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
     model = Article
     template_name = 'produits/article/article_create_form.html'
     form_class = ArticleCreateForm
 
 
-class ArticleDeleteView(LoginRequiredMixin, DeleteView):
+class ArticleDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_ADMIN]
     model = Article
     template_name = 'produits/article/article_confirm_delete.html'
     success_url = reverse_lazy('articles')
@@ -160,7 +233,8 @@ class ArticleDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class ArticleActivateOrDeactivateView(LoginRequiredMixin, FormView):
+class ArticleActivateOrDeactivateView(RoleRequiredMixin, FormView):
+    allowed_roles = [ROLE_ADMIN]
     form_class = ArticleActivateOrDeactivateForm
     template_name = 'produits/article/activate_deactivate.html'
 
