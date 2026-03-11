@@ -43,6 +43,7 @@ urlpatterns = [
     path('rapports/', include('rapports.urls')),
     path('users/', include('users_management.urls')),
     path('parametres/', include('parametres.urls')),
+    path('logs/', include('logs.urls')),
     path("select2/", include("django_select2.urls")),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='jsi18n'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,4 +1,5 @@
 {% load static %}
+{% load user_tags %}
     <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
             <a href="" class="site_title"><i class="fa fa-spinner"></i> <span>ESM V.1</span></a>
@@ -10,11 +11,18 @@
         {% if user.is_authenticated %}
         <div class="profile clearfix">
             <div class="profile_pic">
+                {% if user.photo %}
                 <img src="{{ user.photo.url }}" alt="..." class="img-circle profile_img">
+                {% else %}
+                <img src="{% static 'images/user.png' %}" alt="..." class="img-circle profile_img">
+                {% endif %}
             </div>
             <div class="profile_info">
                 <span>Bienvenue,</span>
                 <h2> {{ user.username }} </h2>
+                {% if user.type_profile %}
+                <small style="color: #a9b7c6;">{{ user.type_profile.nom }}</small>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -24,29 +32,61 @@
         <!-- sidebar menu -->
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
-                <!-- <h3>MENU</h3> -->
                 <ul class="nav side-menu documents">
+
+                    <!-- Tableau de bord : tous les rôles -->
                     <li id="index"><a href="{% url 'index' %}"><i class="fa fa-home"></i> Tableau de bord </a></li>
+
+                    <!-- Factures : Admin, Facturier, Gérant Magasin -->
+                    {% if user|has_role:"admin,facturier,gerant_magasin" %}
                     <li id="factures"><a href="{% url 'factures' %}"><i class="fa fa-shopping-cart"></i> Factures </a></li>
+                    {% endif %}
+
+                    <!-- Caisses : Admin, Caissier, Gérant Magasin -->
+                    {% if user|has_role:"admin,caissier,gerant_magasin" %}
                     <li id="caisses"><a><i class="fa fa-usd"></i> Caisses <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="caisse"><a href="{% url 'ouverture_caisse' %}">Nouvelle caisse</a></li>
                             <li id="liste_caisses"><a href="{% url 'caisses' %}">Liste des caisses</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+
+                    <!-- Approvisionnements : Admin uniquement -->
+                    {% if user|is_admin %}
                     <li id="approvisionnements"><a href="{% url 'approvisionnements' %}"><i class="fa fa-truck"></i> Approvisionnements </a></li>
+                    {% endif %}
+
+                    <!-- Articles / Stock : Admin, Gérant Stock, Gérant Magasin -->
+                    {% if user|has_role:"admin,gerant_stock,gerant_magasin" %}
                     <li id="articles"><a><i class="fa fa-tags"></i> Articles <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="liste_articles"><a href="{% url 'articles' %}">Articles</a></li>
+                            {% if user|is_admin %}
                             <li id="unites"><a href="{% url 'unites' %}">Unités</a></li>
                             <li id="categories"><a href="{% url 'categories' %}">Catégories</a></li>
+                            {% endif %}
                             <li id="fiche_stock"><a href="{% url 'fiche_stock' %}">Fiche de stock</a></li>
+                            {% if user|is_admin %}
                             <li id="transfert_stock"><a href="{% url 'transferts_stock' %}">Transfert de stock</a></li>
+                            {% endif %}
                         </ul>
                     </li>
+                    {% endif %}
+
+                    <!-- Commandes, Fournisseurs : Admin uniquement -->
+                    {% if user|is_admin %}
                     <li id="commandes"><a href="{% url 'commandes' %}"><i class="fa fa-file-text-o"></i> Commandes </a></li>
                     <li id="fournisseurs"><a href="{% url 'fournisseurs' %}"><i class="fa fa-list-ul"></i> Fournisseurs </a></li>
+                    {% endif %}
+
+                    <!-- Clients : Admin, Facturier, Caissier, Gérant Magasin -->
+                    {% if user|has_role:"admin,facturier,caissier,gerant_magasin" %}
                     <li id="clients"><a href="{% url 'clients' %}"><i class="fa fa-user"></i> Clients </a></li>
+                    {% endif %}
+
+                    <!-- Créanciers - Débiteurs : Admin uniquement -->
+                    {% if user|is_admin %}
                     <li id="cr_db"><a><i class="fa fa-exchange"></i> Créanciers - Débiteurs <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="creanciers"><a href="{% url 'creanciers' %}">Créanciers</a></li>
@@ -60,31 +100,36 @@
                             <li id="rapport_resultat"><a href="{% url 'rapport_resultats' %}">Rapport des résultats</a></li>
                             <li id="rapport_article"><a href="{% url 'rapport_articles' %}">Rapport des articles</a></li>
                             <li id="rapport_caisse"><a href="{% url 'rapport_caisses' %}">Rapport des caisses</a></li>
+                            <li id="rapport_commande"><a href="{% url 'rapport_commandes' %}">Rapport des commandes</a></li>
                         </ul>
                     </li>
                     <li id="paie"><a><i class="fa fa-money"></i> Livre de paie <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li id="agents"><a href="{% url 'agents' %}">Agents</a></li>
-                            <!--<li id="listes_paie"><a href="{% url 'listes_paie' %}">Listes de paie</a></li>-->
                         </ul>
                     </li>
+                    {% endif %}
+
                 </ul>
             </div>
+
+            <!-- Section Configurations : Admin uniquement -->
+            {% if user|is_admin %}
             <div class="menu_section">
-                {% if perms.parametres %}
-                    <h3>Configurations</h3>
-                    <ul class="nav side-menu">
-                        {% if perms.users %}
-                            <li id="users"><a href="{% url 'users' %}"><i class="fa fa-users"></i> Comptes utilisateurs </a></li>
-                        {% endif %}
-                        <li id="parametres"><a href="{% url 'parametres' %}"><i class="fa fa-cogs"></i> Paramètres </a></li>
-                    </ul>
-                {% endif %}
+                <h3>Configurations</h3>
+                <ul class="nav side-menu">
+                    <li id="users"><a href="{% url 'users' %}"><i class="fa fa-users"></i> Comptes utilisateurs </a></li>
+                    <li id="parametres"><a href="{% url 'parametres' %}"><i class="fa fa-cogs"></i> Paramètres </a></li>
+                    <li id="taux_echange"><a href="{% url 'taux_echange_list' %}"><i class="fa fa-exchange"></i> Taux d'échange </a></li>
+                    <li id="logs"><a href="{% url 'logs' %}"><i class="fa fa-list-alt"></i> Journal d'activités </a></li>
+                </ul>
             </div>
+            {% endif %}
+
         </div>
         <!-- /sidebar menu -->
 
-        <!-- /menu footer buttons -->
+        <!-- menu footer buttons -->
         <div class="sidebar-footer hidden-small">
             <a data-toggle="tooltip" data-placement="top" title="Settings">
                 <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
@@ -95,7 +140,7 @@
             <a data-toggle="tooltip" data-placement="top" title="Lock">
                 <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
             </a>
-            <a data-toggle="tooltip" data-placement="top" title="Logout" href="login">
+            <a data-toggle="tooltip" data-placement="top" title="Logout" href="{% url 'logout' %}">
                 <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
             </a>
         </div>
