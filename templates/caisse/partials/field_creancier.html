@@ -1,7 +1,7 @@
 <div class="form-group">
     <label class="control-label col-md-12 col-sm-12 col-xs-12">Creancier</label>
     <div class="col-md-12 col-sm-12 col-xs-12">
-        <select name="creancier" class="form-control">
+        <select name="creancier" class="form-control js-simple-select">
             {% for creancier in creanciers %}
                 <option value="{{ creancier.pk }}">{{ creancier.nom }}</option>
             {% endfor %}

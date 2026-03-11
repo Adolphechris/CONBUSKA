@@ -12,6 +12,7 @@ from caisse.models import (
     MouvementCaisseAgent,
     MouvementCaisseChargesExploitation,
     MouvementCaisseChargesPersonnelles,
+    Caisse,
     CaisseCourante,
     SousRubriqueCaisse,
 )
@@ -21,12 +22,19 @@ from clients.models import Client
 from creanciers.models import Creancier, Debiteur
 from paie.models import Agent
 from patrimoine.services import SnapshotService
+from patrimoine.services.fonds_roulement_service import FondsRoulementService
 
 
 class MouvementCaisseService:
     """
     Couche métier unique pour la gestion des mouvements de caisse.
     Aucune dépendance HTTP / Django Views.
+
+    Contrat : toute création, modification ou suppression de MouvementCaisse
+    doit passer par les méthodes publiques (create, update, delete) de ce service.
+    La garde unique contre les écritures sur une caisse clôturée est
+    _assert_caisse_ouverte(), appelée dans create, update et delete.
+    Ne pas surcharger MouvementCaisse.save() pour ce contrôle.
     """
     # ----------------- Guards -----------------
 
@@ -34,6 +42,54 @@ class MouvementCaisseService:
     def _assert_caisse_ouverte(caisse_courante: CaisseCourante):
         if not caisse_courante.est_ouverte:
             raise ValidationError("La caisse est clôturée")
+
+    @staticmethod
+    def _is_transfert(mouvement: MouvementCaisse) -> bool:
+        return (mouvement.rubrique.nom or "").strip().lower() == "transfert caisse"
+
+    @staticmethod
+    def _get_transfert_miroir(mouvement: MouvementCaisse) -> Optional[MouvementCaisse]:
+        return (
+            MouvementCaisse.objects
+            .filter(mouvement_transfert_source=mouvement)
+            .select_related("caisse")
+            .first()
+        )
+
+    @classmethod
+    def _assign_caisse_destination(cls, mouvement: MouvementCaisse, caisse_destination_id: Optional[int]):
+        if cls._is_transfert(mouvement) and caisse_destination_id:
+            mouvement.caisse_destination_id = int(caisse_destination_id)
+        else:
+            mouvement.caisse_destination = None
+
+    @classmethod
+    def _assert_not_mirror(cls, mouvement: MouvementCaisse):
+        if mouvement.mouvement_transfert_source_id:
+            raise ValidationError(
+                "Le mouvement miroir d'un transfert ne peut pas être modifié directement."
+            )
+
+    @classmethod
+    def _cleanup_transfert(cls, mouvement: MouvementCaisse):
+        miroir = cls._get_transfert_miroir(mouvement)
+        if miroir:
+            cls._assert_caisse_ouverte(miroir.caisse)
+            miroir.delete()
+
+    @staticmethod
+    def _rebuild_impacts(*, impacts):
+        unique_impacts = {
+            (caisse_courante.pk, date): caisse_courante
+            for caisse_courante, date in impacts
+            if caisse_courante is not None and date is not None
+        }
+
+        for (caisse_pk, date), caisse_courante in unique_impacts.items():
+            SnapshotService.rebuild_day(caisse_courante=caisse_courante, date=date)
+
+        for _, date in unique_impacts.keys():
+            FondsRoulementService.rebuild(date)
 
     # ---------- API PUBLIQUE ----------
 
@@ -51,6 +107,7 @@ class MouvementCaisseService:
             debiteur_id: Optional[int] = None,
             agent_id: Optional[int] = None,
             sous_rubrique_id: Optional[int] = None,
+            caisse_destination_id: Optional[int] = None,
     ) -> MouvementCaisse:
         cls._assert_caisse_ouverte(caisse_courante)
 
@@ -60,9 +117,13 @@ class MouvementCaisseService:
         mouvement = form.save(commit=False)
         mouvement.caisse = caisse_courante
         mouvement.effectue_par = user
+        cls._assign_caisse_destination(mouvement, caisse_destination_id)
+
         mouvement.save()
 
-        cls._dispatch_with_ids(
+        # Dispatch vers les tables de liaison (Fournisseur, Client, Créancier, etc.)
+        # pour que les rapports patrimoine et soldes tiers restent cohérents.
+        extra_impacts = cls._dispatch_with_ids(
             mouvement,
             fournisseur_id=fournisseur_id,
             client_id=client_id,
@@ -71,11 +132,13 @@ class MouvementCaisseService:
             agent_id=agent_id,
             sous_rubrique_id=sous_rubrique_id,
             user=user,
+            caisse_destination_id=caisse_destination_id,
         )
-
-        SnapshotService.rebuild_day(
-            caisse_courante=caisse_courante,
-            date=mouvement.date_mouvement.date(),
+        cls._rebuild_impacts(
+            impacts=[
+                (caisse_courante, mouvement.date_mouvement.date()),
+                *extra_impacts,
+            ]
         )
 
         return mouvement
@@ -93,52 +156,64 @@ class MouvementCaisseService:
             debiteur_id: Optional[int] = None,
             agent_id: Optional[int] = None,
             sous_rubrique_id: Optional[int] = None,
+            caisse_destination_id: Optional[int] = None,
     ) -> MouvementCaisse:
         if not form.is_valid():
             raise ValueError("Form invalide")
 
         mouvement = form.instance
+        cls._assert_not_mirror(mouvement)
         cls._assert_caisse_ouverte(mouvement.caisse)
 
+        miroir_avant = cls._get_transfert_miroir(mouvement)
         old_date = mouvement.date_mouvement.date()
+        impacts = [(mouvement.caisse, old_date)]
+        if miroir_avant:
+            cls._assert_caisse_ouverte(miroir_avant.caisse)
+            impacts.append((miroir_avant.caisse, miroir_avant.date_mouvement.date()))
 
-        mouvement = form.save()
-        cls._dispatch_with_ids(mouvement,
-                               fournisseur_id=fournisseur_id,
-                               client_id=client_id,
-                               creancier_id=creancier_id,
-                               debiteur_id=debiteur_id,
-                               agent_id=agent_id,
-                               sous_rubrique_id=sous_rubrique_id,
-                               user=user)
-
-        # rebuild ancienne et nouvelle date (si changement)
-        SnapshotService.rebuild_day(
-            caisse_courante=mouvement.caisse,
-            date=old_date,
+        mouvement = form.save(commit=False)
+        cls._assign_caisse_destination(mouvement, caisse_destination_id)
+        mouvement.save()
+        # Mise à jour des liaisons tiers (Fournisseur, Client, Créancier, etc.)
+        extra_impacts = cls._dispatch_with_ids(
+            mouvement,
+            fournisseur_id=fournisseur_id,
+            client_id=client_id,
+            creancier_id=creancier_id,
+            debiteur_id=debiteur_id,
+            agent_id=agent_id,
+            sous_rubrique_id=sous_rubrique_id,
+            user=user,
+            caisse_destination_id=caisse_destination_id,
         )
 
-        SnapshotService.rebuild_day(
-            caisse_courante=mouvement.caisse,
-            date=mouvement.date_mouvement.date(),
+        new_date = mouvement.date_mouvement.date()
+        impacts.extend(
+            [
+                (mouvement.caisse, new_date),
+                *extra_impacts,
+            ]
         )
+        cls._rebuild_impacts(impacts=impacts)
 
         return mouvement
 
     @classmethod
     @transaction.atomic
     def delete(cls, *, mouvement: MouvementCaisse):
+        cls._assert_not_mirror(mouvement)
         cls._assert_caisse_ouverte(mouvement.caisse)
 
         date = mouvement.date_mouvement.date()
-        caisse = mouvement.caisse
+        impacts = [(mouvement.caisse, date)]
+        miroir = cls._get_transfert_miroir(mouvement)
+        if miroir:
+            cls._assert_caisse_ouverte(miroir.caisse)
+            impacts.append((miroir.caisse, miroir.date_mouvement.date()))
 
         mouvement.delete()
-
-        SnapshotService.rebuild_day(
-            caisse_courante=caisse,
-            date=date,
-        )
+        cls._rebuild_impacts(impacts=impacts)
 
     # ---------- CALCULS FINANCIERS ----------
 
@@ -169,6 +244,7 @@ class MouvementCaisseService:
             agent_id,
             sous_rubrique_id,
             user,
+            caisse_destination_id=None,
     ):
         key = (mouvement.rubrique.nom or "").strip().lower()
 
@@ -176,16 +252,20 @@ class MouvementCaisseService:
             cls._handle_fournisseur(mouvement, fournisseur_id)
         elif key == "clients":
             cls._handle_client(mouvement, client_id)
-        elif key == "creanciers":
+        elif key == "créanciers":
             cls._handle_creancier(mouvement, creancier_id)
-        elif key == "debiteurs":
+        elif key == "débiteurs":
             cls._handle_debiteur(mouvement, debiteur_id)
         elif key in {"transport", "avance sur salaire", "restauration", "assistance sociale"}:
             cls._handle_agent(mouvement, agent_id)
         elif key in {"charges exploitation", "charges personnelles"}:
             cls._handle_charge(mouvement, sous_rubrique_id)
         elif key == "transfert caisse":
-            cls._handle_transfert(mouvement, user)
+            return cls._handle_transfert(mouvement, user)
+        else:
+            cls._cleanup_transfert(mouvement)
+
+        return []
 
     # ---------- HANDLERS METIER ----------
     @staticmethod
@@ -275,9 +355,16 @@ class MouvementCaisseService:
 
     @staticmethod
     def _handle_transfert(mouvement, user):
+        if mouvement.type_mouvement != "SORTIE":
+            raise ValidationError("Un transfert de caisse doit être enregistré comme une sortie.")
+
         caisse_destination = getattr(mouvement, "caisse_destination", None)
+        miroir = MouvementCaisseService._get_transfert_miroir(mouvement)
         if not caisse_destination:
-            return
+            if miroir:
+                MouvementCaisseService._assert_caisse_ouverte(miroir.caisse)
+                miroir.delete()
+            return []
 
         caisse_ouverte = CaisseCourante.objects.filter(
             caisse=caisse_destination,
@@ -285,13 +372,32 @@ class MouvementCaisseService:
         ).select_for_update().first()
 
         if not caisse_ouverte:
-            return
+            raise ValidationError(
+                f"Impossible de transférer vers « {caisse_destination} » : "
+                "veuillez ouvrir cette caisse avant de procéder au transfert."
+            )
 
-        MouvementCaisse.objects.create(
-            caisse=caisse_ouverte,
-            type_mouvement="ENTREE",
-            rubrique=mouvement.rubrique,
-            montant=mouvement.montant,
-            motif=mouvement.motif,
-            effectue_par=user,
-        )
+        if miroir:
+            MouvementCaisseService._assert_caisse_ouverte(miroir.caisse)
+            miroir.caisse = caisse_ouverte
+            miroir.type_mouvement = "ENTREE"
+            miroir.rubrique = mouvement.rubrique
+            miroir.montant = mouvement.montant
+            miroir.motif = mouvement.motif
+            miroir.effectue_par = user
+            miroir.date_mouvement = mouvement.date_mouvement
+            miroir.caisse_destination = None
+            miroir.save()
+        else:
+            miroir = MouvementCaisse.objects.create(
+                caisse=caisse_ouverte,
+                type_mouvement="ENTREE",
+                rubrique=mouvement.rubrique,
+                montant=mouvement.montant,
+                motif=mouvement.motif,
+                effectue_par=user,
+                date_mouvement=mouvement.date_mouvement,
+                mouvement_transfert_source=mouvement,
+            )
+
+        return [(miroir.caisse, miroir.date_mouvement.date())]

@@ -1,45 +1,81 @@
 import datetime
-from django.contrib.auth.mixins import LoginRequiredMixin
+import logging
+from decimal import Decimal
+
 from django.views.generic import ListView, DetailView, FormView, DeleteView
 from django.shortcuts import redirect, get_object_or_404, render, HttpResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.template.loader import render_to_string
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from .models import (Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse, SousRubriqueCaisse)
 from clients.models import Client
 from fournisseurs.models import Fournisseur
 from creanciers.models import Creancier, Debiteur
 from factures.models import Facture
 from users.models import Caissier
+from users.permissions import (
+    CaisseAccessMixin, RoleRequiredMixin,
+    ROLE_ADMIN, ROLE_CAISSIER, ROLE_GERANT_MAGASIN,
+    user_has_role,
+)
 from paie.models import Agent
 from .forms import OuvertureCaisseValidateForm, ClotureCaisseValidateForm, CaisseForm
 from .services.mouvement_caisse import MouvementCaisseService
 
-
-def get_total_ventes():
-    factures = Facture.objects.filter(date_creation__date=datetime.datetime.now().date())
-    total_factures = sum(i.total for i in factures)
-    return total_factures
+logger = logging.getLogger(__name__)
 
 
-class OuvertureCaisseView(LoginRequiredMixin, FormView):
+def get_total_ventes_caisse(caisse_courante):
+    """
+    Les ventes du jour n'alimentent que la caisse principale.
+    On retient uniquement les factures validées et on se base sur la
+    date métier de vente (`date_facture`), pas sur la date technique de création.
+    """
+    if not caisse_courante or not caisse_courante.caisse.is_principal:
+        return Decimal("0")
+
+    factures = Facture.objects.filter(
+        date_facture=caisse_courante.date_ouverture.date(),
+        valide=True,
+    )
+    return sum((facture.total for facture in factures), Decimal("0"))
+
+
+def get_total_entrees_caisse(caisse_courante, entrees):
+    return caisse_courante.solde_initial + get_total_ventes_caisse(caisse_courante) + entrees
+
+
+def assert_caisse_write_access(user, caisse: Caisse):
+    if not user.is_authenticated:
+        raise PermissionDenied
+    if user_has_role(user, ROLE_ADMIN, ROLE_GERANT_MAGASIN):
+        return
+    if user_has_role(user, ROLE_CAISSIER):
+        try:
+            if user.caissier.caisse_id == caisse.pk:
+                return
+        except Caissier.DoesNotExist:
+            pass
+    raise PermissionDenied
+
+
+class OuvertureCaisseView(CaisseAccessMixin, FormView):
     form_class = OuvertureCaisseValidateForm
     template_name = 'caisse/ouvrir_caisse.html'
 
     def get_caisse(self):
         """
-        Cette methode vérifie si l'url envoie un pk de caisse. Si oui, alors elle renvoie la caisse
-        en parametre. Sinon elle cherche la caisse associée à l'utilisateur. Un user de type Admin
-        prend par défaut la caisse principale. Les autres users de profile caissier, sont associés
-        à leurs caisses respectives.
-        :return:
+        Returns the relevant Caisse for this request.
+        If a pk is in the URL, use it directly. Otherwise fall back to the
+        user's assigned caisse (caissier) or the principal caisse (admin/gérant).
         """
         try:
             caisse = Caisse.objects.get(pk=self.kwargs['pk'])
         except (Caisse.DoesNotExist, KeyError):
-            if self.request.user.type_profile.nom == 'Admin':
+            if user_has_role(self.request.user, ROLE_ADMIN, ROLE_GERANT_MAGASIN):
                 caisse = Caisse.objects.get(is_principal=True)
             else:
                 check_caisse = Caissier.objects.get(user=self.request.user)
@@ -49,18 +85,20 @@ class OuvertureCaisseView(LoginRequiredMixin, FormView):
     def solde_initial(self):
         caisse = self.get_caisse()
         get_solde = CaisseCourante.objects.filter(caisse=caisse, est_ouverte=False).last()
-        try:
-            solde = get_solde.solde_final
-        except AttributeError:
-            solde = 0
-        return solde
+        if not get_solde or get_solde.solde_final is None:
+            return Decimal("0")
+        return get_solde.solde_final
 
     def dispatch(self, request, *args, **kwargs):
-        # Vérifier si l'utilisateur a déjà une caisse ouverte
-        if CaisseCourante.objects.filter(est_ouverte=True, ouvert_par=self.request.user).exists():
-            get_caisse = CaisseCourante.objects.get(est_ouverte=True, ouvert_par=self.request.user)
-            # messages.warning(request, "Vous avez déjà une caisse ouverte.")
-            return redirect('caisse_details', get_caisse.pk)
+        # Si cette caisse-là a déjà une instance ouverte, y rediriger directement.
+        # On cible la caisse demandée (pas "n'importe quelle caisse ouverte de cet utilisateur")
+        # pour permettre à un admin d'ouvrir plusieurs caisses indépendantes.
+        caisse = self.get_caisse()
+        instance_ouverte = CaisseCourante.objects.filter(
+            caisse=caisse, est_ouverte=True
+        ).first()
+        if instance_ouverte:
+            return redirect('caisse_details', instance_ouverte.pk)
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -82,16 +120,22 @@ class OuvertureCaisseView(LoginRequiredMixin, FormView):
         return context
 
 
+@login_required
 @require_GET
 def get_update_caisse_form(request, pk):
     instance = get_object_or_404(MouvementCaisse, pk=pk)
+    assert_caisse_write_access(request.user, instance.caisse.caisse)
     form = CaisseForm(instance=instance, caisse_pk=instance.caisse.pk)
     return render(request, "caisse/partials/update_form.html",
                   {"update_form": form, "caisse_pk": instance.caisse.pk, "mouvement_pk": pk})
 
 
+@login_required
+@require_GET
 def rubrique_champ_view(request, caisse_pk):
-    print("************* ", request.GET)
+    caisse = get_object_or_404(Caisse, pk=caisse_pk)
+    assert_caisse_write_access(request.user, caisse)
+    logger.debug("rubrique_champ_view GET params: %s", request.GET)
     rubrique_id = request.GET.get('rubrique')
     champ_html = ""
 
@@ -127,7 +171,6 @@ def rubrique_champ_view(request, caisse_pk):
                                           context={'agents': Agent.objects.all()})
 
         elif rubrique.nom.lower() == "charges exploitation":
-            print("******* HERE")
             champ_html = render_to_string("caisse/partials/field_sous_rubrique.html",
                                           context={'sous_rubriques': SousRubriqueCaisse.objects.filter(rubrique__nom="Charges exploitation")})
 
@@ -139,11 +182,14 @@ def rubrique_champ_view(request, caisse_pk):
     return HttpResponse(champ_html)
 
 
-class CaisseView(LoginRequiredMixin, DetailView):
+class CaisseView(CaisseAccessMixin, DetailView):
     model = CaisseCourante
     context_object_name = "caisse_courante"
     template_name = "caisse/caisse.html"
     success_url = reverse_lazy("historique_caisse")
+
+    def get_caisse(self):
+        return get_object_or_404(CaisseCourante, pk=self.kwargs['pk']).caisse
 
     # ---------- helpers vue ----------
 
@@ -151,14 +197,22 @@ class CaisseView(LoginRequiredMixin, DetailView):
         return (
             MouvementCaisse.objects
             .filter(caisse=self.object, type_mouvement=type_mouvement)
-            .select_related("rubrique", "effectue_par")
+            .select_related("rubrique", "sous_rubrique", "caisse_destination", "effectue_par")
+            .prefetch_related(
+                "mouvements_caisse_f__fournisseur",
+                "mouvements_caisse_c__client",
+                "mouvements_caisse_cr__creancier",
+                "mouvements_caisse_db__debiteur",
+                "mouvements_caisse_ag__agent",
+                "mouvements_caisse_ce__sous_rubrique",
+                "mouvements_caisse_cp__sous_rubrique",
+            )
         )
 
     def total_entrees(self):
-        return (
-            self.object.solde_initial
-            + get_total_ventes()
-            + MouvementCaisseService.total_par_type(self.object, "ENTREE")
+        return get_total_entrees_caisse(
+            self.object,
+            MouvementCaisseService.total_par_type(self.object, "ENTREE"),
         )
 
     def total_sorties(self):
@@ -175,21 +229,27 @@ class CaisseView(LoginRequiredMixin, DetailView):
 
         return self.render_to_response(context)
 
-    def render_state(self, request):
+    def render_state(self, request, error_message=None):
+        ventes = get_total_ventes_caisse(self.object)
         total_entrees = self.total_entrees()
         total_sorties = self.total_sorties()
 
+        ctx = {
+            "add_form": CaisseForm(caisse_pk=self.object.caisse.pk),
+            "caisse": self.object.caisse,
+            "caisse_courante": self.object,
+            "ventes": ventes,
+            "mouvements_entree": self.mouvements("ENTREE"),
+            "mouvements_sortie": self.mouvements("SORTIE"),
+            "total_entrees": total_entrees,
+            "total_sorties": total_sorties,
+        }
+        if error_message:
+            ctx["error_message"] = error_message
+
         html = render_to_string(
             "caisse/partials/add_form_and_table.html",
-            {
-                "add_form": CaisseForm(caisse_pk=self.object.caisse.pk),
-                "caisse": self.object.caisse,
-                "caisse_courante": self.object,
-                "mouvements_entree": self.mouvements("ENTREE"),
-                "mouvements_sortie": self.mouvements("SORTIE"),
-                "total_entrees": total_entrees,
-                "total_sorties": total_sorties,
-            },
+            ctx,
             request=request,
         )
 
@@ -212,6 +272,7 @@ class CaisseView(LoginRequiredMixin, DetailView):
             "debiteur_id": post.get("debiteur"),
             "agent_id": post.get("agent"),
             "sous_rubrique_id": post.get("sous_rubrique"),
+            "caisse_destination_id": post.get("caisse_destination"),
         }
 
     def post(self, request, *args, **kwargs):
@@ -226,12 +287,17 @@ class CaisseView(LoginRequiredMixin, DetailView):
             if not form.is_valid():
                 return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
-            MouvementCaisseService.create(
-                form=form,
-                caisse_courante=self.object,
-                user=request.user,
-                **self._ids_from_post(request.POST),
-            )
+            try:
+                MouvementCaisseService.create(
+                    form=form,
+                    caisse_courante=self.object,
+                    user=request.user,
+                    **self._ids_from_post(request.POST),
+                )
+            except ValidationError as e:
+                resp = self.render_state(request, error_message=str(e))
+                resp.status_code = 400
+                return resp
 
             return self.render_state(request)
 
@@ -244,11 +310,16 @@ class CaisseView(LoginRequiredMixin, DetailView):
         if not form.is_valid():
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
-        MouvementCaisseService.update(
-            form=form,
-            user=request.user,
-            **self._ids_from_post(request.POST),
-        )
+        try:
+            MouvementCaisseService.update(
+                form=form,
+                user=request.user,
+                **self._ids_from_post(request.POST),
+            )
+        except ValidationError as e:
+            resp = self.render_state(request, error_message=str(e))
+            resp.status_code = 400
+            return resp
 
         return self.render_state(request)
 
@@ -263,7 +334,7 @@ class CaisseView(LoginRequiredMixin, DetailView):
             "caisse": self.object.caisse,
             "mouvements_entree": self.mouvements("ENTREE"),
             "mouvements_sortie": self.mouvements("SORTIE"),
-            "ventes": get_total_ventes(),
+            "ventes": get_total_ventes_caisse(self.object),
             "total_entrees": total_entrees,
             "total_sorties": total_sorties,
             "solde_caisse": total_entrees - total_sorties,
@@ -271,220 +342,12 @@ class CaisseView(LoginRequiredMixin, DetailView):
         return ctx
 
 
-'''
-class CaisseView(LoginRequiredMixin, DetailView):
-    model = CaisseCourante
-    context_object_name = 'caisse_courante'
-    template_name = 'caisse/caisse.html'
-    success_url = reverse_lazy('historique_caisse')
-
-    def get_caisse(self):
-        return get_object_or_404(Caisse, pk=self.get_object().caisse.pk)
-
-    def get_mouvements_entree_caisse(self):
-        mouvements = MouvementCaisse.objects.filter(caisse=self.kwargs['pk'], type_mouvement='ENTREE')
-        return mouvements
-
-    def get_mouvements_sortie_caisse(self):
-        mouvements = MouvementCaisse.objects.filter(caisse=self.kwargs['pk'], type_mouvement='SORTIE')
-        return mouvements
-
-    def get_total_entrees(self):
-        solde_initial = self.get_object().solde_initial
-        entrees = sum(i.montant for i in self.get_mouvements_entree_caisse())
-        return solde_initial + get_total_ventes() + entrees
-
-    def get_total_sorties(self):
-        sorties = sum(i.montant for i in self.get_mouvements_sortie_caisse())
-        return sorties
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(object=self.object)
-        context['add_form'] = CaisseForm(caisse_pk=self.get_caisse().pk)
-        return self.render_to_response(context)
-
-    def post(self, request, *args, **kwargs):
-        if request.headers.get('HX-Request') == 'true':
-            form_type = request.POST.get('form_type')
-
-            if form_type == 'add':
-                form = CaisseForm(request.POST, caisse_pk=self.get_caisse().pk)
-                if form.is_valid():
-                    mouvement = form.save(commit=False)
-                    mouvement.caisse = self.get_object()
-                    mouvement.effectue_par = self.request.user
-                    mouvement.save()
-
-                    if mouvement.rubrique.nom.lower() == "fournisseurs":
-                        fournisseur_pk = request.POST.get('fournisseur')
-                        fournisseur = Fournisseur.objects.get(id=fournisseur_pk)
-
-                        MouvementCaisseFournisseur.objects.create(
-                            mouvement_caisse=mouvement,
-                            fournisseur=fournisseur
-                        )
-
-                    elif mouvement.rubrique.nom.lower() == "clients":
-                        client_pk = request.POST.get('client')
-                        client = Client.objects.get(id=client_pk)
-
-                        MouvementCaisseClient.objects.create(
-                            mouvement_caisse=mouvement,
-                            client=client
-                        )
-
-                    elif mouvement.rubrique.nom.lower() == "créanciers":
-                        creancier_pk = request.POST.get('creancier')
-                        creancier = Creancier.objects.get(id=creancier_pk)
-
-                        MouvementCaisseCreancier.objects.create(
-                            mouvement_caisse=mouvement,
-                            creancier=creancier
-                        )
-
-                    elif mouvement.rubrique.nom.lower() == "débiteurs":
-                        debiteur_pk = request.POST.get('debiteur')
-                        debiteur = Debiteur.objects.get(id=debiteur_pk)
-
-                        MouvementCaisseDebiteur.objects.create(
-                            mouvement_caisse=mouvement,
-                            debiteur=debiteur
-                        )
-
-                    elif mouvement.rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration",
-                                                            "assistance sociale"]:
-                        agent_pk = request.POST.get('agent')
-                        if agent_pk:
-                            agent = Agent.objects.get(pk=agent_pk)
-                            MouvementCaisseAgent.objects.create(
-                                mouvement_caisse=mouvement,
-                                agent=agent
-                            )
-
-                    elif mouvement.rubrique.nom.lower() == "transfert caisse":
-                        get_caisse_ouverte = CaisseCourante.objects.filter(caisse=mouvement.caisse_destination,
-                                                                           est_ouverte=True).first()
-                        if get_caisse_ouverte:
-                            MouvementCaisse.objects.create(
-                                caisse=get_caisse_ouverte,
-                                type_mouvement="ENTREE",
-                                rubrique=mouvement.rubrique,
-                                montant=mouvement.montant,
-                                motif=mouvement.motif,
-                                effectue_par=self.request.user
-                            )
-
-                    total_entrees = self.get_total_entrees()
-                    total_sorties = self.get_total_sorties()
-
-                    html = render_to_string("caisse/partials/add_form_and_table.html", {
-                        "add_form": CaisseForm(caisse_pk=self.get_caisse().pk),
-                        "caisse": self.get_caisse(),
-                        "caisse_courante": self.get_object(),
-                        "mouvements_entree": self.get_mouvements_entree_caisse(),
-                        "mouvements_sortie": self.get_mouvements_sortie_caisse(),
-                        "total_entrees": total_entrees,
-                        "total_sorties": total_sorties,
-                    }, request=request)
-
-                    html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
-                        "total_entrees": total_entrees,
-                        "total_sorties": total_sorties,
-                        "solde_caisse": total_entrees - total_sorties,
-                    })
-
-                    return HttpResponse(html + html_totaux)
-                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-            else:
-                instance = get_object_or_404(MouvementCaisse, pk=int(request.POST.get('id')))
-                form = CaisseForm(request.POST, instance=instance, caisse_pk=self.get_caisse().pk)
-                if form.is_valid():
-                    mouvement = form.save(commit=False)
-                    # mouvement.caisse = self.get_object()
-                    mouvement.save()
-
-                    if mouvement.rubrique.nom.lower() == "fournisseurs":
-                        fournisseur_pk = request.POST.get('fournisseur')
-                        fournisseur = Fournisseur.objects.get(id=fournisseur_pk)
-
-                        get_mc_fournisseur = MouvementCaisseFournisseur.objects.get(mouvement_caisse=mouvement.pk)
-                        get_mc_fournisseur.fournisseur = fournisseur
-                        get_mc_fournisseur.save()
-
-                    elif mouvement.rubrique.nom.lower() == "clients":
-                        client_pk = request.POST.get('client')
-                        client = Client.objects.get(id=client_pk)
-
-                        get_mc_client = MouvementCaisseClient.objects.get(mouvement_caisse=mouvement.pk)
-                        get_mc_client.client = client
-                        get_mc_client.save()
-
-                    elif mouvement.rubrique.nom.lower() == "creanciers":
-                        creancier_pk = request.POST.get('creancier')
-                        creancier = Creancier.objects.get(id=creancier_pk)
-
-                        get_mc_creancier = MouvementCaisseCreancier.objects.get(mouvement_caisse=mouvement.pk)
-                        get_mc_creancier.creancier = creancier
-                        get_mc_creancier.save()
-
-                    elif mouvement.rubrique.nom.lower() == "debiteurs":
-                        debiteur_pk = request.POST.get('debiteur')
-                        debiteur = Debiteur.objects.get(id=debiteur_pk)
-
-                        get_mc_debiteur = MouvementCaisseDebiteur.objects.get(mouvement_caisse=mouvement.pk)
-                        get_mc_debiteur.debiteur = debiteur
-                        get_mc_debiteur.save()
-
-                    elif mouvement.rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration",
-                                                            "assistance sociale"]:
-                        agent_pk = request.POST.get('agent')
-                        if agent_pk:
-                            agent = Agent.objects.get(pk=agent_pk)
-                            get_mc_agent = MouvementCaisseAgent.objects.get(mouvement_caisse=mouvement.pk)
-                            get_mc_agent.agent = agent
-                            get_mc_agent.save()
-
-                    total_entrees = self.get_total_entrees()
-                    total_sorties = self.get_total_sorties()
-
-                    html = render_to_string("caisse/partials/add_form_and_table.html", {
-                        "add_form": CaisseForm(caisse_pk=self.get_caisse().pk),
-                        "caisse_courante": self.get_object(),
-                        "mouvements_entree": self.get_mouvements_entree_caisse(),
-                        "mouvements_sortie": self.get_mouvements_sortie_caisse(),
-                        "total_entrees": total_entrees,
-                        "total_sorties": total_sorties,
-                    }, request=request)
-
-                    html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
-                        "total_entrees": total_entrees,
-                        "total_sorties": total_sorties,
-                        "solde_caisse": total_entrees - total_sorties,
-                    })
-
-                    return HttpResponse(html + html_totaux)
-                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-        return JsonResponse({'error': 'Invalid request'}, status=400)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['caisse'] = self.get_caisse()
-        context['mouvements_entree'] = self.get_mouvements_entree_caisse()
-        context['mouvements_sortie'] = self.get_mouvements_sortie_caisse()
-        context['ventes'] = get_total_ventes()
-        context['total_entrees'] = self.get_total_entrees()
-        context['total_sorties'] = self.get_total_sorties()
-        context['solde_caisse'] = self.get_total_entrees() - self.get_total_sorties()
-        return context
-'''
-
-
-class ClotureCaisseView(LoginRequiredMixin, FormView):
+class ClotureCaisseView(CaisseAccessMixin, FormView):
     form_class = ClotureCaisseValidateForm
     template_name = 'caisse/cloturer_caisse.html'
+
+    def get_caisse(self):
+        return self.get_caisse_courante().caisse
 
     def get_caisse_courante(self):
         """
@@ -500,17 +363,11 @@ class ClotureCaisseView(LoginRequiredMixin, FormView):
         mouvements_qs = MouvementCaisse.objects.filter(caisse=self.get_caisse_courante().pk, type_mouvement='SORTIE')
         return sum(i.montant for i in mouvements_qs)
 
-    def get_total_ventes(self):
-        caisse = self.get_caisse_courante()
-        factures = Facture.objects.filter(date_creation__date=caisse.date_ouverture.date())
-        total_factures = sum(i.total for i in factures)
-        return total_factures
-
     def solde_final(self):
-        solde_initial = self.get_caisse_courante().solde_initial
+        caisse_courante = self.get_caisse_courante()
         entrees = self.get_mouvements_entree_caisse()
         sorties = self.get_mouvements_sortie_caisse()
-        solde_final = solde_initial + entrees - sorties
+        solde_final = get_total_entrees_caisse(caisse_courante, entrees) - sorties
         return solde_final
 
     def post(self, request, *args, **kwargs):
@@ -521,7 +378,7 @@ class ClotureCaisseView(LoginRequiredMixin, FormView):
         caisse_courante.est_ouverte = False
         caisse_courante.save()
 
-        if self.request.user.type_profile.nom == 'Admin':
+        if user_has_role(self.request.user, ROLE_ADMIN):
             caisse = Caisse.objects.get(is_principal=True)
             # Redirection vers l'historique
             response = HttpResponse()
@@ -544,7 +401,7 @@ class ClotureCaisseView(LoginRequiredMixin, FormView):
         return context
 
 
-class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
+class MouvementCaisseDeleteView(CaisseAccessMixin, DeleteView):
     model = MouvementCaisse
     context_object_name = "mouvement_caisse"
     template_name = "caisse/mouvement_caisse_confirm_delete.html"
@@ -577,7 +434,7 @@ class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
             MouvementCaisseService.delete(mouvement=mouvement)
         except ValidationError as e:
             return HttpResponse(
-                f"<div class='alert alert-danger'>{e.message}</div>",
+                f"<div class='alert alert-danger'><i class='fa fa-exclamation-triangle'></i> {str(e)}</div>",
                 status=400,
             )
 
@@ -585,10 +442,10 @@ class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
         mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='ENTREE')
         mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='SORTIE')
 
-        total_entrees = (
-                caisse_courante.solde_initial
-                + get_total_ventes()
-                + sum(m.montant for m in mouvements_entree)
+        ventes = get_total_ventes_caisse(caisse_courante)
+        total_entrees = get_total_entrees_caisse(
+            caisse_courante,
+            sum(m.montant for m in mouvements_entree),
         )
         total_sorties = sum(m.montant for m in mouvements_sortie)
 
@@ -597,8 +454,11 @@ class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
             {
                 "caisse": self.get_caisse(),
                 "caisse_courante": caisse_courante,
+                "ventes": ventes,
                 "mouvements_entree": mouvements_entree,
                 "mouvements_sortie": mouvements_sortie,
+                "total_entrees": total_entrees,
+                "total_sorties": total_sorties,
             },
             request=request,
         )
@@ -618,79 +478,25 @@ class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
         return response
 
 
-'''
-class MouvementCaisseDeleteView(LoginRequiredMixin, DeleteView):
-    model = MouvementCaisse
-    context_object_name = 'mouvement_caisse'
-    template_name = 'caisse/mouvement_caisse_confirm_delete.html'
-
-    def get_caisse_courante(self):
-        return get_object_or_404(CaisseCourante, pk=self.kwargs['caisse_pk'])
-
-    def get_caisse(self):
-        return get_object_or_404(Caisse, pk=self.get_caisse_courante().caisse.pk)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = "Supprimer un mouvement de caisse"
-        context['message'] = (f"Êtes-vous sûr de vouloir supprimer le mouvement : #{self.get_object().motif} ? "
-                              f"Cette action est irréversible.")
-        context['submit_icon'] = 'fa fa-check'
-        context['submit_label'] = 'Valider'
-        context['caisse'] = self.get_caisse_courante()
-        return context
-
-    def get_success_url(self):
-        return reverse('caisse_details', kwargs={'pk': self.object.pk})
-
-    def delete(self, request, *args, **kwargs):
-        mouvement_caisse = self.get_object()
-        caisse_courante = mouvement_caisse.caisse
-
-        mouvement_caisse.delete()
-
-        mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='ENTREE')
-        mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='SORTIE')
-
-        total_entrees = sum(i.montant for i in mouvements_entree) + get_total_ventes() + caisse_courante.solde_initial
-        total_sorties = sum(i.montant for i in mouvements_sortie)
-
-        html_table = render_to_string('caisse/partials/lines_table.html', {
-            "caisse": self.get_caisse(),
-            "caisse_courante": caisse_courante,
-            "mouvements_entree": mouvements_entree,
-            "mouvements_sortie": mouvements_sortie,
-        })
-
-        html_totaux = render_to_string('caisse/partials/caisse_totaux_oob.html', {
-            "solde_caisse": total_entrees - total_sorties,
-            "total_entrees": total_entrees,
-            "total_sorties": total_sorties,
-        })
-
-        response = HttpResponse(html_table + html_totaux)
-        response["HX-Trigger"] = "closeModal"
-        return response
-'''
-
-
-class CaissesView(LoginRequiredMixin, ListView):
+class CaissesView(RoleRequiredMixin, ListView):
     model = Caisse
     context_object_name = 'liste_caisses'
     template_name = 'caisse/caisses.html'
+    allowed_roles = [ROLE_ADMIN, ROLE_CAISSIER, ROLE_GERANT_MAGASIN]
 
     def get_queryset(self):
         user = self.request.user
-        if user.type_profile.nom == 'Admin':
-            caisses = Caisse.objects.all()
-        else:
+        if user_has_role(user, ROLE_ADMIN, ROLE_GERANT_MAGASIN):
+            return Caisse.objects.all()
+        try:
             check_caisse = Caissier.objects.get(user=user)
-            caisses = Caisse.objects.filter(pk=check_caisse.caisse.pk)
+            return Caisse.objects.filter(pk=check_caisse.caisse.pk)
+        except Caissier.DoesNotExist:
+            return Caisse.objects.none()
 
-        return caisses
 
-
-class HistoriqueCaisseView(LoginRequiredMixin, DetailView):
+class HistoriqueCaisseView(RoleRequiredMixin, DetailView):
+    allowed_roles = [ROLE_ADMIN, ROLE_CAISSIER, ROLE_GERANT_MAGASIN]
     model = Caisse
     template_name = 'caisse/caisse_historique.html'
 

@@ -56,6 +56,17 @@ class MouvementCaisse(models.Model):
     type_mouvement = models.CharField(max_length=10, choices=TYPE_CHOICES)
     rubrique = models.ForeignKey(RubriqueCaisse, on_delete=models.PROTECT, related_name='mouvements_rubrique')
     sous_rubrique = models.ForeignKey(SousRubriqueCaisse, on_delete=models.PROTECT, null=True, blank=True)
+    caisse_destination = models.ForeignKey(
+        'Caisse', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='transferts_sortants',
+    )
+    mouvement_transfert_source = models.OneToOneField(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='mouvement_transfert_miroir',
+    )
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     motif = models.CharField(max_length=255)
     reference = models.CharField(max_length=100, blank=True, null=True)  # ex: numéro de facture
@@ -72,6 +83,37 @@ class MouvementCaisse(models.Model):
 
     def __str__(self):
         return f"{self.type_mouvement} - {self.montant}"
+
+    @property
+    def badge_entite(self):
+        """Returns the linked entity name for the rubrique badge in the table.
+
+        Uses prefetch caches when the queryset was built with prefetch_related;
+        falls back to individual queries otherwise.
+        """
+        # Transfert caisse → caisse de destination (FK persisté)
+        if self.caisse_destination_id:
+            return str(self.caisse_destination)
+
+        # Sous-rubrique directe (charges exploitation / personnelles via le form)
+        if self.sous_rubrique_id:
+            return str(self.sous_rubrique)
+
+        # Tables de liaison tiers
+        for related, field in (
+            ("mouvements_caisse_f", "fournisseur"),
+            ("mouvements_caisse_c", "client"),
+            ("mouvements_caisse_cr", "creancier"),
+            ("mouvements_caisse_db", "debiteur"),
+            ("mouvements_caisse_ag", "agent"),
+            ("mouvements_caisse_ce", "sous_rubrique"),
+            ("mouvements_caisse_cp", "sous_rubrique"),
+        ):
+            qs = getattr(self, related).all()
+            if qs:
+                return str(getattr(qs[0], field))
+
+        return None
 
     @property
     def solde_actuel(self):

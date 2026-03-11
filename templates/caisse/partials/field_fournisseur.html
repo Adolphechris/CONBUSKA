@@ -1,7 +1,7 @@
 <div class="form-group">
     <label class="control-label col-md-12 col-sm-12 col-xs-12">Fournisseur</label>
     <div class="col-md-12 col-sm-12 col-xs-12">
-        <select name="fournisseur" class="form-control">
+        <select name="fournisseur" class="form-control js-simple-select">
             {% for fournisseur in fournisseurs %}
                 <option value="{{ fournisseur.pk }}">{{ fournisseur.nom }}</option>
             {% endfor %}

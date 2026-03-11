@@ -483,33 +483,116 @@
     </div>
 
     <script>
-        $(document).ready(function() {
-            // MODAL
-            document.body.addEventListener("closeModal", function () {
-                $('#modalConfirm').modal('hide');
-            });
+        // ── Fonctions globales (accessibles aux attributs hx-on des templates) ──
 
-            document.body.addEventListener("htmx:afterSwap", function (e) {
-                if (e.target.id === "modalContent") {
+        function initSelect2(container) {
+            $(container).find('.js-simple-select').each(function () {
+                if ($(this).data('select2')) {
+                    $(this).select2('destroy');
+                }
+                $(this).select2({ width: '100%' });
+            });
+        }
+
+        var _dtOptions = {
+            destroy: true,
+            pageLength: 10,
+            columnDefs: [{ orderable: false, targets: -1 }],
+            language: {
+                search:       "Rechercher&nbsp;:",
+                lengthMenu:   "Afficher _MENU_ éléments",
+                info:         "Lignes _START_ à _END_ sur _TOTAL_",
+                infoEmpty:    "Aucun résultat disponible",
+                zeroRecords:  "Aucun élément à afficher",
+                emptyTable:   "Aucune donnée disponible",
+                paginate: {
+                    first:    "Premier",
+                    last:     "Dernier",
+                    next:     "Suivant",
+                    previous: "Précédent"
+                }
+            }
+        };
+
+        function initCaisseTables() {
+            if ($('#table-entrees').length) {
+                $('#table-entrees').DataTable(_dtOptions);
+            }
+            if ($('#table-sorties').length) {
+                $('#table-sorties').DataTable(_dtOptions);
+            }
+        }
+
+        function resetForms() {
+            // Vider le formulaire de modification
+            const updateContainer = document.getElementById('updateFormContainer');
+            if (updateContainer) updateContainer.innerHTML = '';
+
+            // Réafficher et réinitialiser le formulaire d'ajout
+            const addContainer = document.getElementById('addFormContainer');
+            if (addContainer) {
+                addContainer.style.display = 'block';
+                const addForm = addContainer.querySelector('form');
+                if (addForm) addForm.reset();
+                initSelect2(addContainer);
+                $(addContainer).find('.js-simple-select').val(null).trigger('change');
+            }
+        }
+
+        $(document).ready(function () {
+
+            // Initialisation Select2 et DataTables au chargement de la page
+            initSelect2(document);
+            initCaisseTables();
+
+            // ── Listener HTMX unique (htmx:afterSettle : DOM pleinement posé) ──
+            document.body.addEventListener('htmx:afterSettle', function (evt) {
+                const target = evt.detail.target;
+
+                // Re-init Select2 dans tout conteneur swappé
+                initSelect2(target);
+
+                // Soumission add / update → le grid entier est rechargé
+                if (target.id === 'formTableContainer') {
+                    resetForms();
+                    initCaisseTables();
+                }
+
+                // Chargement du formulaire de modification dans la colonne gauche
+                if (target.id === 'updateFormContainer') {
+                    initSelect2(target);
+                }
+
+                // Champs dynamiques injectés après changement de rubrique (HTMX)
+                if (target.classList && target.classList.contains('rubrique-dependent-fields')) {
+                    initSelect2(target);
+                }
+
+                // Ouverture modale de confirmation (suppression)
+                if (target.id === 'modalContent') {
                     $('#modalConfirm').modal('show');
                 }
-            });
 
-            // MODAL CLOTURE CAISSE
-            document.body.addEventListener("closeModalCloture", function () {
-                $('#modal-cloture-content').modal('hide');
-            });
-
-            document.body.addEventListener("htmx:afterSwap", function (e) {
-                if (e.target.id === "modal-cloture-content") {
+                // Ouverture modale de clôture de caisse
+                if (target.id === 'modal-cloture-content') {
                     $('#closeRegisterModal').modal('show');
                 }
             });
 
+            // ── Fermeture des modales ──
+            document.body.addEventListener('closeModal', function () {
+                $('#modalConfirm').modal('hide');
+            });
+
+            document.body.addEventListener('closeModalCloture', function () {
+                $('#closeRegisterModal').modal('hide');
+            });
+
+            // ── Highlight sidebar ──
             $('#caisse').addClass('current-page');
             $('#caisses').addClass('active');
             let parent = document.getElementById('caisses');
             parent.childNodes[2].style.display = 'block';
-         });
+        });
     </script>
 {% endblock content %}

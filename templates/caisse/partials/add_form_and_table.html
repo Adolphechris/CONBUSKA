@@ -1,3 +1,8 @@
+{% if error_message %}
+<div class="alert alert-danger" role="alert">
+    <i class="fa fa-exclamation-triangle"></i> {{ error_message }}
+</div>
+{% endif %}
 <div id="formTableContainer">
     <!-- Formulaire à gauche -->
     <div class="col-md-4" id="formContainer">
