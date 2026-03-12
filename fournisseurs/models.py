@@ -40,7 +40,7 @@ class Fournisseur(models.Model):
         if self.is_system:
             return (
                     self.mouvements()
-                    .annotate(prix_total_db=F('montant'))
+                    .annotate(prix_total_db=F('montant') * F('detail__qte'))
                     .aggregate(total=Sum('prix_total_db'))
                     ['total'] or 0
             )
