@@ -1,0 +1,181 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Journal d'activités{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-title" style="margin-bottom:20px;">
+        <div class="title_left">
+            <h3><i class="fa fa-list-alt"></i> Journal d'activités
+                <small>{{ total }} entrée{{ total|pluralize }}</small>
+            </h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="x_panel">
+        <div class="x_title">
+            <h2><i class="fa fa-filter"></i> Filtres</h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+            <form method="get" class="form-inline" style="gap:10px;display:flex;flex-wrap:wrap;align-items:flex-end;">
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">
+                        {{ filter.form.date_debut.label }}
+                    </label>
+                    {{ filter.form.date_debut }}
+                </div>
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">
+                        {{ filter.form.date_fin.label }}
+                    </label>
+                    {{ filter.form.date_fin }}
+                </div>
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">
+                        {{ filter.form.user.label }}
+                    </label>
+                    {{ filter.form.user }}
+                </div>
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">
+                        {{ filter.form.module.label }}
+                    </label>
+                    {{ filter.form.module }}
+                </div>
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">
+                        {{ filter.form.action.label }}
+                    </label>
+                    {{ filter.form.action }}
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa fa-search"></i> Filtrer
+                    </button>
+                    <a href="{% url 'logs' %}" class="btn btn-default btn-sm" style="margin-left:6px;">
+                        <i class="fa fa-times"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="x_panel">
+        <div class="x_content">
+            <div class="table-responsive">
+                <table id="tableLogs" class="table table-striped table-bordered jambo_table">
+                    <thead>
+                        <tr class="headings">
+                            <th>Date / Heure</th>
+                            <th>Utilisateur</th>
+                            <th>Module</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td style="white-space:nowrap;font-size:12px;color:#73879C;">
+                                <i class="fa fa-clock-o"></i>
+                                {{ log.created_at|date:"d/m/Y H:i:s" }}
+                            </td>
+                            <td>
+                                {% if log.user %}
+                                    <span class="label label-default">{{ log.user }}</span>
+                                {% else %}
+                                    <span class="text-muted"><i>Système</i></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="label label-primary">
+                                    <i class="fa {{ log.module_icon }}"></i>
+                                    {{ log.get_module_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.action == 'CREATE' %}
+                                    <span class="label label-success">
+                                {% elif log.action == 'DELETE' %}
+                                    <span class="label label-danger">
+                                {% elif log.action == 'UPDATE' %}
+                                    <span class="label label-info">
+                                {% elif log.action == 'CLOSE' %}
+                                    <span class="label label-warning">
+                                {% elif log.action == 'LOGIN' %}
+                                    <span class="label label-success">
+                                {% else %}
+                                    <span class="label label-default">
+                                {% endif %}
+                                    <i class="fa {{ log.icon }}"></i>
+                                    {{ log.get_action_display }}
+                                </span>
+                            </td>
+                            <td style="font-size:13px;">{{ log.description }}</td>
+                            <td style="font-size:11px;color:#aaa;">
+                                {{ log.ip_address|default:"—" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted" style="padding:30px;">
+                                <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                Aucun log pour ces critères
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="text-center" style="margin-top:15px;">
+                <ul class="pagination pagination-sm">
+                    {% if page_obj.has_previous %}
+                        <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&laquo;</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="active"><span>{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&raquo;</span></li>
+                    {% endif %}
+                </ul>
+                <p class="text-muted" style="font-size:12px;">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} — {{ total }} résultat{{ total|pluralize }}
+                </p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('#logs').addClass('current-page');
+    $('#parametres').parent().addClass('active');
+});
+</script>
+{% endblock %}

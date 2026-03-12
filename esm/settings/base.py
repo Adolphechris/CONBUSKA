@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'rapports.apps.RapportsConfig',
     'users.apps.UsersConfig',
     'users_management.apps.UsersManagementConfig',
-    'logs.apps.LogsConfig',
+    'activity_logs.apps.ActivityLogsConfig',
     # Contrib
     'django.forms',
     'django_filters',
@@ -45,7 +45,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-    'logs.middleware.CurrentUserMiddleware',
+    'activity_logs.middleware.CurrentUserMiddleware',
 ]
 
 ROOT_URLCONF = 'esm.urls'

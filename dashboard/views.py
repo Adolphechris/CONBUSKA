@@ -332,7 +332,7 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         context_data['articles_expiration'] = self.articles_expiration()
 
         # ── Journal d'activités ───────────────────────────────────────────
-        from logs.models import ActivityLog
+        from activity_logs.models import ActivityLog
         context_data['recent_logs'] = ActivityLog.objects.select_related('user').all()[:10]
 
         return context_data
