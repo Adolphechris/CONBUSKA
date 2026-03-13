@@ -17,8 +17,8 @@ class CaisseCourante(models.Model):
                                   related_name='fermetures_caisse')
     date_ouverture = models.DateTimeField(auto_now_add=True)
     date_fermeture = models.DateTimeField(null=True, blank=True)
-    solde_initial = models.DecimalField(max_digits=10, decimal_places=2)
-    solde_final = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    solde_initial = models.DecimalField(max_digits=18, decimal_places=2)
+    solde_final = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
     est_ouverte = models.BooleanField(default=True)
     objects = models.Manager()
 
@@ -67,7 +67,7 @@ class MouvementCaisse(models.Model):
         blank=True,
         related_name='mouvement_transfert_miroir',
     )
-    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    montant = models.DecimalField(max_digits=18, decimal_places=2)
     motif = models.CharField(max_length=255)
     reference = models.CharField(max_length=100, blank=True, null=True)  # ex: numéro de facture
     effectue_par = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True)
