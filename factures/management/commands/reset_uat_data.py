@@ -19,7 +19,7 @@ Sécurité : bloqué si settings.DEBUG est False.
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from esm import settings
+from django.conf import settings
 
 from approvisionnements.models import (
     FraisApprovisionnement,
