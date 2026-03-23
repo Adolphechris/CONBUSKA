@@ -1,100 +1,133 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Commandes {% endblock title %}
+{% block title %}Commandes{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Commandes</h5>
-                </div>
-            </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Historique des commandes<small></small></h2>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div class="content table-responsive display">
-                                <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'commande_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            NOUVELLE COMMANDE
-                                        </a>
-                                    </button>
-                                </div>
-                                <table id="tableCommandes" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title"> Numero</th>
-                                            <th class="column-title"> Date</th>
-                                            <th class="column-title"> Fournisseur</th>
-                                            <th class="column-title"> Taux</th>
-                                            <th class="column-title"> Devise</th>
-                                            <th class="column-title"> Montant </th>
-                                            <th class="column-title"> Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for commande in liste_commandes %}
-										    <tr>
-                                                <td>{{ commande.numero }}</td>
-                                                <td>{{ commande.date_commande }}</td>
-                                                <td>{{ commande.fournisseur }}</td>
-                                                <td>{{ commande.taux }}</td>
-                                                <td>{{ commande.devise }}</td>
-                                                <td>{{ commande.total_commande }}</td>
-                                                <td>
-                                                    <a href="{{ commande.get_absolute_url }}" class="btn btn-warning btn-xs">
-                                                        <i class="fa fa-eye"></i>
-                                                        Details
-                                                    </a>
-                                                </td>
-										    </tr>
-									    {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="right_col" role="main">
+  <div class="">
+    <div class="page-title">
+      <div class="title_left">
+        <h5>Commandes</h5>
+      </div>
     </div>
-    <script>
-        $(document).ready(function () {
-            var t = $('#tableCommandes').DataTable({
-                dom: '<"top">rflt<"bottom"p><"clear">',
-                paging: true,
-			    autoWidth: true,
-                columnDefs: [
 
-                ],
-                language: {
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "sLengthMenu":     "Afficher _MENU_ éléments",
-                    "sLoadingRecords": "Chargement...",
-                    "sProcessing": "Traitement...",
-                    "oPaginate": {
-                        "sFirst":    "Premier",
-                        "sLast":     "Dernier",
-                        "sNext":     "Suivant",
-                        "sPrevious": "Précédent"
-                    },
-                    "oAria": {
-                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
-                    }
-                },
-            });
-        });
-    </script>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Historique des commandes<small></small></h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <div class="content table-responsive display">
+              <div class="row" style="margin-bottom:10px;">
+                <div class="col-xs-12" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+                  <a href="{% url 'commande_create' %}" class="btn btn-success btn-sm">
+                    <i class="fa fa-plus"></i> NOUVELLE COMMANDE
+                  </a>
+                </div>
+              </div>
+
+              <table id="tableCommandes" class="table table-striped jambo_table bulk_action">
+                <thead>
+                  <tr class="headings">
+                    <th class="column-title">Numéro</th>
+                    <th class="column-title">Date</th>
+                    <th class="column-title">Fournisseur</th>
+                    <th class="column-title">Devise</th>
+                    <th class="column-title text-right">Taux</th>
+                    <th class="column-title text-right">Montant</th>
+                    <th class="column-title text-center">Statut</th>
+                    <th class="column-title text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for commande in liste_commandes %}
+                  <tr>
+                    <td><span style="font-family:monospace;">#{{ commande.numero }}</span></td>
+                    <td>{{ commande.date_commande|date:"d/m/Y" }}</td>
+                    <td>{{ commande.fournisseur }}</td>
+                    <td>
+                      {% if commande.devise %}
+                        <span style="font-weight:600;">{{ commande.devise.code }}</span>
+                        <span style="color:#999; font-size:11px;">({{ commande.devise.symbole }})</span>
+                      {% else %}—{% endif %}
+                    </td>
+                    <td class="text-right">{{ commande.taux|floatformat:2 }}</td>
+                    <td class="text-right">
+                      <strong>
+                        {{ commande.total_commande|floatformat:0 }}
+                        {% if commande.devise %}{{ commande.devise.symbole }}{% endif %}
+                      </strong>
+                    </td>
+                    <td class="text-center">
+                      {% if commande.actif %}
+                        <span class="label label-success">En cours</span>
+                      {% else %}
+                        <span class="label label-default">Clôturée</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      <a href="{{ commande.get_absolute_url }}" class="btn btn-primary btn-xs">
+                        <i class="fa fa-eye"></i> Voir
+                      </a>
+                      <button class="btn btn-xs btn-danger"
+                              hx-get="{% url 'commande_delete' commande.pk %}"
+                              hx-target="#modalContent"
+                              hx-trigger="click"
+                              hx-swap="innerHTML">
+                        <i class="fa fa-times-circle"></i> Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="8" class="text-center text-muted" style="padding:30px;">
+                      Aucune commande enregistrée.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Bootstrap (delete / generic) -->
+<div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="modalContent"></div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    $('#commandes').addClass('current-page');
+
+    $('#tableCommandes').DataTable({
+      dom: '<"top">rflt<"bottom"p><"clear">',
+      paging: true,
+      autoWidth: true,
+      order: [[0, 'desc']],
+      language: {
+        sSearch: "Rechercher&nbsp;:",
+        sInfoEmpty: "Aucun résultat disponible",
+        sZeroRecords: "Aucun élément à afficher",
+        sEmptyTable: "Aucune donnée disponible dans le tableau",
+        sLengthMenu: "Afficher _MENU_ éléments",
+        oPaginate: { sFirst:"Premier", sLast:"Dernier", sNext:"Suivant", sPrevious:"Précédent" }
+      },
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      if (evt.target.id === 'modalContent') {
+        $('#mainModal').modal('show');
+      }
+    });
+  });
+</script>
 {% endblock content %}

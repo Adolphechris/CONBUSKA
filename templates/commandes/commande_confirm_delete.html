@@ -1,52 +1,28 @@
-{% extends "base/base.html" %}
-{% load static %}
-
-{% block title %} Commande|Delete {% endblock title %}
-
-{% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 class="modal-title">
-                                    {% if title %}
-                                        {{ title }}
-                                    {% endif %}
-                                </h3>
-                            </div>
-                            {% if message %}
-                                <div class="modal-body text-center">
-                                    <h5>{{ message }}</h5>
-                                </div>
-                            {% endif %}
-                            <div class="modal-footer">
-                                <form action="" class="form" method="post">
-                                    {% csrf_token %}
-                                    {% if next %}
-                                        <input name="next" type="hidden" value="{{ next }}" />
-                                    {% endif %}
-
-                                    {% if previous %}
-                                        <input name="previous" type="hidden" value="{{ previous }}" />
-                                    {% endif %}
-
-                                    <a class="btn btn-default" onclick='{% if previous %}window.location.replace("{{ previous }}");{% else %}history.go(-1);{% endif %}'>
-                                        <i class="fa fa-times"></i> Annuler
-                                    </a>
-
-                                    <button type="submit" class="btn btn-info" data-dismiss="modal">
-                                        <i class="{{ submit_icon|default:'fa fa-check' }}"></i>
-                                        {% if submit_label %}{{ submit_label }}{% else %} Yes {% endif %}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="modal-dialog" role="document">
+  <div class="modal-content">
+    <div class="modal-header" style="background:#c0392b; border-radius:4px 4px 0 0;">
+      <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.8;">&times;</button>
+      <h4 class="modal-title" style="color:#fff; font-size:15px; font-weight:600;">
+        <i class="fa fa-exclamation-triangle"></i>&nbsp;
+        {{ title|default:"Annuler la commande" }}
+      </h4>
     </div>
-{% endblock content %}
+    <div class="modal-body" style="padding:20px; text-align:center;">
+      <p style="font-size:14px; color:#2A3F54; margin:0;">{{ message }}</p>
+    </div>
+    <div class="modal-footer" style="border-top:1px solid #eee;">
+      <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+        <i class="fa fa-times"></i> Annuler
+      </button>
+      <form style="display:inline;"
+            hx-post="{% url 'commande_delete' commande.pk %}"
+            hx-swap="none">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm">
+          <i class="{{ submit_icon|default:'fa fa-check' }}"></i>
+          {{ submit_label|default:"Confirmer" }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

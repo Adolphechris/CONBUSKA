@@ -1,0 +1,222 @@
+<style>
+  /* ── Premium lines table ────────────────────────────────────────────── */
+  .lt-wrapper {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+
+  #tableCommande {
+    width: 100%; border-collapse: collapse; margin: 0;
+    font-size: 13px;
+  }
+
+  /* Header */
+  #tableCommande thead tr {
+    background: linear-gradient(135deg, #2A3F54 0%, #1e3347 100%);
+  }
+  #tableCommande thead th {
+    color: rgba(255,255,255,.75);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    padding: 11px 14px;
+    border: none;
+    white-space: nowrap;
+  }
+  #tableCommande thead th:first-child { border-radius: 0; }
+
+  /* Body rows */
+  #tableCommande tbody tr {
+    border-bottom: 1px solid #f0f2f5;
+    transition: background .15s;
+  }
+  #tableCommande tbody tr:last-child { border-bottom: none; }
+  #tableCommande tbody tr:hover { background: #f7f9fc; }
+  #tableCommande tbody td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    color: #2c3e50;
+  }
+
+  /* Row counter */
+  .lt-counter {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #ecf0f1; color: #7f8c8d;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* Article code badge */
+  .lt-code {
+    display: inline-block;
+    background: #eef2f7; color: #34495e;
+    border-radius: 4px; padding: 2px 7px;
+    font-family: monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: .3px;
+  }
+
+  /* Designation */
+  .lt-designation { font-weight: 500; color: #2A3F54; }
+
+  /* Qty pill */
+  .lt-qty {
+    display: inline-block;
+    background: #e8f4fd; color: #2980b9;
+    border-radius: 12px; padding: 2px 10px;
+    font-weight: 700; font-size: 12px;
+    min-width: 36px; text-align: center;
+  }
+
+  /* Unite */
+  .lt-unite {
+    color: #95a5a6; font-size: 11px; text-transform: uppercase; letter-spacing: .3px;
+  }
+
+  /* Price */
+  .lt-price { color: #555; }
+  .lt-price .lt-currency { color: #aaa; font-size: 11px; margin-left: 2px; }
+
+  /* Total cell */
+  .lt-total-cell .lt-amount {
+    font-weight: 700; color: #27ae60; font-size: 13px;
+  }
+  .lt-total-cell .lt-currency { color: #7dce99; font-size: 11px; margin-left: 2px; }
+
+  /* Action buttons */
+  .lt-actions { display: flex; gap: 4px; justify-content: center; }
+  .lt-btn {
+    width: 30px; height: 30px;
+    border-radius: 7px; border: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; cursor: pointer; transition: all .15s;
+  }
+  .lt-btn-edit   { background: #eaf3fb; color: #2980b9; }
+  .lt-btn-edit:hover   { background: #2980b9; color: #fff; }
+  .lt-btn-delete { background: #fdeaea; color: #e74c3c; }
+  .lt-btn-delete:hover { background: #e74c3c; color: #fff; }
+
+  /* Footer */
+  #tableCommande tfoot tr {
+    background: #f8fafc;
+    border-top: 2px solid #e8ecf0;
+  }
+  #tableCommande tfoot td {
+    padding: 12px 14px;
+  }
+  .lt-footer-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #95a5a6;
+  }
+  .lt-footer-total {
+    font-size: 16px; font-weight: 800; color: #27ae60;
+  }
+  .lt-footer-currency {
+    font-size: 12px; color: #7dce99; margin-left: 3px;
+  }
+
+  /* Empty state */
+  .lt-empty {
+    padding: 40px 20px; text-align: center;
+  }
+  .lt-empty-icon {
+    font-size: 36px; color: #dde1e7; margin-bottom: 10px;
+  }
+  .lt-empty-text { color: #aab0bc; font-size: 13px; }
+</style>
+
+<div class="lt-wrapper">
+  <table id="tableCommande">
+    <thead>
+      <tr>
+        <th style="width:40px; text-align:center;">#</th>
+        <th>Code</th>
+        <th>Désignation</th>
+        <th style="text-align:center;">Qté</th>
+        <th>Unité</th>
+        <th style="text-align:right;">P.U.</th>
+        <th style="text-align:right;">Total ligne</th>
+        {% if commande.actif %}
+        <th style="text-align:center; width:80px;">Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in details_commande %}
+      <tr id="row-{{ i.pk }}">
+
+        <td style="text-align:center;">
+          <span class="lt-counter">{{ forloop.counter }}</span>
+        </td>
+
+        <td><span class="lt-code">{{ i.article.code }}</span></td>
+
+        <td><span class="lt-designation">{{ i.article.designation }}</span></td>
+
+        <td style="text-align:center;">
+          <span class="lt-qty">{{ i.qte }}</span>
+        </td>
+
+        <td><span class="lt-unite">{{ i.article.unite }}</span></td>
+
+        <td class="lt-price" style="text-align:right;">
+          {{ i.prix|floatformat:2 }}
+          {% if commande.devise %}<span class="lt-currency">{{ commande.devise.symbole }}</span>{% endif %}
+        </td>
+
+        <td class="lt-total-cell" style="text-align:right;">
+          <span class="lt-amount">{{ i.prix_total|floatformat:2 }}</span>
+          {% if commande.devise %}<span class="lt-currency">{{ commande.devise.symbole }}</span>{% endif %}
+        </td>
+
+        {% if commande.actif %}
+        <td>
+          <div class="lt-actions">
+            <button class="lt-btn lt-btn-edit"
+                    title="Modifier"
+                    hx-get="{% url 'get_commande_update_form' i.pk %}"
+                    hx-target="#updateFormContainer"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-on:click="document.getElementById('addFormContainer').style.display='none';">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="lt-btn lt-btn-delete"
+                    title="Supprimer"
+                    hx-get="{% url 'delete_article_commande' commande.pk i.pk %}"
+                    hx-target="#modalContent"
+                    hx-trigger="click"
+                    hx-swap="innerHTML">
+              <i class="fa fa-trash-o"></i>
+            </button>
+          </div>
+        </td>
+        {% endif %}
+
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="{% if commande.actif %}8{% else %}7{% endif %}" class="lt-empty">
+          <div class="lt-empty-icon"><i class="fa fa-inbox"></i></div>
+          <div class="lt-empty-text">Aucun article enregistré sur cette commande.</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="{% if commande.actif %}5{% else %}4{% endif %}"></td>
+        <td style="text-align:right;">
+          <span class="lt-footer-label">Total commande</span>
+        </td>
+        <td style="text-align:right;">
+          <span class="lt-footer-total">{{ total|floatformat:2 }}</span>
+          {% if commande.devise %}<span class="lt-footer-currency">{{ commande.devise.symbole }}</span>{% endif %}
+        </td>
+        {% if commande.actif %}<td></td>{% endif %}
+      </tr>
+    </tfoot>
+  </table>
+</div>

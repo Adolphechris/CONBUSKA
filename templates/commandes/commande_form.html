@@ -49,15 +49,11 @@
 
     <script>
         $(document).ready(function() {
-            $('#id_date_commande').daterangepicker({
-                singleDatePicker: true,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            });
-
             $('#commandes').addClass('active');
-         });
+            if (typeof $.fn.select2 !== 'undefined') {
+                $('#id_fournisseur, #id_devise').select2({ width: '100%' });
+            }
+        });
     </script>
 
 {% endblock content %}

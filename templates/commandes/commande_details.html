@@ -1,264 +1,172 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails Commande {% endblock title %}
+{% block title %}Commande N° {{ commande.numero }}{% endblock %}
+
 {% block stylesheets %}
-{{block.super}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+{{ block.super }}
 <style>
-    /* En-tête avec logo */
-    .headerx {
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #e5e7eb;
-    }
+  /* ── Banner ──────────────────────────────────────────────────────────── */
+  .cmd-banner {
+    background: linear-gradient(135deg, #2A3F54 0%, #1a2d3f 100%);
+    border-radius: 12px; padding: 22px 28px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .cmd-banner-left { display:flex; align-items:flex-start; gap:16px; }
+  .cmd-avatar {
+    width: 62px; height: 62px; border-radius: 50%;
+    background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff; flex-shrink: 0;
+  }
+  .cmd-banner-info h2 { color:#fff; margin:0 0 8px; font-size:20px; font-weight:700; }
+  .cmd-meta { display:flex; flex-wrap:wrap; gap:10px; }
+  .cmd-badge { background:rgba(255,255,255,.15); color:rgba(255,255,255,.9); border-radius:20px; padding:2px 12px; font-size:12px; }
+  .cmd-meta-item { color:rgba(255,255,255,.75); font-size:12px; display:flex; align-items:center; gap:5px; }
+  .cmd-meta-item strong { color:#fff; }
+  .cmd-banner-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; align-self:flex-start; }
+  .cmd-btn { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:7px; padding:7px 16px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:background .2s; cursor:pointer; line-height:1; vertical-align:middle; }
+  .cmd-btn:hover { background:rgba(255,255,255,.3); color:#fff; text-decoration:none; }
+  .cmd-btn.back { background:rgba(0,0,0,.15); border-color:rgba(255,255,255,.2); }
+  .cmd-btn.danger { background:rgba(231,76,60,.6); border-color:rgba(231,76,60,.8); }
+  .cmd-btn.success { background:rgba(39,174,96,.6); border-color:rgba(39,174,96,.8); }
 
-    .logo-wrapper {
-      display: block;
-      overflow: hidden;
-    }
+  /* ── Form area ───────────────────────────────────────────────────────── */
+  .add-form-container { background:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.07); padding:16px 18px; margin-bottom:16px; }
+  .form-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#73879C; margin:0 0 12px; }
 
-    .logo-container {
-        width: 48px;
-        height: 48px;
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 8px;
-        display: flex; /* Active flexbox */
-        align-items: center; /* Centre verticalement */
-        justify-content: center; /* Centre horizontalement */
-        margin-right: 15px;
-    }
-
-    .logo-container i {
-        font-size: 24px;
-    }
-
-    .header-text {
-        margin-left: 63px; /* 48px logo + 15px margin */
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-top: 0;
-      margin-bottom: 5px;
-    }
-
-    /* Panneaux personnalisés */
-    .custom-panel {
-      border: none;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
-    }
-
-    .panel-heading {
-      background-color: white;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 15px 20px;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-    }
-
-    .panel-title {
-      font-weight: 600;
-      font-size: 20px;
-      color: #1f2937;
-      margin: 0;
-      line-height: 30px;
-    }
-
-    .panel-body {
-      padding: 20px;
-    }
-    .text-medium {
-        font-weight: 500;
-        font-size: 16px;
-    }
-    .row-spacing {
-        margin-bottom: 10px;
-    }
-    .icon-space {
-  margin-right: 5px;
-}
+  /* ── PDF dropdown ────────────────────────────────────────────────────── */
+  .btn-pdf-group .dropdown-menu { min-width: 200px; }
+  .btn-pdf-group .dropdown-menu a { display:flex; align-items:center; gap:8px; }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Commandes / Editer commande </h5>
-                </div>
-            </div>
-            <div class="row">
-                <div class="x_panel">
-                    <div class="headerx clearfix">
-                        <div class="logo-wrapper">
-                            <div class="logo-container pull-left">
-                                <i class="fa fa-file-text-o"></i>
-                            </div>
-                            <div class="header-text">
-                                <h1>Bon de Commande No. {{ commande.numero }}</h1>
-                                <p class="text-muted">Gestion des commandes fournisseurs</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Informations de la commande -->
-                    <div class="panel panel-default custom-panel">
-                        <div class="panel-heading">
-                            <div class="clearfix">
-                                <h5 class="panel-title pull-left"><i class="fa fa-info-circle icon-space"></i>Informations de la commande</h5>
-                                <a href="{% url 'commande_update' commande.pk %}" class="btn btn-default btn-sm pull-right" id="btnModifier">
-                                  <i class="fa fa-pencil icon-space"></i>Modifier
-                                </a>
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group row-spacing">
-                                        <label class="col-sm-4 control-label">FOURNISSEUR :</label>
-                                        <div class="col-sm-8">
-                                            <p class="form-control-static text-medium">{{ commande.fournisseur }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row-spacing">
-                                        <label class="col-sm-4 control-label">DATE :</label>
-                                        <div class="col-sm-8">
-                                          <p class="form-control-static text-medium">{{ commande.date_commande }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group row-spacing">
-                                        <label class="col-sm-4 control-label">TAUX :</label>
-                                        <div class="col-sm-8">
-                                            <p class="form-control-static text-medium">{{ commande.taux }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row-spacing">
-                                        <label class="col-sm-4 control-label">DEVISE :</label>
-                                        <div class="col-sm-8">
-                                            <p class="form-control-static text-medium">{{ commande.devise }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Détails de la commande -->
-                    <div class="panel panel-default custom-panel">
-                        <div class="panel-heading">
-                            <div class="clearfix">
-                                <h5 class="panel-title pull-left"><i class="fa fa-list-ul icon-space"></i>Détails de la commande</h5>
-                                <a class="btn btn-primary btn-sm pull-right" href="{% url 'add_article_commande' commande.pk %}" id="btnAjouter">
-                                    <i class="fa fa-plus icon-space"></i>Ajouter un article
-                                </a>
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="table-responsive">
-                                <table id="tableCommande" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr>
-                                            <th>N°</th>
-                                            <th>Code</th>
-                                            <th>Article</th>
-                                            <th>Quantité</th>
-                                            <th>Unité</th>
-                                            <th>Prix unitaire</th>
-                                            <th>Prix total</th>
-                                            <th class="text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for i in details_commande %}
-                                            <tr>
-                                                <td class="vertical-middle">1</td>
-                                                <td class="vertical-middle">{{ i.article.code }}</td>
-                                                <td class="vertical-middle">{{ i.article.designation }}</td>
-                                                <td class="vertical-middle">{{ i.qte }}</td>
-                                                <td class="vertical-middle">{{ i.article.unite }}</td>
-                                                <td class="vertical-middle">{{ i.prix }} {{ commande.devise }}</td>
-                                                <td class="vertical-middle text-medium">{{ i.prix_total }} {{ commande.devise }}</td>
-                                                <td class="text-center">
-                                                    <div class="btn-group">
-                                                        <a class="btn btn-default btn-sm action-btn" href="{% url 'update_article_commande' commande.pk i.pk %}">
-                                                            <i class="fa fa-pencil"></i>
-                                                        </a>
-                                                        <button class="btn btn-danger btn-sm action-btn" title="Supprimer">
-                                                            <i class="fa fa-trash-o"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                    <tfoot>
-                                        <tr class="total-row">
-                                            <td colspan="6" class="text-right"><strong>Total:</strong></td>
-                                            <td><strong>{{ commande.total_commande }} {{ commande.devise }}</strong></td>
-                                            <td></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                            <button type="button" class="btn btn-danger">
-                                <i class="fa fa-file-pdf-o"></i>
-                                Bon de commande
-                            </button>
-                        </div>
-                    </div>
-                    <div class="container-fluid text-right">
-                        <a class="btn btn-success" href="{% url 'commande_save' commande.pk %}">
-                            <i class="fa fa-save"></i>
-                            Enregister commande
-                        </a>
-                        <a class="btn btn-default" href="{% url 'commande_delete' commande.pk %}">
-                            <i class="fa fa-trash"></i>
-                            Annuler commande
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-        $(document).ready(function () {
-            var t = $('#tableCommande').DataTable({
-                dom: '<"top">rflt<"bottom"p><"clear">',
-                scrollY: 300,
-                paging: false,
-			    autoWidth: true,
-                columnDefs: [
-                    { orderable: false, targets: 0 },
-                ],
-                language: {
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sInfoEmpty": "Aucun r&eacute;sultat disponible",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "sLengthMenu":     "Afficher _MENU_ éléments",
-                    "sLoadingRecords": "Chargement...",
-                    "sProcessing": "Traitement...",
-                    "oPaginate": {
-                        "sFirst":    "Premier",
-                        "sLast":     "Dernier",
-                        "sNext":     "Suivant",
-                        "sPrevious": "Précédent"
-                    },
-                    "oAria": {
-                        "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
-                    }
-                },
-            });
+<div class="right_col" role="main">
+  <div class="">
 
-            $('#commandes').addClass('active');
-        });
-    </script>
-{% endblock content %}
+    <!-- ── Banner (header + meta) ──────────────────────────────────────── -->
+    <div class="cmd-banner">
+      <div class="cmd-banner-left">
+        <div class="cmd-avatar"><i class="fa fa-file-text-o"></i></div>
+        <div class="cmd-banner-info">
+          <h2>Commande N° {{ commande.numero }}</h2>
+          <div class="cmd-meta">
+            {% if commande.actif %}
+              <span class="cmd-badge" style="background:rgba(39,174,96,.4);">En cours</span>
+            {% else %}
+              <span class="cmd-badge" style="background:rgba(127,140,141,.4);">Clôturée</span>
+            {% endif %}
+
+            <span class="cmd-meta-item"><i class="fa fa-building-o"></i>{{ commande.fournisseur }}</span>
+            <span class="cmd-meta-item"><i class="fa fa-calendar"></i>{{ commande.date_commande|date:"d/m/Y" }}</span>
+
+            {% if commande.devise %}
+              <span class="cmd-meta-item">
+                <i class="fa fa-money"></i>
+                <strong>{{ commande.devise.code }}</strong>&nbsp;({{ commande.devise.symbole }})
+                &nbsp;·&nbsp;taux <strong>{{ commande.taux|floatformat:4 }}</strong>
+              </span>
+            {% else %}
+              <span class="cmd-meta-item"><i class="fa fa-money"></i>taux <strong>{{ commande.taux|floatformat:4 }}</strong></span>
+            {% endif %}
+
+            <span class="cmd-meta-item"><i class="fa fa-user"></i>{{ commande.cree_par }}</span>
+
+            <span class="cmd-meta-item" style="color:#9df0d8;">
+              <i class="fa fa-calculator"></i>
+              Total&nbsp;<strong style="color:#9df0d8;">{{ total|floatformat:2 }}{% if commande.devise %}&nbsp;{{ commande.devise.symbole }}{% endif %}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cmd-banner-actions">
+        <a href="{% url 'commandes' %}" class="cmd-btn back"><i class="fa fa-arrow-left"></i> Retour</a>
+        <a href="{% url 'commande_update' commande.pk %}" class="cmd-btn"><i class="fa fa-pencil"></i> Modifier</a>
+
+        <!-- PDF dropdown -->
+        <div class="btn-pdf-group" style="position:relative;">
+          <button class="cmd-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-file-pdf-o"></i> PDF <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-right">
+            <li>
+              <a href="{% url 'bon_commande_pdf' commande.pk %}" target="_blank">
+                <i class="fa fa-file-text-o"></i> Bon de commande
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'proforma_pdf' commande.pk %}" target="_blank">
+                <i class="fa fa-file-o"></i> Demande de proforma
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {% if commande.actif %}
+          <a href="{% url 'commande_save' commande.pk %}" class="cmd-btn success"><i class="fa fa-save"></i> Clôturer</a>
+          <button class="cmd-btn danger"
+                  hx-get="{% url 'commande_delete' commande.pk %}"
+                  hx-target="#modalContent"
+                  hx-swap="innerHTML"
+                  data-toggle="modal" data-target="#globalModal">
+            <i class="fa fa-trash"></i> Annuler
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Breadcrumb ──────────────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background:transparent; padding:4px 0 12px; margin:0;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li><a href="{% url 'commandes' %}">Commandes</a></li>
+      <li class="active">N° {{ commande.numero }}</li>
+    </ol>
+
+    <!-- ── HTMX Form + Table ───────────────────────────────────────────── -->
+    {% if commande.actif %}
+    <div class="row" id="formTableContainer">
+      {% include "commandes/partials/add_form_and_table.html" %}
+    </div>
+    {% else %}
+    <div class="row">
+      <div class="col-md-12">
+        <div class="table-responsive" id="linesTableContainer">
+          {% include "commandes/partials/lines_table.html" %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Modal global pour confirmations HTMX -->
+<div class="modal fade" id="globalModal" tabindex="-1" role="dialog">
+  <div id="modalContent"></div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#commandes').addClass('current-page');
+
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+      if (evt.detail.target.id === 'modalContent') {
+        $('#globalModal').modal('show');
+      }
+    });
+
+    // Après un update réussi : vider updateFormContainer, réafficher addFormContainer
+    document.body.addEventListener('lineUpdated', function() {
+      document.getElementById('updateFormContainer').innerHTML = '';
+      document.getElementById('addFormContainer').style.display = '';
+    });
+
+    if (typeof $.fn.select2 !== 'undefined') {
+      $('#addForm select').select2({ width: '100%' });
+    }
+  });
+</script>
+{% endblock %}

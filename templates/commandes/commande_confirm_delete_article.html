@@ -1,0 +1,24 @@
+{% load static %}
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; border-radius:4px 4px 0 0;">
+            <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.8;">&times;</button>
+            <h4 class="modal-title" style="font-size:15px; font-weight:600;">
+                <i class="fa fa-trash-o"></i>&nbsp; {{ title }}
+            </h4>
+        </div>
+        <div class="modal-body">
+            <p>{{ message }}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-danger btn-sm"
+                    hx-post="{% url 'delete_article_commande' commande.pk detail.pk %}"
+                    hx-target="#linesTableContainer"
+                    hx-swap="innerHTML"
+                    data-dismiss="modal">
+                <i class="{{ submit_icon }}"></i> {{ submit_label }}
+            </button>
+        </div>
+    </div>
+</div>

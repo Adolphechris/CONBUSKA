@@ -1,0 +1,36 @@
+<div class="add-form-container">
+    <h6 class="form-title">Ajouter un article</h6>
+    <form id="addForm"
+          hx-post="{% url 'commande_line_add' commande.pk %}"
+          hx-target="#linesTableContainer"
+          hx-swap="innerHTML"
+          hx-on:htmx:after-request="if(event.detail.successful) { this.reset(); $(this).find('select').val(null).trigger('change'); }">
+        {% csrf_token %}
+        <div class="form-group{% if add_form.article.errors %} has-error{% endif %}">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-cube"></i></span>
+                {{ add_form.article }}
+            </div>
+            {% if add_form.article.errors %}<span class="help-block text-danger">{{ add_form.article.errors|join:", " }}</span>{% endif %}
+        </div>
+        <div class="form-group{% if add_form.qte.errors %} has-error{% endif %}">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-sort-numeric-asc"></i></span>
+                {{ add_form.qte }}
+            </div>
+            {% if add_form.qte.errors %}<span class="help-block text-danger">{{ add_form.qte.errors|join:", " }}</span>{% endif %}
+        </div>
+        <div class="form-group{% if add_form.prix.errors %} has-error{% endif %}">
+            <div class="input-group">
+                <span class="input-group-addon">
+                    <i class="fa fa-money"></i>
+                </span>
+                {{ add_form.prix }}
+            </div>
+            {% if add_form.prix.errors %}<span class="help-block text-danger">{{ add_form.prix.errors|join:", " }}</span>{% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+            <i class="fa fa-plus-circle icon-space"></i> Ajouter
+        </button>
+    </form>
+</div>
