@@ -221,9 +221,10 @@
                         {% include "approvisionnements/partials/lines_table.html" %}
                     </div>
                     <div style="margin-top:12px;">
-                        <button type="button" class="btn btn-danger btn-sm">
+                        <a href="{% url 'bon_appro_pdf' approvisionnement.pk %}" target="_blank"
+                           class="btn btn-danger btn-sm">
                             <i class="fa fa-file-pdf-o"></i> Bon d'approvisionnement
-                        </button>
+                        </a>
                     </div>
                 </div>
 

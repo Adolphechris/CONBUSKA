@@ -317,3 +317,23 @@ class ArticleApprovisionnementDeleteView(RoleRequiredMixin, DeleteView):
             return response
 
         return redirect(self.get_success_url())
+
+
+class BonApproPdfView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN]
+
+    def get(self, request, pk):
+        from utils.pdf_generator import DocumentGenerator
+        appro = get_object_or_404(Approvisionnement, pk=pk)
+        details = (
+            DetailsApprovisionnement.objects
+            .filter(approvisionnement=appro)
+            .select_related('article', 'fournisseur')
+            .prefetch_related('frais__type_frais')
+            .order_by('pk')
+        )
+        gen = DocumentGenerator(
+            filename=f'bon_appro_{appro.numero}.pdf',
+            title=f'Bon d\'approvisionnement N° {appro.numero}',
+        )
+        return gen.generate_bon_appro(appro=appro, details=details)

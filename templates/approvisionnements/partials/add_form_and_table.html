@@ -11,8 +11,10 @@
     <div class="table-responsive" id="linesTableContainer">
         {% include "approvisionnements/partials/lines_table.html" %}
     </div>
-    <button type="button" class="btn btn-danger mt-3">
-        <i class="fa fa-file-pdf-o"></i>
-        Bon d'approvisionnement
-    </button>
+    <div style="margin-top:12px;">
+        <a href="{% url 'bon_appro_pdf' approvisionnement.pk %}" target="_blank"
+           class="btn btn-danger btn-sm">
+            <i class="fa fa-file-pdf-o"></i> Bon d'approvisionnement
+        </a>
+    </div>
 </div>
