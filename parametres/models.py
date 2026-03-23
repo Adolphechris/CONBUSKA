@@ -6,10 +6,29 @@ from simple_history.models import HistoricalRecords
 from .exceptions import RateNotFoundError
 
 
-DEVISE_CHOICES = [
-    ('USD', 'Dollar US'),
-    ('CDF', 'Franc Congolais'),
-]
+# ── Devise ─────────────────────────────────────────────────────────────────────
+
+class Devise(models.Model):
+    """Table des devises, source unique de vérité pour tout le système."""
+    code    = models.CharField(max_length=5, unique=True, verbose_name='Code')
+    nom     = models.CharField(max_length=50, verbose_name='Nom')
+    symbole = models.CharField(max_length=5, verbose_name='Symbole')
+    actif   = models.BooleanField(default=True, verbose_name='Active')
+    date_creation    = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = 'Devise'
+        verbose_name_plural = 'Devises'
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} – {self.nom}"
+
+    @staticmethod
+    def get_absolute_url():
+        return reverse('devises')
 
 
 # ── Manager ───────────────────────────────────────────────────────────────────
@@ -22,8 +41,8 @@ class TauxEchangeManager(models.Manager):
         prochaine modification manuelle.
 
         Paramètres :
-            source : devise d'origine  (ex: 'USD')
-            cible  : devise de sortie  (ex: 'CDF')
+            source : code devise d'origine  (ex: 'USD')
+            cible  : code devise de sortie  (ex: 'CDF')
             date   : date de référence (défaut : aujourd'hui en heure locale)
 
         Raises:
@@ -115,11 +134,11 @@ class TauxEchange(models.Model):
         simple_history trace l'ancienne valeur automatiquement.
     """
     devise_source   = models.CharField(
-        max_length=3, choices=DEVISE_CHOICES, default='USD',
+        max_length=5, default='USD',
         verbose_name='Devise source'
     )
     devise_cible    = models.CharField(
-        max_length=3, choices=DEVISE_CHOICES, default='CDF',
+        max_length=5, default='CDF',
         verbose_name='Devise cible'
     )
     taux            = models.DecimalField(

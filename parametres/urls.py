@@ -3,6 +3,7 @@ from .views import (
     ParametresView, ParametresUpdateView,
     MagasinsView, MagasinCreateView, MagasinUpdateView,
     TauxEchangeListView, TauxEchangeCreateView, TauxEchangeUpdateView, TauxEchangeHistoryView,
+    DevisesView, DeviseCreateView, DeviseUpdateView,
 )
 
 urlpatterns = [
@@ -15,4 +16,7 @@ urlpatterns = [
     path('taux/create', TauxEchangeCreateView.as_view(), name='taux_echange_create'),
     path('taux/<int:pk>/update', TauxEchangeUpdateView.as_view(), name='taux_echange_update'),
     path('taux/<int:pk>/history', TauxEchangeHistoryView.as_view(), name='taux_echange_history'),
+    path('devises/', DevisesView.as_view(), name='devises'),
+    path('devise/create', DeviseCreateView.as_view(), name='devise_create'),
+    path('devise/<int:pk>/update', DeviseUpdateView.as_view(), name='devise_update'),
 ]

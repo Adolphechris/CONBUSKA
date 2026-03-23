@@ -1,5 +1,5 @@
 from django import forms
-from .models import Parametre, Magasin, TauxEchange
+from .models import Parametre, Magasin, TauxEchange, Devise
 
 
 class ParametresForm(forms.ModelForm):
@@ -77,6 +77,23 @@ class TauxEchangeForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [('', '---------')] + [
+            (d.code, f"{d.code} – {d.nom}")
+            for d in Devise.objects.filter(actif=True).order_by('code')
+        ]
+        self.fields['devise_source'] = forms.ChoiceField(
+            choices=choices,
+            widget=forms.Select(attrs={'class': 'form-control'}),
+            label='Devise source',
+        )
+        self.fields['devise_cible'] = forms.ChoiceField(
+            choices=choices,
+            widget=forms.Select(attrs={'class': 'form-control'}),
+            label='Devise cible',
+        )
+
     def clean(self):
         cleaned = super().clean()
         source = cleaned.get('devise_source')
@@ -86,3 +103,15 @@ class TauxEchangeForm(forms.ModelForm):
                 "La devise source et la devise cible ne peuvent pas être identiques."
             )
         return cleaned
+
+
+class DeviseForm(forms.ModelForm):
+    class Meta:
+        model = Devise
+        fields = ['code', 'nom', 'symbole', 'actif']
+        widgets = {
+            'code':    forms.TextInput(attrs={'class': 'form-control', 'style': 'text-transform:uppercase;'}),
+            'nom':     forms.TextInput(attrs={'class': 'form-control'}),
+            'symbole': forms.TextInput(attrs={'class': 'form-control'}),
+            'actif':   forms.CheckboxInput(attrs={'class': 'flat'}),
+        }

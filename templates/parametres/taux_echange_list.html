@@ -41,8 +41,8 @@
                                     <tbody>
                                         {% for item in taux_list %}
                                             <tr>
-                                                <td>{{ item.get_devise_source_display }}</td>
-                                                <td>{{ item.get_devise_cible_display }}</td>
+                                                <td>{{ item.devise_source }}</td>
+                                                <td>{{ item.devise_cible }}</td>
                                                 <td>{{ item.taux }}</td>
                                                 <td>{{ item.effective_date|date:"d/m/Y" }}</td>
                                                 <td>

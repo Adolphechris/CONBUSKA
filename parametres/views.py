@@ -4,8 +4,8 @@ from django.views.generic.edit import UpdateView
 from django.template.loader import render_to_string
 from django.shortcuts import redirect, render, HttpResponse
 from django.urls import reverse_lazy
-from .models import Parametre, Magasin, TauxEchange
-from .forms import ParametresForm, ParametresEditForm, MagasinCreateForm, TauxEchangeForm
+from .models import Parametre, Magasin, TauxEchange, Devise
+from .forms import ParametresForm, ParametresEditForm, MagasinCreateForm, TauxEchangeForm, DeviseForm
 
 
 class ParametresView(RoleRequiredMixin, FormView):
@@ -180,4 +180,47 @@ class TauxEchangeHistoryView(RoleRequiredMixin, DetailView):
                 record.prev = None
                 record.diff = {}
         context['history_records'] = history
+        return context
+
+
+# ── Devises ───────────────────────────────────────────────────────────────────
+
+class DevisesView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_ADMIN]
+    model = Devise
+    context_object_name = 'devises'
+    template_name = 'parametres/devises.html'
+    ordering = ['code']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['create_form'] = DeviseForm()
+        return context
+
+
+class DeviseCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_ADMIN]
+    model = Devise
+    form_class = DeviseForm
+    template_name = 'parametres/devise_form.html'
+    success_url = reverse_lazy('devises')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Nouvelle devise'
+        context['cancel_url'] = reverse_lazy('devises')
+        return context
+
+
+class DeviseUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_ADMIN]
+    model = Devise
+    form_class = DeviseForm
+    template_name = 'parametres/devise_form.html'
+    success_url = reverse_lazy('devises')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Modifier — {self.object.code}'
+        context['cancel_url'] = reverse_lazy('devises')
         return context

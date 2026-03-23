@@ -1,0 +1,82 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Paramètres | Devises{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="">
+    <div class="page-title">
+      <div class="title_left">
+        <h5><a href="{% url 'parametres' %}">Paramètres</a> / Devises</h5>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Devises</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <div class="row" style="margin-bottom:12px;">
+              <div class="col-md-12 text-right">
+                <a href="{% url 'devise_create' %}" class="btn btn-primary btn-sm">
+                  <i class="fa fa-plus"></i> Nouvelle devise
+                </a>
+              </div>
+            </div>
+            <table id="tableDevises" class="table table-striped jambo_table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Nom</th>
+                  <th>Symbole</th>
+                  <th>Statut</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in devises %}
+                  <tr>
+                    <td><strong>{{ d.code }}</strong></td>
+                    <td>{{ d.nom }}</td>
+                    <td><span style="font-family:monospace; font-weight:700;">{{ d.symbole }}</span></td>
+                    <td>
+                      {% if d.actif %}
+                        <span class="label label-success">Active</span>
+                      {% else %}
+                        <span class="label label-default">Inactive</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'devise_update' d.pk %}" class="btn btn-info btn-xs">
+                        <i class="fa fa-edit"></i> Modifier
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5" class="text-center text-muted" style="padding:24px;">Aucune devise configurée.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  $(document).ready(function() {
+    $('#taux_echange').addClass('active');
+    $('#tableDevises').DataTable({
+      language: {
+        search: "Rechercher :", sLengthMenu: "Afficher _MENU_ lignes",
+        sZeroRecords: "Aucun résultat", sEmptyTable: "Aucune donnée",
+        oPaginate: { sNext:"›", sPrevious:"‹", sFirst:"«", sLast:"»" }
+      },
+      order: [[0, 'asc']],
+    });
+  });
+</script>
+{% endblock %}

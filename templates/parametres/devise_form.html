@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Paramètres | {{ title }}{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+  <div class="">
+    <div class="page-title">
+      <div class="title_left">
+        <h5><a href="{% url 'parametres' %}">Paramètres</a> / <a href="{% url 'devises' %}">Devises</a> / {{ title }}</h5>
+      </div>
+    </div>
+    <div class="col-md-8 col-md-offset-2">
+      <div class="x_panel">
+        <div class="x_title">
+          <h4>{{ title }}</h4>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+          <form class="form-horizontal form-label-left" method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form.visible_fields %}
+              <div class="form-group">
+                <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label }}</label>
+                <div class="col-md-6 col-sm-6 col-xs-12">
+                  {{ field }}
+                  {% for error in field.errors %}
+                    <span style="color:red; font-size:12px;">{{ error }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+            <div class="ln_solid"></div>
+            <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+              <input type="submit" class="btn btn-primary" value="Enregistrer">
+              <a href="{{ cancel_url }}" class="btn btn-default">Annuler</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  $(document).ready(function() {
+    $('#taux_echange').addClass('active');
+  });
+</script>
+{% endblock %}
