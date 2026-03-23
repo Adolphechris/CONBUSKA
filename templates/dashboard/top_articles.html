@@ -1,0 +1,149 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Articles — Statistiques de vente{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-title" style="margin-bottom:20px;">
+        <div class="title_left">
+            <h3>
+                <i class="fa fa-bar-chart"></i> Statistiques des ventes par article
+                <small>{{ total }} article{{ total|pluralize }}</small>
+            </h3>
+        </div>
+        <div class="title_right">
+            <a href="{% url 'index' %}" class="btn btn-default btn-sm pull-right">
+                <i class="fa fa-arrow-left"></i> Retour au tableau de bord
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="x_panel">
+        <div class="x_title">
+            <h2><i class="fa fa-filter"></i> Trier par</h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content" style="padding:15px 20px;">
+            <div class="btn-group">
+                <a href="?tri=ca"
+                   class="btn btn-sm {% if tri == 'ca' %}btn-success{% else %}btn-default{% endif %}">
+                    <i class="fa fa-money"></i> Chiffre d'affaires &darr;
+                </a>
+                <a href="?tri=qte"
+                   class="btn btn-sm {% if tri == 'qte' %}btn-success{% else %}btn-default{% endif %}">
+                    <i class="fa fa-cubes"></i> Volume de vente &darr;
+                </a>
+                <a href="?tri=moins"
+                   class="btn btn-sm {% if tri == 'moins' %}btn-warning{% else %}btn-default{% endif %}">
+                    <i class="fa fa-arrow-down"></i> Moins vendus (CA)
+                </a>
+                <a href="?tri=moins_qte"
+                   class="btn btn-sm {% if tri == 'moins_qte' %}btn-warning{% else %}btn-default{% endif %}">
+                    <i class="fa fa-arrow-down"></i> Moins vendus (volume)
+                </a>
+            </div>
+            <span class="text-muted" style="margin-left:15px;font-size:13px;">
+                Tri actuel : <strong>{{ tri_label }}</strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="x_panel">
+        <div class="x_title">
+            <h2>
+                <i class="fa fa-star"></i>
+                {% if tri == 'ca' or tri == 'qte' %}Articles les plus vendus{% else %}Articles les moins vendus{% endif %}
+                — {{ tri_label }}
+            </h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th>Article</th>
+                            <th style="text-align:right;">Quantité vendue</th>
+                            <th style="text-align:right;">Chiffre d'affaires (FC)</th>
+                            <th style="width:200px;">Progression CA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in page_obj %}
+                        <tr>
+                            <td class="text-muted" style="font-size:12px;">
+                                {{ forloop.counter|add:page_obj.start_index|add:"-1" }}
+                            </td>
+                            <td>
+                                <strong>{{ article.article__designation }}</strong>
+                            </td>
+                            <td style="text-align:right;">
+                                {{ article.total_qte }}
+                            </td>
+                            <td style="text-align:right;font-weight:600;">
+                                {{ article.total_ca|floatformat:0 }} FC
+                            </td>
+                            <td>
+                                <div style="background:#e8e8e8;border-radius:3px;height:8px;overflow:hidden;">
+                                    <div style="width:{% widthratio article.total_ca max_ca 100 %}%;height:100%;background:#26B99A;border-radius:3px;"></div>
+                                </div>
+                                <div style="background:#e8e8e8;border-radius:3px;height:4px;overflow:hidden;margin-top:3px;">
+                                    <div style="width:{% widthratio article.total_qte max_qte 100 %}%;height:100%;background:#5A8DEE;border-radius:3px;opacity:.6;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted" style="padding:40px;">
+                                <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                Aucune donnée de vente disponible
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="text-center" style="margin-top:15px;">
+                <ul class="pagination pagination-sm">
+                    {% if page_obj.has_previous %}
+                        <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&laquo;</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="active"><span>{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li><a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&raquo;</span></li>
+                    {% endif %}
+                </ul>
+                <p class="text-muted" style="font-size:12px;">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} — {{ total }} article{{ total|pluralize }}
+                </p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+</div>
+{% endblock %}

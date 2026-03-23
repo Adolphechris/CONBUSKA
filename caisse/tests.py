@@ -1,9 +1,11 @@
+import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from caisse.forms import CaisseForm
 from caisse.models import (
@@ -12,8 +14,15 @@ from caisse.models import (
     MouvementCaisse,
     RubriqueCaisse,
 )
+from caisse.selectors import get_total_ventes_caisse
 from caisse.services.mouvement_caisse import MouvementCaisseService
 from caisse.views import OuvertureCaisseView
+from factures.tests.factories import (
+    ClientFactory,
+    DetailsFactureFactory,
+    FactureClientFactory,
+    FactureFactory,
+)
 
 User = get_user_model()
 
@@ -353,3 +362,123 @@ class OuvertureCaisseViewTestCase(TestCase):
         view.get_caisse = lambda: caisse
 
         self.assertEqual(view.solde_initial(), Decimal("0"))
+
+
+class GetTotalVentesCaisseTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="caissier_test",
+            password="testpass123",
+            force_password_change=False,
+        )
+        self.principal = Caisse.objects.create(
+            nom="Caisse Principale",
+            is_principal=True,
+        )
+        self.secondaire = Caisse.objects.create(
+            nom="Caisse Secondaire",
+            is_principal=False,
+        )
+
+    def _create_caisse_courante(self, *, caisse: Caisse, date_ouverture):
+        caisse_courante = CaisseCourante.objects.create(
+            caisse=caisse,
+            ouvert_par=self.user,
+            solde_initial=Decimal("1000.00"),
+            est_ouverte=True,
+        )
+        CaisseCourante.objects.filter(pk=caisse_courante.pk).update(
+            date_ouverture=date_ouverture
+        )
+        caisse_courante.refresh_from_db()
+        return caisse_courante
+
+    def test_get_total_ventes_caisse_exclut_facture_client(self):
+        date_ouverture = timezone.now().replace(
+            hour=8,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        caisse_courante = self._create_caisse_courante(
+            caisse=self.principal,
+            date_ouverture=date_ouverture,
+        )
+        date_vente = date_ouverture.date()
+
+        facture_comptoir = FactureFactory(
+            cree_par=self.user,
+            date_facture=date_vente,
+            client_comptoir="Client comptoir",
+            valide=True,
+        )
+        DetailsFactureFactory(
+            facture=facture_comptoir,
+            qte=2,
+            prix=Decimal("100.00"),
+        )
+
+        facture_client = FactureFactory(
+            cree_par=self.user,
+            date_facture=date_vente,
+            valide=True,
+        )
+        DetailsFactureFactory(
+            facture=facture_client,
+            qte=3,
+            prix=Decimal("100.00"),
+        )
+        FactureClientFactory(
+            facture=facture_client,
+            client=ClientFactory(),
+        )
+
+        facture_non_validee = FactureFactory(
+            cree_par=self.user,
+            date_facture=date_vente,
+            client_comptoir="Brouillon",
+            valide=False,
+        )
+        DetailsFactureFactory(
+            facture=facture_non_validee,
+            qte=5,
+            prix=Decimal("100.00"),
+        )
+
+        facture_autre_jour = FactureFactory(
+            cree_par=self.user,
+            date_facture=date_vente - datetime.timedelta(days=1),
+            client_comptoir="Autre jour",
+            valide=True,
+        )
+        DetailsFactureFactory(
+            facture=facture_autre_jour,
+            qte=7,
+            prix=Decimal("100.00"),
+        )
+
+        total = get_total_ventes_caisse(caisse_courante=caisse_courante)
+
+        self.assertEqual(total, Decimal("200.00"))
+
+    def test_get_total_ventes_caisse_retourne_zero_hors_caisse_principale(self):
+        caisse_courante = self._create_caisse_courante(
+            caisse=self.secondaire,
+            date_ouverture=timezone.now(),
+        )
+
+        facture = FactureFactory(
+            cree_par=self.user,
+            date_facture=caisse_courante.date_ouverture.date(),
+            client_comptoir="Client comptoir",
+            valide=True,
+        )
+        DetailsFactureFactory(
+            facture=facture,
+            qte=2,
+            prix=Decimal("100.00"),
+        )
+
+        total = get_total_ventes_caisse(caisse_courante=caisse_courante)
+
+        self.assertEqual(total, Decimal("0"))

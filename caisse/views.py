@@ -14,7 +14,6 @@ from .models import (Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse, So
 from clients.models import Client
 from fournisseurs.models import Fournisseur
 from creanciers.models import Creancier, Debiteur
-from factures.models import Facture
 from users.models import Caissier
 from users.permissions import (
     CaisseAccessMixin, RoleRequiredMixin,
@@ -23,29 +22,15 @@ from users.permissions import (
 )
 from paie.models import Agent
 from .forms import OuvertureCaisseValidateForm, ClotureCaisseValidateForm, CaisseForm
+from .selectors import get_total_ventes_caisse
 from .services.mouvement_caisse import MouvementCaisseService
 
 logger = logging.getLogger(__name__)
 
-
-def get_total_ventes_caisse(caisse_courante):
-    """
-    Les ventes du jour n'alimentent que la caisse principale.
-    On retient uniquement les factures validées et on se base sur la
-    date métier de vente (`date_facture`), pas sur la date technique de création.
-    """
-    if not caisse_courante or not caisse_courante.caisse.is_principal:
-        return Decimal("0")
-
-    factures = Facture.objects.filter(
-        date_facture=caisse_courante.date_ouverture.date(),
-        valide=True,
-    )
-    return sum((facture.total for facture in factures), Decimal("0"))
-
-
 def get_total_entrees_caisse(caisse_courante, entrees):
-    return caisse_courante.solde_initial + get_total_ventes_caisse(caisse_courante) + entrees
+    return caisse_courante.solde_initial + get_total_ventes_caisse(
+        caisse_courante=caisse_courante
+    ) + entrees
 
 
 def assert_caisse_write_access(user, caisse: Caisse):
@@ -230,7 +215,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
         return self.render_to_response(context)
 
     def render_state(self, request, error_message=None):
-        ventes = get_total_ventes_caisse(self.object)
+        ventes = get_total_ventes_caisse(caisse_courante=self.object)
         total_entrees = self.total_entrees()
         total_sorties = self.total_sorties()
 
@@ -334,7 +319,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
             "caisse": self.object.caisse,
             "mouvements_entree": self.mouvements("ENTREE"),
             "mouvements_sortie": self.mouvements("SORTIE"),
-            "ventes": get_total_ventes_caisse(self.object),
+            "ventes": get_total_ventes_caisse(caisse_courante=self.object),
             "total_entrees": total_entrees,
             "total_sorties": total_sorties,
             "solde_caisse": total_entrees - total_sorties,
@@ -442,7 +427,7 @@ class MouvementCaisseDeleteView(CaisseAccessMixin, DeleteView):
         mouvements_entree = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='ENTREE')
         mouvements_sortie = MouvementCaisse.objects.filter(caisse=caisse_courante, type_mouvement='SORTIE')
 
-        ventes = get_total_ventes_caisse(caisse_courante)
+        ventes = get_total_ventes_caisse(caisse_courante=caisse_courante)
         total_entrees = get_total_entrees_caisse(
             caisse_courante,
             sum(m.montant for m in mouvements_entree),

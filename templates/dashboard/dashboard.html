@@ -538,8 +538,9 @@
 
     <div class="col-md-4">
         <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-star"></i> Articles les Plus Vendus</h3>
+            <div class="panel-heading" style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="panel-title"><i class="fa fa-star"></i> Articles les Plus Vendus <small>top 10</small></h3>
+                <a href="{% url 'top_articles' %}" class="btn btn-xs btn-default"><i class="fa fa-list"></i> Voir tout</a>
             </div>
             <div class="panel-body">
                 {% if top_articles %}

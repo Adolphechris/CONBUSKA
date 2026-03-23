@@ -2,7 +2,8 @@ import logging
 
 from django.conf import settings
 from django.shortcuts import redirect
-from django.views.generic import TemplateView, RedirectView, View
+from django.views.generic import TemplateView, RedirectView, View, ListView
+from django.core.paginator import Paginator
 from django.urls import reverse_lazy
 from users.permissions import RoleRequiredMixin, ALL_ROLES
 import json
@@ -18,7 +19,8 @@ from factures.models import Facture, DetailsFacture
 from parametres.models import Magasin
 from produits.models import Article, Stock, MouvementStock
 from commandes.models import Commande
-from django.db.models import Sum, F, DecimalField, Value, Prefetch, Case, When, IntegerField, Q
+from caisse.selectors import get_total_ventes_caisse
+from django.db.models import Sum, F, DecimalField, Value, Prefetch, Case, When, IntegerField, Q, Max
 from django.db.models.functions import ExtractMonth, Coalesce
 from django.utils import timezone
 from decimal import Decimal
@@ -166,6 +168,7 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         result = []
         total = Decimal('0')
         for cc in caisses:
+            ventes = get_total_ventes_caisse(caisse_courante=cc)
             entrees = cc.mouvements.filter(type_mouvement='ENTREE').aggregate(
                 t=Coalesce(Sum('montant'), Value(0),
                            output_field=DecimalField(max_digits=14, decimal_places=2))
@@ -174,12 +177,13 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
                 t=Coalesce(Sum('montant'), Value(0),
                            output_field=DecimalField(max_digits=14, decimal_places=2))
             )['t']
-            solde = cc.solde_initial + entrees - sorties
+            solde = cc.solde_initial + ventes + entrees - sorties
             total += solde
             result.append({
                 'cc': cc,
                 'nom': cc.caisse.nom,
                 'solde_initial': cc.solde_initial,
+                'ventes': ventes,
                 'entrees': entrees,
                 'sorties': sorties,
                 'solde': solde,
@@ -318,9 +322,9 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         context_data['categories_data'] = categories_data
 
         # ── Top articles + progress bars dynamiques ───────────────────────
-        articles_ca = self.top_articles()
+        articles_ca = self.top_articles()[:10]
         context_data['top_articles'] = articles_ca
-        first_article = articles_ca.first()
+        first_article = articles_ca[0] if articles_ca else None
         context_data['top_articles_max'] = (
             first_article['total_ca'] if first_article else Decimal('1')
         )
@@ -353,3 +357,54 @@ class DashboardBaseView(RoleRequiredMixin, View):
 
             else:
                 pass
+
+
+class TopArticlesView(RoleRequiredMixin, TemplateView):
+    template_name = 'dashboard/top_articles.html'
+    allowed_roles = ALL_ROLES
+    PER_PAGE = 25
+
+    TRI_CHOICES = {
+        'ca': ('-total_ca', 'Chiffre d\'affaires'),
+        'qte': ('-total_qte', 'Volume de vente'),
+        'moins': ('total_ca', 'Moins vendus (CA)'),
+        'moins_qte': ('total_qte', 'Moins vendus (volume)'),
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tri = self.request.GET.get('tri', 'ca')
+        if tri not in self.TRI_CHOICES:
+            tri = 'ca'
+
+        order_field, tri_label = self.TRI_CHOICES[tri]
+
+        qs = (
+            DetailsFacture.objects
+            .annotate(ca=F('qte') * F('prix'))
+            .values('article__designation', 'article__id')
+            .annotate(
+                total_qte=Sum('qte'),
+                total_ca=Sum('ca', output_field=DecimalField(max_digits=18, decimal_places=2))
+            )
+            .order_by(order_field)
+        )
+
+        total_count = qs.count()
+        max_vals = qs.aggregate(max_ca=Max('total_ca'), max_qte=Max('total_qte'))
+        max_ca = max_vals['max_ca'] or Decimal('1')
+        max_qte = max_vals['max_qte'] or 1
+
+        paginator = Paginator(qs, self.PER_PAGE)
+        page_num = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_num)
+
+        context['page_obj'] = page_obj
+        context['is_paginated'] = page_obj.has_other_pages()
+        context['total'] = total_count
+        context['tri'] = tri
+        context['tri_label'] = tri_label
+        context['tri_choices'] = self.TRI_CHOICES
+        context['max_ca'] = max_ca or Decimal('1')
+        context['max_qte'] = max_qte or 1
+        return context
