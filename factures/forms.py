@@ -4,7 +4,7 @@ from factures.models import Facture, DetailsFacture, FactureClient
 from produits.models import Article, Stock
 from parametres.models import Magasin
 from clients.models import Client
-from utils.custom_field import ArticleChoiceField
+from utils.custom_field import ArticleChoiceField, ArticleSelectWidget
 
 """
 class InfosFactureForm(forms.Form):
@@ -44,7 +44,7 @@ class ArticleFactureAddForm(forms.ModelForm):
     article = ArticleChoiceField(
         queryset=Article.objects.none(),
         empty_label="--- Sélectionner un article ---",
-        widget = forms.Select(attrs={'class': 'form-control js-simple-select'}),
+        widget=ArticleSelectWidget(attrs={'class': 'form-control js-simple-select', 'id': 'id_article_add'}),
     )
     class Meta:
         model = DetailsFacture

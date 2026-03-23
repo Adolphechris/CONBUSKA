@@ -21,6 +21,11 @@
             </button>
         </div>
     </div>
+
+    <!-- Indicateur de prix appliqué -->
+    <div id="priceIndicator" style="display:none;margin-top:2px;padding:8px 10px;border-radius:5px;font-size:12px;font-weight:600;transition:all .2s;">
+    </div>
+
     <div class="form-actions">
         <button type="submit" class="btn btn-primary-premium btn-block">
             <i class="fa fa-plus-circle"></i>
@@ -28,3 +33,75 @@
         </button>
     </div>
 </form>
+
+<script>
+(function () {
+    function updatePriceIndicator() {
+        var select   = document.getElementById('id_article_add');
+        var qteInput = document.querySelector('#addForm input[name="qte"]');
+        var indicator = document.getElementById('priceIndicator');
+
+        if (!select || !qteInput || !indicator) return;
+
+        var opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) {
+            indicator.style.display = 'none';
+            return;
+        }
+
+        var pv       = parseFloat(opt.getAttribute('data-prix-vente') || '0');
+        var pvg      = parseFloat(opt.getAttribute('data-prix-vente-gros') || '0');
+        var seuil    = parseInt(opt.getAttribute('data-seuil-gros') || '0', 10);
+        var qte      = parseInt(qteInput.value || '0', 10);
+
+        // Pas de tarif gros configuré → on n'affiche rien de spécial
+        if (!seuil || seuil <= 0) {
+            indicator.style.display = 'none';
+            return;
+        }
+
+        var grossMode = qte >= seuil;
+        if (grossMode) {
+            indicator.style.display = 'block';
+            indicator.style.background = '#EAFAF1';
+            indicator.style.border = '1px solid #A9DFBF';
+            indicator.style.color = '#1E8449';
+            indicator.innerHTML = '<i class="fa fa-check-circle"></i> Prix gros appliqué&nbsp;: <strong>' + pvg.toLocaleString('fr-CD') + ' FC</strong>';
+        } else {
+            indicator.style.display = 'block';
+            indicator.style.background = '#EBF5FB';
+            indicator.style.border = '1px solid #AED6F1';
+            indicator.style.color = '#1A5276';
+            indicator.innerHTML =
+                '<i class="fa fa-tag"></i> Prix unitaire&nbsp;: <strong>' + pv.toLocaleString('fr-CD') + ' FC</strong>' +
+                '<span style="margin-left:10px;font-weight:400;color:#5D6D7E;">' +
+                '(prix gros à partir de ' + seuil + ' unité' + (seuil > 1 ? 's' : '') + '&nbsp;: ' + pvg.toLocaleString('fr-CD') + ' FC)' +
+                '</span>';
+        }
+    }
+
+    function bindIndicator() {
+        var qteInput = document.querySelector('#addForm input[name="qte"]');
+        if (qteInput) {
+            qteInput.removeEventListener('input', updatePriceIndicator);
+            qteInput.addEventListener('input', updatePriceIndicator);
+        }
+
+        // Select2 déclenche "change" sur l'élément <select> natif
+        var select = document.getElementById('id_article_add');
+        if (select) {
+            $(select).off('change.priceIndicator').on('change.priceIndicator', updatePriceIndicator);
+        }
+
+        updatePriceIndicator();
+    }
+
+    // Initialisation initiale + après chaque rechargement HTMX du conteneur
+    document.addEventListener('DOMContentLoaded', bindIndicator);
+    document.body.addEventListener('htmx:afterSettle', function (evt) {
+        if (evt.detail.target.id === 'formTableContainer') {
+            bindIndicator();
+        }
+    });
+})();
+</script>

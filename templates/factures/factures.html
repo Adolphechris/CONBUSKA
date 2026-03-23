@@ -20,13 +20,19 @@
                         </div>
                         <div class="x_content">
                             <div class="content table-responsive display">
-                                <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'facture_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            NOUVELLE FACTURE
+                                <div class="row" style="margin-bottom:10px;">
+                                    <div class="col-xs-12" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+                                        {% if is_admin %}
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm"
+                                                data-toggle="modal" data-target="#purgeModal">
+                                            <i class="fa fa-trash-o"></i> Nettoyer brouillons
+                                        </button>
+                                        {% endif %}
+                                        <a href="{% url 'facture_create' %}" class="btn btn-success btn-sm">
+                                            <i class="fa fa-plus"></i> NOUVELLE FACTURE
                                         </a>
-                                    </button>
+                                    </div>
                                 </div>
                                 <table id="tableFactures" class="table table-striped jambo_table bulk_action">
                                     <thead>
@@ -105,7 +111,7 @@
         </div>
     </div>
 
-    <!-- Modal Bootstrap -->
+    <!-- Modal Bootstrap (delete / generic) -->
     <div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" id="modalContent">
@@ -113,6 +119,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Purge brouillons (admin) -->
+    {% if is_admin %}
+    <div class="modal fade" id="purgeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#E67E22; color:#fff; border-radius:4px 4px 0 0;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.8;">&times;</button>
+                    <h4 class="modal-title" style="font-size:15px; font-weight:600;">
+                        <i class="fa fa-trash-o"></i>&nbsp; Nettoyer les brouillons vides
+                    </h4>
+                </div>
+                <div class="modal-body" style="padding:20px;">
+                    <p style="font-size:13px; color:#2A3F54; margin-bottom:6px;">
+                        Cette action supprime <strong>tous les brouillons sans articles</strong>, tous utilisateurs confondus.
+                    </p>
+                    <p style="font-size:12px; color:#E74C3C; margin:0;">
+                        <i class="fa fa-exclamation-triangle"></i> Action irréversible.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid #eee;">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Annuler</button>
+                    <button type="button"
+                            class="btn btn-warning btn-sm"
+                            hx-post="{% url 'purge_empty_drafts' %}"
+                            hx-target="body"
+                            hx-swap="none"
+                            data-dismiss="modal">
+                        <i class="fa fa-trash-o"></i>&nbsp; Confirmer la purge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 <script>
     $(document).ready(function () {

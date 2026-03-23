@@ -1,3 +1,4 @@
+import datetime
 import decimal
 from django.core.exceptions import ValidationError
 from users.permissions import RoleRequiredMixin, ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN, user_has_role
@@ -15,8 +16,10 @@ from django.core.exceptions import PermissionDenied
 from .models import Facture, DetailsFacture, Livreur, FactureClient
 from .forms import ArticleFactureAddForm, ArticleFactureUpdateForm, InfosFactureForm, FactureClientForm
 from .services import FactureService
+from .exceptions import FactureError
 import random
 from parametres.models import get_taux_usd_cdf
+from utils.pdf_generator import DocumentGenerator
 
 
 class FacturesView(RoleRequiredMixin, ListView):
@@ -25,6 +28,11 @@ class FacturesView(RoleRequiredMixin, ListView):
     context_object_name = 'liste_factures'
     template_name = 'factures/factures.html'
     ordering = ['-numero']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_admin'] = user_has_role(self.request.user, ROLE_ADMIN)
+        return context
 
 
 class BaseFactureCreateMixin:
@@ -43,7 +51,17 @@ class BaseFactureCreateMixin:
         return get_taux_usd_cdf()
 
     def create_new_facture(self, user):
-        """Crée une nouvelle facture avec un livreur choisi aléatoirement."""
+        """Crée une nouvelle facture avec un livreur choisi aléatoirement.
+        Purge d'abord les brouillons vides de cet utilisateur créés avant aujourd'hui."""
+        today = datetime.date.today()
+        Facture.objects.filter(
+            cree_par=user,
+            valide=False,
+            date_creation__date__lt=today,
+        ).exclude(
+            pk__in=DetailsFacture.objects.values('facture_id')
+        ).delete()
+
         get_livreur = self.get_random_livreur()
         facture = Facture.objects.create(
             devise='FC',
@@ -73,9 +91,17 @@ class FactureValidateAndCreateView(RoleRequiredMixin, BaseFactureCreateMixin, Vi
     def post(self, request, *args, **kwargs):
         facture = get_object_or_404(Facture, pk=kwargs.get("pk"))
 
+        date_facture = None
+        date_str = request.POST.get('date_facture')
+        if date_str:
+            try:
+                date_facture = datetime.date.fromisoformat(date_str)
+            except ValueError:
+                pass
+
         try:
-            FactureService.valider(facture=facture, user=request.user)
-        except ValidationError as e:
+            FactureService.valider(facture=facture, user=request.user, date_facture=date_facture)
+        except (ValidationError, FactureError) as e:
             return HttpResponse(str(e), status=400)
 
         new_facture = self.create_new_facture(self.request.user)
@@ -423,3 +449,33 @@ class FactureDeleteView(RoleRequiredMixin, View):
             return response
 
         return redirect("factures")
+
+
+class PurgeEmptyDraftsView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN]
+
+    def post(self, request):
+        Facture.objects.filter(
+            valide=False,
+        ).exclude(
+            pk__in=DetailsFacture.objects.values('facture_id')
+        ).delete()
+
+        if request.headers.get("HX-Request"):
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse('factures')
+            return response
+        return redirect('factures')
+
+
+class FacturePdfView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_ADMIN, ROLE_FACTURIER, ROLE_GERANT_MAGASIN]
+
+    def get(self, request, pk):
+        facture = get_object_or_404(Facture, pk=pk)
+        details = DetailsFacture.objects.filter(facture=facture).select_related('article')
+        gen = DocumentGenerator(
+            filename=f'facture_{facture.numero}.pdf',
+            title=f'Facture N° {facture.numero}',
+        )
+        return gen.generate_facture(facture=facture, details=details)

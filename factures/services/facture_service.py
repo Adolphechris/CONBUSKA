@@ -3,7 +3,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import Sum, F, IntegerField, Case, When
 from produits.models import Magasin, MouvementStock
 from produits.services import StockService
-from factures.models import Facture, DetailsFacture
+from factures.models import Facture, DetailsFacture, FactureClient
+from factures.exceptions import ClientComptorManquantError
 
 
 class FactureService:
@@ -176,7 +177,10 @@ class FactureService:
 
         # Mise à jour de la ligne de détail (draft ou confirmed)
         detail.qte = qte_nouvelle
-        detail.prix = article.prix_vente
+        if article.seuil_gros and qte_nouvelle >= article.seuil_gros:
+            detail.prix = article.prix_vente_gros
+        else:
+            detail.prix = article.prix_vente
         detail.save(update_fields=["qte", "prix"])
 
         return detail
@@ -209,7 +213,7 @@ class FactureService:
 
     @staticmethod
     @transaction.atomic
-    def valider(*, facture: Facture, user):
+    def valider(*, facture: Facture, user, date_facture=None):
         """
         Transition DRAFT → CONFIRMED.
 
@@ -237,6 +241,12 @@ class FactureService:
         if not facture.facture_details.exists():
             raise ValidationError("Une facture sans articles ne peut pas être validée.")
 
+        has_facture_client = FactureClient.objects.filter(facture=facture).exists()
+        if not has_facture_client and not facture.client_comptoir:
+            raise ClientComptorManquantError(
+                "Le nom du client est obligatoire pour valider la facture."
+            )
+
         magasin = Magasin.objects.get(is_principal=True)
 
         # 1 OUT net par article (FIFO) — verrou optimiste posé ici
@@ -250,10 +260,14 @@ class FactureService:
                 source=facture,
             )
 
+        update_fields = ["valide", "actif", "modifie_par"]
         facture.valide = True
         facture.actif = False
         facture.modifie_par = user
-        facture.save(update_fields=["valide", "actif", "modifie_par"])
+        if date_facture is not None:
+            facture.date_facture = date_facture
+            update_fields.append("date_facture")
+        facture.save(update_fields=update_fields)
 
     @staticmethod
     @transaction.atomic

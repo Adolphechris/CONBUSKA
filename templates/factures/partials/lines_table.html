@@ -77,9 +77,10 @@
     <div class="row">
         <div class="col-md-6 text-left">
             <div class="btn-group">
-                <button class="btn btn-danger" id="btnPdf">
+                <a href="{% url 'facture_pdf' facture.pk %}" target="_blank"
+                   class="btn btn-danger" id="btnPdf">
                     <i class="fa fa-file-pdf-o icon-space"></i>PDF
-                </button>
+                </a>
                 <button class="btn btn-warning" id="btnPrint">
                     <i class="fa fa-print icon-space"></i>POS
                 </button>
@@ -93,11 +94,9 @@
                             <i class="fa fa-save icon-space"></i> Enregistrer le brouillon
                         </a>
                     </button>
-                    <button hx-post="{% url 'validate_facture' facture.pk %}"
-                            hx-target="body"
-                            hx-swap="none"
-                            class="btn btn-primary"
-                            id="btnEnregistrer">
+                    <button class="btn btn-primary" id="btnEnregistrer"
+                            type="button"
+                            data-toggle="modal" data-target="#validateDateModal">
                         <i class="fa fa-check-circle icon-space"></i>Valider la facture
                     </button>
                 {% endif %}
@@ -116,4 +115,45 @@
         </div>
     </div>
 </div>
+
+<!-- ── Modal confirmation validation avec date ───────────────────────────── -->
+{% if not facture.valide %}
+<div class="modal fade" id="validateDateModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg,#26B99A,#169F85); color:#fff; border-radius:4px 4px 0 0;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.8;">&times;</button>
+                <h4 class="modal-title" style="font-size:15px; font-weight:600;">
+                    <i class="fa fa-calendar-check-o"></i>&nbsp; Date de la facture
+                </h4>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <p style="font-size:12px; color:#73879C; margin-bottom:12px;">
+                    Confirmez ou ajustez la date avant validation :
+                </p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <input type="date"
+                           id="validateDate"
+                           name="date_facture"
+                           class="form-control"
+                           value="{{ facture.date_facture|date:'Y-m-d' }}">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #eee;">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button"
+                        class="btn btn-primary btn-sm"
+                        hx-post="{% url 'validate_facture' facture.pk %}"
+                        hx-include="#validateDate"
+                        hx-target="body"
+                        hx-swap="none">
+                    <i class="fa fa-check-circle"></i>&nbsp; Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 </div>
