@@ -74,6 +74,7 @@
       <div class="det-banner-actions">
         <a href="{% url 'creanciers' %}" class="det-btn back"><i class="fa fa-arrow-left"></i> Retour</a>
         <a href="{% url 'creancier_update' creancier.pk %}" class="det-btn"><i class="fa fa-pencil"></i> Modifier</a>
+        <a href="{% url 'creancier_releve_pdf' creancier.pk %}" target="_blank" class="det-btn"><i class="fa fa-file-pdf-o"></i> Relevé PDF</a>
       </div>
     </div>
 

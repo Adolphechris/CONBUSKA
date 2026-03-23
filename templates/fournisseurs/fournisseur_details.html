@@ -78,6 +78,7 @@
       <div class="det-banner-actions">
         <a href="{% url 'fournisseurs' %}" class="det-btn back"><i class="fa fa-arrow-left"></i> Retour</a>
         <a href="{% url 'fournisseur_update' fournisseur.pk %}" class="det-btn"><i class="fa fa-pencil"></i> Modifier</a>
+        <a href="{% url 'fournisseur_releve_pdf' fournisseur.pk %}" target="_blank" class="det-btn"><i class="fa fa-file-pdf-o"></i> Relevé PDF</a>
       </div>
     </div>
 

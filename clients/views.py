@@ -1,5 +1,6 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django_filters.views import FilterView
 from .models import Client
@@ -77,3 +78,54 @@ class ClientDeleteView(RoleRequiredMixin, DeleteView):
         context['submit_icon'] = 'fa fa-check'
         context['submit_label'] = 'Valider'
         return context
+
+
+class ClientRelevePdfView(RoleRequiredMixin, View):
+    allowed_roles = _ALL_CLIENT_ROLES
+
+    def get(self, request, pk):
+        from utils.pdf_generator import DocumentGenerator
+        client   = get_object_or_404(Client, pk=pk)
+        factures = list(client.factures())
+        paiements = list(client.paiements())
+
+        debit_rows = [
+            [
+                str(i + 1),
+                fc.facture.date_facture.strftime('%d/%m/%Y'),
+                f'#{fc.facture.numero}',
+                f'{float(fc.facture.total):,.0f}',
+            ]
+            for i, fc in enumerate(factures)
+        ]
+        credit_rows = [
+            [
+                str(i + 1),
+                p.mouvement_caisse.date_mouvement.strftime('%d/%m/%Y'),
+                f'{float(p.mouvement_caisse.montant):,.0f}',
+            ]
+            for i, p in enumerate(paiements)
+        ]
+
+        gen = DocumentGenerator(
+            filename=f'releve_client_{client.code}.pdf',
+            title=f'RELEVÉ DE COMPTE — CLIENT — {client.nom.upper()}',
+        )
+        return gen.generate_releve_compte(
+            tiers_info={
+                'nom': client.nom,
+                'code': client.code,
+                'type': 'Client',
+                'telephone': client.telephone,
+                'email': client.email,
+                'adresse': client.adresse,
+                'ville': client.ville,
+            },
+            debit_label='Factures',
+            credit_label='Paiements reçus',
+            debit_headers=['N°', 'Date', 'N° Facture', 'Total (FC)'],
+            debit_rows=debit_rows,
+            credit_rows=credit_rows,
+            total_debit=float(client.total_factures()),
+            total_credit=float(client.total_paiements()),
+        )
