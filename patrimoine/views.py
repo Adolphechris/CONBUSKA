@@ -12,7 +12,7 @@ import datetime
 from patrimoine.models import SnapshotJournalier, ResultatApprovisionnementSnapshot, ResultatJournalier, ResultatMensuel
 from caisse.models import (MouvementCaisse, SousRubriqueCaisse, MouvementCaisseChargesExploitation,
                            MouvementCaisseChargesPersonnelles)
-from patrimoine.services import JournalTransactionService
+from patrimoine.services import JournalTransactionService, SnapshotService
 
 
 """
@@ -184,6 +184,9 @@ class CalendrierFinancierView(RoleRequiredMixin, TemplateView):
         )
         snapshots = {s['date']: s for s in daily_agg}
 
+        # Résultats d'approvisionnement par jour (source principale de revenus)
+        appro_par_jour = SnapshotService.get_appro_par_jour(first_day, last_day)
+
         # générateur calendrier (lundi -> dimanche)
         cal = calendar.Calendar(firstweekday=calendar.MONDAY)
         weeks = []
@@ -196,9 +199,10 @@ class CalendrierFinancierView(RoleRequiredMixin, TemplateView):
                     continue
 
                 snap = snapshots.get(day)
-                entrees = snap['total_entrees'] if snap else 0
+                entrees_caisse = snap['total_entrees'] if snap else 0
                 sorties = snap['total_sorties'] if snap else 0
-                solde = snap['solde_fermeture'] if snap else (entrees - sorties)
+                entrees = entrees_caisse + (appro_par_jour.get(day) or 0)
+                solde = snap['solde_fermeture'] if snap else (entrees_caisse - sorties)
 
                 week_days.append({
                     "date": day,
@@ -232,6 +236,8 @@ class CalendrierFinancierView(RoleRequiredMixin, TemplateView):
         first_snapshot = snapshots.first()
         last_snapshot = snapshots.last()
 
+        total_appro_mois = SnapshotService.get_appro_total(first_day, last_day)
+
         ctx.update({
             "days": days,
             "weeks": weeks,
@@ -241,7 +247,7 @@ class CalendrierFinancierView(RoleRequiredMixin, TemplateView):
             "prev": {"mois": prev_month, "annee": prev_year},
             "next": {"mois": next_month, "annee": next_year},
 
-            "total_entrees_mois": monthly_aggregates["total_entrees"] or 0,
+            "total_entrees_mois": (monthly_aggregates["total_entrees"] or 0) + total_appro_mois,
             "total_sorties_mois": monthly_aggregates["total_sorties"] or 0,
             "solde_mois": last_snapshot.solde_fermeture if last_snapshot else 0,
 
@@ -280,12 +286,12 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
 
         base_qs = MouvementCaisse.objects.filter(
             date_mouvement__date__range=(date_debut, date_fin)
-        )
+        ).exclude(rubrique__nom__in=SnapshotService.EXCLUDED_RUBRIQUES)
 
         # =========================
         # TOTAUX
         # =========================
-        total_entrees = (
+        total_entrees_caisse = (
             base_qs.filter(type_mouvement="ENTREE")
             .aggregate(total=Sum("montant"))["total"] or 0
         )
@@ -294,6 +300,11 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
             base_qs.filter(type_mouvement="SORTIE")
             .aggregate(total=Sum("montant"))["total"] or 0
         )
+
+        # Les résultats d'approvisionnement sont la principale source de revenus :
+        # ils n'apparaissent pas dans MouvementCaisse mais dans leur propre table.
+        appro_total = SnapshotService.get_appro_total(date_debut, date_fin)
+        total_entrees = total_entrees_caisse + appro_total
 
         solde = total_entrees - total_sorties
 
@@ -310,7 +321,7 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
 
             result = []
             for r in qs:
-                pourcentage = (r["montant"] / total * 100) if total else 0
+                pourcentage = (float(r["montant"]) / float(total) * 100) if total else 0
                 result.append({
                     "label": r["rubrique__nom"],
                     "montant": float(r["montant"]),
@@ -319,6 +330,17 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
             return result
 
         repartition_entrees = repartition("ENTREE", total_entrees)
+
+        # Ajouter la ligne Approvisionnement à la répartition des entrées
+        if appro_total > 0:
+            pourcentage_appro = round(float(appro_total) / float(total_entrees) * 100, 1) if total_entrees else 0
+            repartition_entrees.append({
+                "label": "Approvisionnement",
+                "montant": float(appro_total),
+                "pourcentage": pourcentage_appro,
+            })
+            repartition_entrees.sort(key=lambda x: x["montant"], reverse=True)
+
         repartition_sorties = repartition("SORTIE", total_sorties)
 
         # =========================

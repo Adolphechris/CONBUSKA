@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from caisse.models import MouvementCaisse, CaisseCourante
 from approvisionnements.models import Approvisionnement
 from patrimoine.models import SnapshotJournalier, ResultatApprovisionnementSnapshot, ResultatJournalier, ResultatMensuel
@@ -8,7 +10,7 @@ from django.db.models import Sum
 
 class SnapshotService:
 
-    EXCLUDED_RUBRIQUES = {"clients", "fournisseurs"}
+    EXCLUDED_RUBRIQUES = {"Clients", "Fournisseurs", "Transfert caisse"}
 
     @staticmethod
     @transaction.atomic
@@ -141,6 +143,35 @@ class SnapshotService:
         )
 
         FondsRoulementService.rebuild(snapshot_date)
+
+    # ── Helpers lecture ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_appro_par_jour(date_debut, date_fin) -> dict:
+        """
+        Retourne {date → Decimal} des résultats bruts d'approvisionnement
+        agrégés par jour sur la plage donnée.
+        Source de vérité : ResultatApprovisionnementSnapshot.
+        """
+        rows = (
+            ResultatApprovisionnementSnapshot.objects
+            .filter(date__range=(date_debut, date_fin))
+            .values('date')
+            .annotate(total=Sum('resultat_brut'))
+        )
+        return {r['date']: r['total'] for r in rows}
+
+    @staticmethod
+    def get_appro_total(date_debut, date_fin) -> Decimal:
+        """
+        Total des résultats bruts d'approvisionnement sur la plage donnée.
+        """
+        result = (
+            ResultatApprovisionnementSnapshot.objects
+            .filter(date__range=(date_debut, date_fin))
+            .aggregate(total=Sum('resultat_brut'))['total']
+        )
+        return result or Decimal('0')
 
     @staticmethod
     def on_approvisionnement_rollback(approvisionnement: Approvisionnement):

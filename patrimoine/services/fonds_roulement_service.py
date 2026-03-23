@@ -154,11 +154,17 @@ class FondsRoulementService:
     def rebuild(date):
         from patrimoine.models import FondsRoulementSnapshot
 
-        # FR initial = solde_fermeture du snapshot de la veille
         import datetime
+
         veille = date - datetime.timedelta(days=1)
         precedent = FondsRoulementSnapshot.objects.filter(date=veille).first()
-        fr_initial = precedent.fr_final if precedent else Decimal("0")
+
+        if precedent:
+            fr_initial = precedent.fr_final
+        else:
+            # Premier snapshot : l'initial est la contre-vérification du moment
+            # (transposition du patrimoine existant avant le début du suivi)
+            fr_initial = FondsRoulementService.compute_contreverification()
 
         ej = FondsRoulementService.compute_ej(date)
         sj = FondsRoulementService.compute_sj(date)

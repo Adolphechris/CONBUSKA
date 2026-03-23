@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from caisse.models import MouvementCaisse
 from patrimoine.models import ResultatApprovisionnementSnapshot
+from patrimoine.services.snapshot_service import SnapshotService
 from decimal import Decimal
 import datetime
 from django.utils.timezone import make_aware
@@ -31,8 +32,6 @@ class JournalTransactionService:
         # 1️⃣ MOUVEMENTS CAISSE
         # ===============================
 
-        EXCLUDED_RUBRIQUES = {"clients", "fournisseurs"}
-
         mouvements = (
             MouvementCaisse.objects
             .select_related("caisse", "rubrique", "sous_rubrique", "caisse_destination")
@@ -46,7 +45,7 @@ class JournalTransactionService:
                 "mouvements_caisse_cp__sous_rubrique",
             )
             .filter(date_mouvement__date__range=(date_debut, date_fin))
-            .exclude(rubrique__nom__in=EXCLUDED_RUBRIQUES)
+            .exclude(rubrique__nom__in=SnapshotService.EXCLUDED_RUBRIQUES)
         )
 
         for m in mouvements:
