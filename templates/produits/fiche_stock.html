@@ -1,62 +1,309 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Fiche de stock {% endblock title %}
+{% block title %}Fiche de stock{% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+    /* ── Panel / Card ─────────────────────────────── */
+    .x_panel {
+        position: relative;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px 17px;
+        display: inline-block;
+        background: #fff;
+        border: 1px solid #E6E9ED;
+        -webkit-column-break-inside: avoid;
+        column-break-inside: avoid;
+        opacity: 1;
+        transition: all .2s ease;
+    }
+    .x_title {
+        border-bottom: 2px solid #E6E9ED;
+        padding: 1px 5px 6px;
+        margin-bottom: 10px;
+    }
+    .x_title h2 {
+        margin: 5px 0 6px;
+        float: left;
+        display: block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 16px;
+        font-weight: 400;
+        color: #2A3F54;
+    }
+    .x_title h2 small {
+        margin-left: 10px;
+        font-size: 12px;
+        font-weight: 300;
+    }
+    .x_content {
+        padding: 0 5px 6px;
+        position: relative;
+        width: 100%;
+        float: left;
+        clear: both;
+        margin-top: 5px;
+    }
+
+    /* ── Stat Cards ───────────────────────────────── */
+    .tile-stats {
+        position: relative;
+        display: block;
+        margin-bottom: 20px;
+        border: 1px solid #E4E4E4;
+        border-radius: 5px;
+        background: #fff;
+        padding: 20px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .tile-stats:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .tile-stats .icon {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 50px;
+        opacity: 0.1;
+        transition: all 0.3s ease;
+    }
+    .tile-stats:hover .icon { opacity: 0.15; transform: scale(1.1); }
+    .tile-stats .count {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    .tile-stats h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 400;
+        color: #BAB8B8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .tile-stats.success-stat .count { color: #26B99A; }
+    .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+    .tile-stats.danger-stat  .count { color: #E74C3C; }
+    .tile-stats.danger-stat  { border-left: 4px solid #E74C3C; }
+    .tile-stats.info-stat    .count { color: #3498DB; }
+    .tile-stats.info-stat    { border-left: 4px solid #3498DB; }
+
+    /* ── Filter Bar ───────────────────────────────── */
+    .filter-bar {
+        background: #F5F7FA;
+        padding: 12px 15px;
+        margin: -10px -17px 15px -17px;
+        border-bottom: 1px solid #E6E9ED;
+    }
+    .filter-bar .form-control { height: 32px; font-size: 12px; }
+    .filter-bar .btn          { height: 32px; padding: 6px 12px; font-size: 12px; }
+
+    /* ── Table styling ────────────────────────────── */
+    #tableFicheStock thead tr th {
+        background: #F5F7FA;
+        color: #2A3F54;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-bottom: 2px solid #26B99A;
+        white-space: nowrap;
+    }
+    #tableFicheStock tbody tr:hover { background: #F9FDF9; }
+
+    .stock-in    { color: #26B99A; font-weight: 600; }
+    .stock-out   { color: #E74C3C; font-weight: 600; }
+    .stock-open  { color: #73879C; }
+    .stock-final { color: #2A3F54; font-weight: 700; }
+    .stock-final.negative { color: #E74C3C; }
+
+    /* ── Buttons ──────────────────────────────────── */
+    .btn { border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
+    .btn-primary { background-color: #26B99A; border-color: #1a9479; }
+    .btn-primary:hover { background-color: #1a9479; border-color: #14785e; }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 <div class="right_col" role="main">
-    <div class="">
-        <div class="page-title">
-            <div class="title_left">
-                <h5>Articles / Fiche de stock</h5>
-            </div>
-            <div class="title_right">
-                <form method="get" class="form-inline" id="magasinFilterForm">
-                    <label for="magasinSelect" class="control-label" style="margin-right: 8px;">Magasin :</label>
-                    <select name="magasin" id="magasinSelect" class="form-control" onchange="this.form.submit()">
-                        {% for m in magasins %}
-                            <option value="{{ m.pk }}" {% if magasin_courant and magasin_courant.pk == m.pk %}selected{% endif %}>
-                                {{ m.nom }}{% if m.is_principal %} (principal){% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </form>
+    <div class="container-fluid">
+
+        <!-- Breadcrumb -->
+        <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+            <li><a href="#"><i class="fa fa-cubes"></i> Stock</a></li>
+            <li class="active">Fiche de stock</li>
+        </ol>
+
+        <!-- Page Header -->
+        <div style="background: linear-gradient(135deg, #26B99A 0%, #1a9479 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+            <div class="row" style="margin: 0; display: flex; align-items: center;">
+                <div class="col-md-8 col-sm-7" style="padding: 0;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 54px; height: 54px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa fa-cubes" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 4px;">
+                                Stock{% if magasin_courant %} · {{ magasin_courant.nom }}{% endif %}
+                            </div>
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Fiche de stock</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Entrées, sorties et solde par article</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-5 text-right" style="padding: 0;">
+                    <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.65; margin-bottom: 3px;">
+                            <i class="fa fa-calendar-o"></i>&nbsp; Période
+                        </div>
+                        <div style="font-size: 15px; font-weight: 600;">
+                            {% if debut == fin %}
+                                {{ debut_display }}
+                            {% else %}
+                                {{ debut_display }} → {{ fin_display }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Stat Cards -->
+        <div class="row" style="margin-top: 4px;">
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats success-stat">
+                    <i class="fa fa-arrow-circle-down icon"></i>
+                    <h3>Total Entrées</h3>
+                    <div class="count">{{ total_in }}</div>
+                    <p class="text-muted" style="font-size:11px; margin:0;">unités reçues sur la période</p>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="tile-stats danger-stat">
+                    <i class="fa fa-arrow-circle-up icon"></i>
+                    <h3>Total Sorties</h3>
+                    <div class="count">{{ total_out }}</div>
+                    <p class="text-muted" style="font-size:11px; margin:0;">unités sorties sur la période</p>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-12 col-xs-12">
+                <div class="tile-stats info-stat">
+                    <i class="fa fa-balance-scale icon"></i>
+                    <h3>Flux net</h3>
+                    <div class="count" {% if stock_net < 0 %}style="color:#E74C3C;"{% endif %}>
+                        {% if stock_net >= 0 %}+{% endif %}{{ stock_net }}
+                    </div>
+                    <p class="text-muted" style="font-size:11px; margin:0;">variation nette de la période</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Panel -->
         <div class="row">
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Fiche de stock{% if magasin_courant %} – {{ magasin_courant.nom }}{% endif %}<small></small></h2>
+                        <h2>
+                            <i class="fa fa-table" style="color:#26B99A; margin-right:6px;"></i>
+                            Détail par article
+                            <small>{{ debut_display }}{% if debut != fin %} → {{ fin_display }}{% endif %}</small>
+                        </h2>
+                        <ul class="nav navbar-right panel_toolbox" style="min-width: 0;">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                        </ul>
                         <div class="clearfix"></div>
                     </div>
+
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <form method="get" id="filterForm">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-5 col-xs-12">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <div class="input-group">
+                                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                            <input type="text" id="daterange" name="_daterange" class="form-control" readonly
+                                                   placeholder="Sélectionner une période">
+                                            <input type="hidden" name="debut" id="inputDebut" value="{{ debut }}">
+                                            <input type="hidden" name="fin"   id="inputFin"   value="{{ fin }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4 col-xs-12">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <div class="input-group">
+                                            <span class="input-group-addon"><i class="fa fa-home"></i></span>
+                                            <select name="magasin" id="magasinSelect" class="form-control">
+                                                {% for m in magasins %}
+                                                    <option value="{{ m.pk }}"
+                                                        {% if magasin_courant and magasin_courant.pk == m.pk %}selected{% endif %}>
+                                                        {{ m.nom }}{% if m.is_principal %} (principal){% endif %}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-3 col-xs-12">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fa fa-filter"></i> Appliquer
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="x_content">
-                        <div class="content table-responsive display">
-                            <table id="tableFicheStock" class="table table-striped jambo_table bulk_action">
+                        <div class="content table-responsive">
+                            <table id="tableFicheStock" class="table table-striped jambo_table">
                                 <thead>
-                                    <tr class="headings">
-                                        <th class="column-title"> No.</th>
-                                        <th class="column-title"> Désignation</th>
-                                        <th class="column-title"> Stock ouverture</th>
-                                        <th class="column-title"> Entrées</th>
-                                        <th class="column-title"> Sorties</th>
-                                        <th class="column-title"> Stock final</th>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Désignation</th>
+                                        <th class="text-right">Stock ouverture</th>
+                                        <th class="text-right">Entrées</th>
+                                        <th class="text-right">Sorties</th>
+                                        <th class="text-right">Stock final</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for article in articles %}
-                                        <tr>
-                                            <td>{{ forloop.counter }}</td>
-                                            <td>{{ article.designation }}</td>
-                                            <td>{{ article.stock_ouverture }}</td>
-                                            <td>{{ article.qte_in }}</td>
-                                            <td>{{ article.qte_out }}</td>
-                                            <td>{{ article.stock_final }}</td>
-                                        </tr>
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td><strong>{{ article.designation }}</strong></td>
+                                        <td class="text-right stock-open">{{ article.stock_ouverture }}</td>
+                                        <td class="text-right stock-in">
+                                            {% if article.qte_in > 0 %}
+                                                <i class="fa fa-arrow-up" style="font-size:10px;"></i> {{ article.qte_in }}
+                                            {% else %}
+                                                <span style="color:#ccc;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right stock-out">
+                                            {% if article.qte_out > 0 %}
+                                                <i class="fa fa-arrow-down" style="font-size:10px;"></i> {{ article.qte_out }}
+                                            {% else %}
+                                                <span style="color:#ccc;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right stock-final {% if article.stock_final < 0 %}negative{% endif %}">
+                                            {{ article.stock_final }}
+                                        </td>
+                                    </tr>
                                     {% empty %}
-                                        <tr>
-                                            <td colspan="6" class="text-center">Aucun article trouvé.</td>
-                                        </tr>
+                                    <tr>
+                                        <td colspan="6" class="text-center" style="padding: 40px; color: #999;">
+                                            <i class="fa fa-inbox" style="font-size: 32px; display:block; margin-bottom:10px; opacity:0.3;"></i>
+                                            Aucun article trouvé.
+                                        </td>
+                                    </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -65,39 +312,76 @@
                 </div>
             </div>
         </div>
+
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        var t = $('#tableFicheStock').DataTable({
-            dom: '<"top">rflt<"bottom"p><"clear">',
-            paging: true,
-            autoWidth: true,
-            order: [[2, 'desc']],
-            "pageLength": 100,
-            columnDefs: [
 
-            ],
-            language: {
-                "sSearch": "Rechercher&nbsp;:",
-                "sInfoEmpty": "Aucun r&eacute;sultat disponible",
-                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                "sLengthMenu":     "Afficher _MENU_ éléments",
-                "sLoadingRecords": "Chargement...",
-                "sProcessing": "Traitement...",
-                "oPaginate": {
-                    "sFirst":    "Premier",
-                    "sLast":     "Dernier",
-                    "sNext":     "Suivant",
-                    "sPrevious": "Précédent"
-                },
-                "oAria": {
-                    "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
-                }
-            },
-        });
+<script>
+$(document).ready(function () {
+    // ── Daterangepicker ──────────────────────────────────────────────────
+    var debut = '{{ debut }}';
+    var fin   = '{{ fin }}';
+
+    $('#daterange').daterangepicker({
+        startDate: moment(debut),
+        endDate:   moment(fin),
+        locale: {
+            format: 'DD/MM/YYYY',
+            applyLabel: 'OK',
+            cancelLabel: 'Annuler',
+            daysOfWeek: ['Di','Lu','Ma','Me','Je','Ve','Sa'],
+            monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
+                         'Août','Septembre','Octobre','Novembre','Décembre']
+        },
+        ranges: {
+            "Aujourd'hui"  : [moment(), moment()],
+            'Hier'         : [moment().subtract(1,'days'), moment().subtract(1,'days')],
+            '7 derniers j' : [moment().subtract(6,'days'), moment()],
+            '30 derniers j': [moment().subtract(29,'days'), moment()],
+            'Ce mois'      : [moment().startOf('month'), moment().endOf('month')],
+            'Mois dernier' : [moment().subtract(1,'month').startOf('month'),
+                              moment().subtract(1,'month').endOf('month')]
+        }
+    }, function(start, end) {
+        $('#inputDebut').val(start.format('YYYY-MM-DD'));
+        $('#inputFin').val(end.format('YYYY-MM-DD'));
     });
+
+    // Sync à l'ouverture (affichage initial)
+    (function() {
+        var drp = $('#daterange').data('daterangepicker');
+        $('#daterange').val(
+            drp.startDate.format('DD/MM/YYYY') + ' - ' + drp.endDate.format('DD/MM/YYYY')
+        );
+    })();
+
+    // ── DataTable ────────────────────────────────────────────────────────
+    $('#tableFicheStock').DataTable({
+        dom: '<"top"f>rt<"bottom"lp><"clear">',
+        paging: true,
+        autoWidth: true,
+        order: [[1, 'asc']],
+        pageLength: 100,
+        columnDefs: [
+            { orderable: false, targets: 0 },
+            { className: 'text-right', targets: [2, 3, 4, 5] }
+        ],
+        language: {
+            "sSearch":         "Rechercher&nbsp;:",
+            "sInfoEmpty":      "Aucun résultat",
+            "sZeroRecords":    "Aucun élément à afficher",
+            "sEmptyTable":     "Aucune donnée disponible",
+            "sLengthMenu":     "Afficher _MENU_ éléments",
+            "sLoadingRecords": "Chargement...",
+            "sProcessing":     "Traitement...",
+            "oPaginate": {
+                "sFirst":    "Premier",
+                "sLast":     "Dernier",
+                "sNext":     "Suivant",
+                "sPrevious": "Précédent"
+            }
+        }
+    });
+});
 </script>
 {% endblock content %}
