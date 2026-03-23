@@ -58,6 +58,7 @@
 
 /* Badges urgence */
 .badge-urgence { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-rupture  { background: #F5CBA7; color: #784212; }
 .badge-critique { background: #FDEDEC; color: #C0392B; }
 .badge-alerte   { background: #FEF9E7; color: #D68910; }
 .badge-ok       { background: #EAFAF1; color: #1E8449; }
@@ -82,7 +83,7 @@
     <div class="report-header">
         <div>
             <h2><i class="fa fa-shopping-basket"></i> Rapport des Commandes</h2>
-            <p>Suggestions de commande basées sur l'écoulement des 30 derniers jours (couverture : 12,5 jours)</p>
+            <p>Articles en rupture, sous seuil critique ou dont le stock couvre moins de 15 jours — qté suggérée = couverture 30j nette du stock existant</p>
         </div>
         <a href="{% url 'export_bon_commande_pdf' %}" class="btn-pdf" target="_blank">
             <i class="fa fa-file-pdf-o"></i> Exporter bon de commande PDF
@@ -98,37 +99,49 @@
                     <div class="kpi-icon navy"><i class="fa fa-list-ol"></i></div>
                 </div>
                 <div class="kpi-value">{{ nb_articles }}</div>
-                <div class="kpi-sub">Articles avec qté suggérée > 0</div>
+                <div class="kpi-sub">Rupture + sous seuil + &lt; 15j</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card red">
                 <div class="kpi-top">
-                    <span class="kpi-label">Critique (&le; 5 jours)</span>
-                    <div class="kpi-icon red"><i class="fa fa-exclamation-triangle"></i></div>
+                    <span class="kpi-label">Ruptures totales</span>
+                    <div class="kpi-icon red"><i class="fa fa-ban"></i></div>
                 </div>
-                <div class="kpi-value" style="{% if nb_critique > 0 %}color:#E74C3C{% endif %}">{{ nb_critique }}</div>
-                <div class="kpi-sub">Stock pour 5 jours ou moins</div>
+                <div class="kpi-value" style="{% if nb_rupture > 0 %}color:#784212{% endif %}">{{ nb_rupture }}</div>
+                <div class="kpi-sub">Stock = 0</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card orange">
                 <div class="kpi-top">
-                    <span class="kpi-label">Alerte (6 – 12 jours)</span>
-                    <div class="kpi-icon orange"><i class="fa fa-bell"></i></div>
+                    <span class="kpi-label">Critique (seuil / &le; 5j)</span>
+                    <div class="kpi-icon orange"><i class="fa fa-exclamation-triangle"></i></div>
                 </div>
-                <div class="kpi-value" style="{% if nb_alerte > 0 %}color:#F39C12{% endif %}">{{ nb_alerte }}</div>
-                <div class="kpi-sub">Stock pour 6 à 12 jours</div>
+                <div class="kpi-value" style="{% if nb_critique > 0 %}color:#E74C3C{% endif %}">{{ nb_critique }}</div>
+                <div class="kpi-sub">Sous seuil ou ≤ 5 jours restants</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card blue">
                 <div class="kpi-top">
-                    <span class="kpi-label">Valeur totale estimée</span>
-                    <div class="kpi-icon blue"><i class="fa fa-money"></i></div>
+                    <span class="kpi-label">Alerte (6 – 14 jours)</span>
+                    <div class="kpi-icon blue"><i class="fa fa-bell"></i></div>
+                </div>
+                <div class="kpi-value" style="{% if nb_alerte > 0 %}color:#F39C12{% endif %}">{{ nb_alerte }}</div>
+                <div class="kpi-sub">Stock pour 6 à 14 jours</div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="kpi-card blue" style="border-left-color:#2A3F54;">
+                <div class="kpi-top">
+                    <span class="kpi-label">Valeur totale estimée de la commande</span>
+                    <div class="kpi-icon navy"><i class="fa fa-money"></i></div>
                 </div>
                 <div class="kpi-value">{{ total_estime|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
-                <div class="kpi-sub">Coût d'achat estimé de la commande</div>
+                <div class="kpi-sub">Coût d'achat estimé — qté × prix achat</div>
             </div>
         </div>
     </div>
@@ -137,7 +150,7 @@
     <div class="report-panel">
         <div class="rp-header">
             <h4><i class="fa fa-table"></i> Suggestions de commande par article</h4>
-            <span style="font-size:11px;color:#ADB5BD;">{{ rows|length }} article(s) — trié par urgence</span>
+            <span style="font-size:11px;color:#ADB5BD;">{{ rows|length }} article(s) — trié par priorité (rupture → critique → alerte)</span>
         </div>
         <div class="rp-body p0" style="overflow-x:auto;">
             <table id="tableCommandes" class="table report-table" style="margin:0;">
@@ -147,30 +160,32 @@
                         <th>Fournisseur</th>
                         <th>Unité</th>
                         <th class="text-right">Stock actuel</th>
+                        <th class="text-right">Seuil critique</th>
                         <th class="text-right">Écoul. 30j</th>
                         <th class="text-right">Écoul./jour</th>
                         <th>Jours restants</th>
                         <th class="text-right">Qté suggérée</th>
                         <th class="text-right">Total estimé (FC)</th>
-                        <th>Urgence</th>
+                        <th>Priorité</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for r in rows %}
-                    <tr>
+                    <tr style="{% if r.urgence == 'rupture' %}background:#FEF5E7;{% elif r.urgence == 'critique' %}background:#FDF2F2;{% endif %}">
                         <td style="font-weight:600;">{{ r.designation }}</td>
                         <td style="font-size:12px;color:#73879C;">{{ r.fournisseur }}</td>
                         <td style="font-size:12px;">{{ r.unite }}</td>
-                        <td class="num">{{ r.stock_actuel }}</td>
+                        <td class="num" style="{% if r.stock_actuel == 0 %}color:#784212;font-weight:700;{% endif %}">{{ r.stock_actuel }}</td>
+                        <td class="num" style="color:#73879C;">{{ r.seuil }}</td>
                         <td class="num">{{ r.ecoul_30j }}</td>
                         <td class="num" style="color:#73879C;">{{ r.ecoul_par_jour }}</td>
                         <td>
                             {% if r.jours_restants is not None %}
                             <div class="jours-bar-wrap">
                                 <div class="jours-bar">
-                                    <div class="jours-bar-fill" style="width:{% if r.jours_restants > 30 %}100{% else %}{{ r.jours_restants|floatformat:0 }}{% endif %}%;background:{% if r.urgence == 'critique' %}#E74C3C{% elif r.urgence == 'alerte' %}#F39C12{% else %}#26B99A{% endif %};"></div>
+                                    <div class="jours-bar-fill" style="width:{% if r.jours_restants > 30 %}100{% else %}{{ r.jours_restants|floatformat:0 }}{% endif %}%;background:{% if r.urgence == 'rupture' %}#784212{% elif r.urgence == 'critique' %}#E74C3C{% else %}#F39C12{% endif %};"></div>
                                 </div>
-                                <span style="font-size:12px;font-weight:700;color:{% if r.urgence == 'critique' %}#E74C3C{% elif r.urgence == 'alerte' %}#D68910{% else %}#1E8449{% endif %};">
+                                <span style="font-size:12px;font-weight:700;color:{% if r.urgence == 'rupture' %}#784212{% elif r.urgence == 'critique' %}#E74C3C{% else %}#D68910{% endif %};">
                                     {{ r.jours_restants }}j
                                 </span>
                             </div>
@@ -189,22 +204,20 @@
                             {% if r.total_estime > 0 %}{{ r.total_estime|floatformat:0 }}{% else %}—{% endif %}
                         </td>
                         <td>
-                            {% if r.urgence == 'critique' %}
+                            {% if r.urgence == 'rupture' %}
+                                <span class="badge-urgence badge-rupture"><i class="fa fa-ban"></i> Rupture</span>
+                            {% elif r.urgence == 'critique' %}
                                 <span class="badge-urgence badge-critique"><i class="fa fa-exclamation-triangle"></i> Critique</span>
-                            {% elif r.urgence == 'alerte' %}
-                                <span class="badge-urgence badge-alerte"><i class="fa fa-bell"></i> Alerte</span>
-                            {% elif r.urgence == 'ok' %}
-                                <span class="badge-urgence badge-ok"><i class="fa fa-check"></i> OK</span>
                             {% else %}
-                                <span class="badge-urgence badge-none">—</span>
+                                <span class="badge-urgence badge-alerte"><i class="fa fa-bell"></i> Alerte</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center" style="padding:40px;color:#ADB5BD;">
-                            <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;"></i>
-                            Aucun article n'a été vendu sur les 30 derniers jours
+                        <td colspan="11" class="text-center" style="padding:40px;color:#ADB5BD;">
+                            <i class="fa fa-check-circle fa-2x" style="display:block;margin-bottom:10px;color:#26B99A;"></i>
+                            Aucun article en rupture, sous seuil critique ou en dessous de 15 jours de stock
                         </td>
                     </tr>
                     {% endfor %}
@@ -213,11 +226,10 @@
         </div>
         <!-- Légende -->
         <div class="legend-box">
-            <span><span class="legend-dot" style="background:#E74C3C;"></span><strong>Critique</strong> : stock ≤ 5 jours</span>
-            <span><span class="legend-dot" style="background:#F39C12;"></span><strong>Alerte</strong> : 6 à 12 jours</span>
-            <span><span class="legend-dot" style="background:#26B99A;"></span><strong>OK</strong> : > 12 jours</span>
-            <span><span class="legend-dot" style="background:#BDC3C7;"></span><strong>—</strong> : aucun écoulement (pas de ventes sur 30j)</span>
-            <span style="margin-left:auto;"><i class="fa fa-info-circle"></i> Qté suggérée = écoulement/jour × 12,5 jours</span>
+            <span><span class="legend-dot" style="background:#784212;"></span><strong>Rupture</strong> : stock = 0</span>
+            <span><span class="legend-dot" style="background:#E74C3C;"></span><strong>Critique</strong> : stock ≤ seuil ou ≤ 5 jours restants</span>
+            <span><span class="legend-dot" style="background:#F39C12;"></span><strong>Alerte</strong> : 6 à 14 jours restants</span>
+            <span style="margin-left:auto;"><i class="fa fa-info-circle"></i> Qté suggérée = (écoul/jour × 30j) − stock actuel &nbsp;|&nbsp; Seuls les articles nécessitant une commande sont affichés</span>
         </div>
     </div>
 

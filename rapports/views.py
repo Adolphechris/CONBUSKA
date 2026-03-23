@@ -144,27 +144,30 @@ class RapportResultatView(RoleRequiredMixin, TemplateView):
             total += r
             aid = d.article_id
             if aid not in par_article:
-                par_article[aid] = {'designation': d.article.designation, 'resultat': 0}
+                par_article[aid] = {
+                    'designation': d.article.designation,
+                    'resultat': 0,
+                }
             par_article[aid]['resultat'] += r
         return total, par_article
 
     def _get_resultat_par_article(self, debut, fin, total_global):
-        """Résultat ventes par article (ORM) avec % sur total_global."""
-        qs = (DetailsFacture.objects
-              .filter(facture__date_facture__range=(debut, fin))
-              .values('article__id', 'article__designation')
-              .annotate(resultat=Sum((F('prix') - F('article__prix_achat')) * F('qte'),
-                                    output_field=DecimalField(max_digits=12, decimal_places=2)))
-              .order_by('-resultat'))
+        """Résultat des appros par article avec % sur le total de référence."""
+        _, par_article = self._get_resultat_appros(debut, fin)
         results = []
-        for item in qs:
-            pct = round(float(item['resultat']) / float(total_global) * 100, 2) if total_global else 0
+        for article_id, item in par_article.items():
+            pct = (
+                round(float(item['resultat']) / float(total_global) * 100, 2)
+                if total_global
+                else 0
+            )
             results.append({
-                'article_id': item['article__id'],
-                'designation': item['article__designation'],
+                'article_id': article_id,
+                'designation': item['designation'],
                 'resultat': item['resultat'],
                 'pourcentage': pct,
             })
+        results.sort(key=lambda item: item['resultat'], reverse=True)
         return results
 
     def get_context_data(self, **kwargs):
@@ -173,7 +176,7 @@ class RapportResultatView(RoleRequiredMixin, TemplateView):
 
         total_ventes = self._get_resultat_ventes(debut, fin)
         total_appros, _ = self._get_resultat_appros(debut, fin)
-        total_global = total_ventes + total_appros
+        total_global = total_appros
 
         articles = self._get_resultat_par_article(debut, fin, total_global)
 
@@ -441,27 +444,43 @@ class RapportCommandeView(RoleRequiredMixin, TemplateView):
             qte_stock = stock_actuel.get(aid, 0)
             ecoul = ecoulement_30j.get(aid, 0)
             ecoul_par_jour = round(ecoul / 30, 2)
-            qte_suggere = max(0, round(ecoul_par_jour * 12.5))
+            seuil = a.seuil or 0
 
             if ecoul_par_jour > 0:
                 jours_restants = round(qte_stock / ecoul_par_jour, 1)
             else:
                 jours_restants = None
 
-            if jours_restants is None:
-                urgence = 'none'
-            elif jours_restants <= 5:
+            # ── Critères d'inclusion ──────────────────────────────────
+            en_rupture  = qte_stock == 0
+            sous_seuil  = qte_stock <= seuil
+            sous_15j    = jours_restants is not None and jours_restants < 15
+            a_commander = en_rupture or sous_seuil or sous_15j
+
+            if not a_commander:
+                continue
+
+            # ── Urgence ───────────────────────────────────────────────
+            if en_rupture:
+                urgence = 'rupture'
+            elif sous_seuil or (jours_restants is not None and jours_restants <= 5):
                 urgence = 'critique'
-            elif jours_restants <= 12:
-                urgence = 'alerte'
             else:
-                urgence = 'ok'
+                urgence = 'alerte'
+
+            # ── Quantité suggérée : couvrir 30j nets du stock existant ─
+            if ecoul_par_jour > 0:
+                qte_suggere = max(0, round(ecoul_par_jour * 30 - qte_stock))
+            else:
+                # Pas d'écoulement : combler le déficit par rapport au seuil
+                qte_suggere = max(0, seuil - qte_stock)
 
             rows.append({
                 'designation'   : a.designation,
                 'fournisseur'   : str(a.fournisseur) if a.fournisseur else '—',
                 'unite'         : str(a.unite) if a.unite else '—',
                 'stock_actuel'  : qte_stock,
+                'seuil'         : seuil,
                 'ecoul_30j'     : ecoul,
                 'ecoul_par_jour': ecoul_par_jour,
                 'jours_restants': jours_restants,
@@ -471,23 +490,24 @@ class RapportCommandeView(RoleRequiredMixin, TemplateView):
                 'urgence'       : urgence,
             })
 
-        # Trier : critique → alerte → ok → none, puis par jours_restants ↑
+        # Trier : rupture → critique → alerte, puis par jours_restants ↑
         def sort_key(r):
-            order = {'critique': 0, 'alerte': 1, 'ok': 2, 'none': 3}
+            order = {'rupture': 0, 'critique': 1, 'alerte': 2}
             jr = r['jours_restants'] if r['jours_restants'] is not None else 9999
             return (order[r['urgence']], jr)
 
         rows.sort(key=sort_key)
-        rows_a_commander = [r for r in rows if r['qte_suggere'] > 0]
-        total_estime = sum(r['total_estime'] for r in rows_a_commander)
+        total_estime = sum(r['total_estime'] for r in rows)
+        nb_rupture  = sum(1 for r in rows if r['urgence'] == 'rupture')
         nb_critique = sum(1 for r in rows if r['urgence'] == 'critique')
         nb_alerte   = sum(1 for r in rows if r['urgence'] == 'alerte')
 
         context.update({
             'rows'          : rows,
-            'rows_a_commander': rows_a_commander,
+            'rows_a_commander': rows,
             'total_estime'  : round(total_estime, 0),
-            'nb_articles'   : len(rows_a_commander),
+            'nb_articles'   : len(rows),
+            'nb_rupture'    : nb_rupture,
             'nb_critique'   : nb_critique,
             'nb_alerte'     : nb_alerte,
             'today'         : today.isoformat(),
@@ -754,20 +774,52 @@ def export_bon_commande_pdf(request):
         a = articles.get(aid)
         if not a:
             continue
+        qte_stock = stock_actuel.get(aid, 0)
         ecoul = ecoulement_30j.get(aid, 0)
-        qte_suggere = int(max(0, round(ecoul / 30 * 12.5)))
-        if qte_suggere == 0:
+        ecoul_par_jour = round(ecoul / 30, 2)
+        seuil = a.seuil or 0
+
+        jours_restants = round(qte_stock / ecoul_par_jour, 1) if ecoul_par_jour > 0 else None
+
+        en_rupture  = qte_stock == 0
+        sous_seuil  = qte_stock <= seuil
+        sous_15j    = jours_restants is not None and jours_restants < 15
+
+        if not (en_rupture or sous_seuil or sous_15j):
             continue
+
+        if ecoul_par_jour > 0:
+            qte_suggere = int(max(0, round(ecoul_par_jour * 30 - qte_stock)))
+        else:
+            qte_suggere = max(0, seuil - qte_stock)
+
+        if en_rupture:
+            urgence = 'rupture'
+        elif sous_seuil or (jours_restants is not None and jours_restants <= 5):
+            urgence = 'critique'
+        else:
+            urgence = 'alerte'
+
         data.append({
-            'designation' : a.designation,
-            'fournisseur' : str(a.fournisseur) if a.fournisseur else '—',
-            'unite'       : str(a.unite) if a.unite else '—',
-            'stock_actuel': stock_actuel.get(aid, 0),
-            'qte_suggere' : qte_suggere,
-            'prix_achat'  : float(a.prix_achat),
-            'total_estime': round(float(a.prix_achat) * qte_suggere, 0),
+            'designation'   : a.designation,
+            'fournisseur'   : str(a.fournisseur) if a.fournisseur else '—',
+            'unite'         : str(a.unite) if a.unite else '—',
+            'stock_actuel'  : qte_stock,
+            'seuil'         : seuil,
+            'ecoul_par_jour': ecoul_par_jour,
+            'jours_restants': jours_restants,
+            'qte_suggere'   : qte_suggere,
+            'prix_achat'    : float(a.prix_achat),
+            'total_estime'  : round(float(a.prix_achat) * qte_suggere, 0),
+            'urgence'       : urgence,
         })
-    data.sort(key=lambda x: x['designation'])
+
+    def _sort_key(r):
+        order = {'rupture': 0, 'critique': 1, 'alerte': 2}
+        jr = r['jours_restants'] if r['jours_restants'] is not None else 9999
+        return (order[r['urgence']], jr)
+
+    data.sort(key=_sort_key)
 
     filename = f'BON_COMMANDE_{today.strftime("%Y%m%d")}.pdf'
     title = f'BON DE COMMANDE — {today.strftime("%d/%m/%Y")}'
