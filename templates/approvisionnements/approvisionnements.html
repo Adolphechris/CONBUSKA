@@ -21,12 +21,10 @@
                         <div class="x_content">
                             <div class="content table-responsive display">
                                 <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'approvisionnement_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            NOUVEL APPROVISIONNEMENT
-                                        </a>
-                                    </button>
+                                    <a href="{% url 'approvisionnement_create' %}" class="btn btn-info btn-sm pull-right creer">
+                                        <i class="fa fa-plus"></i>
+                                        NOUVEL APPROVISIONNEMENT
+                                    </a>
                                 </div>
                                 <table id="tableApprovisionnements" class="table table-striped jambo_table bulk_action">
                                     <thead>
