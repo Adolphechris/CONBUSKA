@@ -351,7 +351,7 @@ class BonCommandePdfView(RoleRequiredMixin, View):
             filename=f'bon_commande_{commande.numero}.pdf',
             title=f'Bon de Commande N° {commande.numero}',
         )
-        return gen.generate_bon_commande(commande=commande, details=details, avec_prix=True)
+        return gen.generate_bon_commande_fournisseur(commande=commande, details=details, avec_prix=True)
 
 
 class ProformaPdfView(RoleRequiredMixin, View):
@@ -367,4 +367,4 @@ class ProformaPdfView(RoleRequiredMixin, View):
             filename=f'proforma_{commande.numero}.pdf',
             title=f'Demande de Proforma N° {commande.numero}',
         )
-        return gen.generate_bon_commande(commande=commande, details=details, avec_prix=False)
+        return gen.generate_bon_commande_fournisseur(commande=commande, details=details, avec_prix=False)
