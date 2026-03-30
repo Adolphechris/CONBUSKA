@@ -1,10 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-
-</body>
-</html>
+<div class="modal-header" style="background:#c0392b; border-radius:4px 4px 0 0;">
+    <button type="button" class="close" data-dismiss="modal"
+            style="color:#fff; opacity:.8;">&times;</button>
+    <h4 class="modal-title" style="color:#fff; font-size:15px; font-weight:600;">
+        <i class="fa fa-exclamation-triangle"></i>&nbsp;{{ title }}
+    </h4>
+</div>
+<form method="POST"
+      hx-post="{% url 'transfert_line_delete' transfert.pk object.pk %}"
+      hx-target="#linesTableContainer"
+      hx-swap="innerHTML">
+    {% csrf_token %}
+    <div class="modal-body" style="padding:20px; text-align:center;">
+        <p style="font-size:14px; color:#2A3F54; margin:0;">{{ message }}</p>
+    </div>
+    <div class="modal-footer" style="border-top:1px solid #eee;">
+        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+            <i class="fa fa-times"></i> Annuler
+        </button>
+        <button type="submit" class="btn btn-danger btn-sm">
+            <i class="{{ submit_icon|default:'fa fa-trash-o' }}"></i>
+            {{ submit_label|default:"Supprimer" }}
+        </button>
+    </div>
+</form>

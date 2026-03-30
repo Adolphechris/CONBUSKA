@@ -1,52 +1,66 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Transfert|Save {% endblock title %}
+{% block title %}Valider le transfert #{{ transfert.numero }}{% endblock title %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 class="modal-title">
-                                    {% if title %}
-                                        {{ title }}
-                                    {% endif %}
-                                </h3>
-                            </div>
-                            {% if message %}
-                                <div class="modal-body text-center">
-                                    <h5>{{ message }}</h5>
-                                </div>
-                            {% endif %}
-                            <div class="modal-footer">
-                                <form action="" class="form" method="post">
-                                    {% csrf_token %}
-                                    {% if next %}
-                                        <input name="next" type="hidden" value="{{ next }}" />
-                                    {% endif %}
+<div class="right_col" role="main">
+<div style="padding:40px 20px; max-width:600px; margin:0 auto;">
 
-                                    {% if previous %}
-                                        <input name="previous" type="hidden" value="{{ previous }}" />
-                                    {% endif %}
-
-                                    <a class="btn btn-default" onclick='{% if previous %}window.location.replace("{{ previous }}");{% else %}history.go(-1);{% endif %}'>
-                                        <i class="fa fa-times"></i> Annuler
-                                    </a>
-
-                                    <button type="submit" class="btn btn-info" data-dismiss="modal">
-                                        <i class="{{ submit_icon|default:'fa fa-check' }}"></i>
-                                        {% if submit_label %}{{ submit_label }}{% else %} Yes {% endif %}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#26B99A,#169F85); border-radius:8px;
+                padding:20px 24px; margin-bottom:24px; color:#fff;
+                box-shadow:0 4px 15px rgba(38,185,154,.35);">
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;border-radius:10px;background:rgba(255,255,255,.2);
+                        display:flex;align-items:center;justify-content:center;font-size:22px;">
+                <i class="fa fa-check-circle"></i>
+            </div>
+            <div>
+                <h4 style="margin:0 0 3px;font-size:18px;font-weight:700;color:#fff;">{{ title }}</h4>
+                <p style="margin:0;font-size:12px;color:rgba(255,255,255,.75);">
+                    Transfert #{{ transfert.numero }} —
+                    {{ transfert.magasin_source }} → {{ transfert.magasin_destination }}
+                </p>
             </div>
         </div>
     </div>
+
+    <!-- Carte de confirmation -->
+    <div style="background:#fff;border-radius:8px;border:1px solid #E6E9ED;
+                box-shadow:0 2px 8px rgba(0,0,0,.05);overflow:hidden;">
+
+        {% if error %}
+        <div style="background:#FDEDEC;border-bottom:1px solid #F1948A;padding:12px 20px;
+                    display:flex;align-items:center;gap:8px;">
+            <i class="fa fa-exclamation-circle" style="color:#C0392B;"></i>
+            <span style="font-size:13px;color:#C0392B;font-weight:600;">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <div style="padding:24px 20px;text-align:center;">
+            <i class="fa fa-question-circle" style="font-size:48px;color:#26B99A;margin-bottom:16px;display:block;"></i>
+            <p style="font-size:15px;color:#2A3F54;margin:0;">{{ message }}</p>
+            <p style="font-size:12px;color:#73879C;margin-top:8px;">
+                Cette action est irréversible et mettra à jour les stocks des deux magasins.
+            </p>
+        </div>
+
+        <div style="padding:16px 20px;border-top:1px solid #F0F0F0;
+                    display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+            <a href="{% url 'transfert_details' transfert.pk %}" class="btn btn-default btn-sm">
+                <i class="fa fa-times"></i> Annuler
+            </a>
+            <form method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="{{ submit_icon|default:'fa fa-check' }}"></i>
+                    {{ submit_label|default:"Valider" }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+</div>
 {% endblock content %}

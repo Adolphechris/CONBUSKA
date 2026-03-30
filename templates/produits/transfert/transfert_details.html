@@ -1,308 +1,296 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Détails transfert {% endblock title %}
+{% block title %}Transfert #{{ transfert.numero }}{% endblock title %}
+
 {% block stylesheets %}
-{{block.super}}
+{{ block.super }}
 <style>
-    /* ====== THEME GENTELELLA ====== */
-    :root {
-      --primary: #26B99A;
-      --primary-dark: #169F85;
-      --dark: #34495E;
-      --border: #E6E9ED;
-      --bg-light: #F7F7F7;
-      --text: #73879C;
-    }
-    /* ====== HEADER ====== */
-    .header {
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
+/* ── Reset ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+.right_col { min-height: 100vh; }
+.content-container { padding: 20px; }
 
-    .logo-container {
-      width: 48px;
-      height: 48px;
-      background: var(--primary);
-      color: white;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      float: left;
-      margin-right: 15px;
-    }
+/* ── Gradient header ─────────────────────────────────────────────── */
+.transfert-header {
+    background: linear-gradient(135deg, #26B99A 0%, #169F85 100%);
+    color: #fff;
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(38,185,154,.35);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.transfert-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; color: #fff; }
+.header-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-right: 14px; flex-shrink: 0;
+}
+.header-meta {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px;
+}
+.meta-item {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; color: rgba(255,255,255,.8);
+}
+.meta-item strong { color: #fff; font-weight: 600; }
+.meta-sep { color: rgba(255,255,255,.4); }
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .logo-container i {
-      font-size: 22px;
-    }
+/* Badges statut */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+}
+.status-draft  { background: #E67E22; color: #fff; }
+.status-valide { background: rgba(255,255,255,.25); color: #fff; border: 1px solid rgba(255,255,255,.5); }
+.status-badge i { font-size: 8px; }
 
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--dark);
-    }
+/* ── Grille formulaire + tableau ─────────────────────────────────── */
+.content-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 1200px) { .content-grid { grid-template-columns: 360px 1fr; } }
+@media (max-width: 1000px) { .content-grid { grid-template-columns: 320px 1fr; } }
+@media (max-width: 900px)  { .content-grid { grid-template-columns: 1fr; } }
 
-    /* ====== PANELS ====== */
-    .custom-panel {
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: white;
-      margin-bottom: 15px;
-    }
+/* ── Cards ───────────────────────────────────────────────────────── */
+.card-premium {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #E6E9ED;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    margin-bottom: 0;
+    overflow: hidden;
+}
+.card-header-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 16px; border-bottom: 1px solid #F0F0F0; background: #FAFBFC;
+}
+.card-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; color: #2A3F54;
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.card-title i { color: #26B99A; font-size: 13px; }
+.card-body { padding: 16px; }
+.card-body.no-padding { padding: 0; }
 
-    .panel-heading {
-      padding: 10px 15px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-light);
-    }
+/* ── Formulaires ─────────────────────────────────────────────────── */
+.form-group { margin-bottom: 10px; }
+.input-group-addon {
+    background: #F5F7FA; border-color: #CCD0D7; color: #73879C;
+}
+.form-control:focus { border-color: #26B99A; box-shadow: none; }
 
-    .panel-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--dark);
-      margin: 0;
-    }
+/* Erreurs non-champ */
+.errorlist { list-style: none; padding: 0; margin: 0 0 8px; }
+.errorlist li {
+    background: #FDEDEC; border: 1px solid #F1948A;
+    border-radius: 4px; padding: 6px 10px;
+    font-size: 12px; color: #C0392B;
+}
 
-    .panel-body {
-      padding: 15px;
-    }
+/* ── Table ───────────────────────────────────────────────────────── */
+.table-responsive { overflow-x: auto; }
+.main-row { cursor: pointer; }
+.main-row:hover { background-color: #f8f9fa !important; }
+.main-row[aria-expanded="true"] { background-color: #f1f4f7; }
+.main-row[aria-expanded="true"] .row-arrow {
+    transform: rotate(90deg); transition: transform .2s;
+}
+.detail-row td { border-top: none !important; }
+.detail-container {
+    padding: 10px 15px 14px 40px;
+    border-left: 3px solid #26B99A;
+    background: #fdfdfd;
+}
 
-    /* ====== FORM ====== */
-    .add-form-container {
-      background: var(--bg-light);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 15px;
-    }
-
-    .form-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--dark);
-      margin-bottom: 15px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .form-control {
-      border-radius: 4px;
-      border-color: #CCD0D7;
-    }
-
-    .form-control:focus {
-      border-color: var(--primary);
-      box-shadow: none;
-    }
-
-    /* ====== TABLE ====== */
-    .custom-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .custom-table th {
-      background: var(--bg-light);
-      font-size: 12px;
-      text-transform: uppercase;
-      color: var(--dark);
-      padding: 10px;
-      border: 1px solid var(--border);
-    }
-
-    .custom-table td {
-      padding: 10px;
-      font-size: 13px;
-      border: 1px solid var(--border);
-    }
-
-    .custom-table tbody tr:hover {
-      background: #F2F9F7;
-    }
-
-    .total-row {
-      background: #F0F8F6;
-      font-weight: 600;
-    }
-
-    /* ====== BUTTONS ====== */
-    .btn {
-      border-radius: 4px;
-      font-weight: 500;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark);
-      border-color: var(--primary-dark);
-    }
-
-    .btn-default {
-      background: white;
-      border: 1px solid var(--border);
-      color: var(--dark);
-    }
-
-    /* ====== ACTIONS ====== */
-    .action-buttons-container {
-      margin-top: 20px;
-      padding: 15px;
-      background: var(--bg-light);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      text-align: center;
-    }
-
-    /* ====== RESPONSIVE ====== */
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 18px;
-      }
-
-      .custom-table th,
-      .custom-table td {
-        padding: 8px;
-        font-size: 12px;
-      }
-
-      .action-buttons-container .btn {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-    }
-
-    /* Style pour la ligne principale */
-    .main-row:hover {
-        background-color: #f8f9fa !important;
-    }
-
-    .main-row[aria-expanded="true"] {
-        background-color: #f1f4f7;
-    }
-
-    .main-row[aria-expanded="true"] .row-arrow {
-        transform: rotate(90deg);
-        transition: 0.2s;
-    }
-
-    /* Container des détails */
-    .detail-container {
-        padding: 10px 15px 15px 45px;
-        border-left: 3px solid #007bff; /* Accent bleu pour montrer le lien avec l'article */
-        background: #fdfdfd;
-    }
-
-    .bg-light { background-color: #fcfcfc !important; }
-
-    /* Supprimer les bordures doubles */
-    .detail-row td {
-        border-top: none !important;
-    }
+/* ── Barre d'actions ─────────────────────────────────────────────── */
+.action-bar {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    padding: 14px 0; flex-wrap: wrap;
+}
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
 <div class="right_col" role="main">
-    <div class="">
-        <div class="page-title">
-            <div class="title_left">
-                <h5>Transferts / Editer transfert </h5>
+<div class="content-container">
+
+    <!-- ── Header gradient ───────────────────────────────────────── -->
+    <div class="transfert-header">
+        <div style="display:flex;align-items:center;">
+            <div class="header-icon"><i class="fa fa-exchange"></i></div>
+            <div>
+                <h2>Transfert <span style="opacity:.8;">#{{ transfert.numero }}</span></h2>
+                <div class="header-meta">
+                    <span class="meta-item">
+                        <i class="fa fa-database"></i>
+                        <strong>{{ transfert.magasin_source }}</strong>
+                    </span>
+                    <span class="meta-sep">→</span>
+                    <span class="meta-item">
+                        <strong>{{ transfert.magasin_destination }}</strong>
+                    </span>
+                    <span class="meta-sep">•</span>
+                    <span class="meta-item">
+                        <i class="fa fa-user-o"></i>
+                        <strong>{{ transfert.cree_par.get_full_name|default:transfert.cree_par.username }}</strong>
+                    </span>
+                    <span class="meta-sep">•</span>
+                    <span class="meta-item">
+                        <i class="fa fa-calendar"></i>
+                        <strong>{{ transfert.date_creation|date:"d/m/Y" }}</strong>
+                    </span>
+                </div>
             </div>
         </div>
-        <div class="row">
-            <div class="x_panel">
-                <div class="headerx clearfix">
-                    <div class="logo-wrapper">
-                        <div class="logo-container pull-left">
-                            <i class="fa fa-exchange"></i>
-                        </div>
-                        <div class="header-text">
-                            <h1>Transfert de stock</h1>
-                            <p class="text-muted">Gestion des transferts</p>
-                        </div>
-                    </div>
+        <div class="header-actions">
+            {% if transfert.valide %}
+                <span class="status-badge status-valide">
+                    <i class="fa fa-check-circle"></i> Validé
+                </span>
+            {% else %}
+                <span class="status-badge status-draft">
+                    <i class="fa fa-clock-o"></i> Brouillon
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Grille formulaire + tableau ───────────────────────────── -->
+    <div class="content-grid">
+
+        <!-- Colonne gauche : formulaires -->
+        <div>
+            <div class="card-premium">
+                <div class="card-header-bar">
+                    <span class="card-title"><i class="fa fa-plus-circle"></i> Ajouter un article</span>
                 </div>
-                <div class="panel panel-default custom-panel">
-                    <div class="panel-heading compact">
-                        <div class="clearfix">
-                            <h5 class="panel-title pull-left"><i class="fa fa-info-circle"></i> Informations du transfert</h5>
-                            <a href="" class="btn btn-default btn-xs pull-right" id="btnModifier">
-                                <i class="fa fa-pencil"></i>
-                            </a>
-                        </div>
+                <div class="card-body">
+                    <div id="addFormContainer">
+                        {% include "produits/transfert/partials/_add_form.html" with form=add_form %}
                     </div>
-                    <div class="panel-body compact">
-                        <div class="row">
-                            <div class="col-md-3 col-sm-6">
-                                <div class="form-group row-spacing-sm">
-                                    <label class="control-label">N° Bon de transfert:</label>
-                                    <p class="form-control-static text-medium">{{ transfert.numero }}</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-sm-6">
-                                <div class="form-group row-spacing-sm">
-                                    <label class="control-label">Magasin source:</label>
-                                    <p class="form-control-static text-medium">{{ transfert.magasin_source }}</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-sm-6">
-                                <div class="form-group row-spacing-sm">
-                                    <label class="control-label">Magasin destination:</label>
-                                    <p class="form-control-static text-medium">{{ transfert.magasin_destination }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="updateFormContainer"></div>
                 </div>
-                <!-- Section principale avec formulaire et tableau -->
-                <div class="panel panel-default custom-panel highlighted-panel">
-                    <div class="panel-heading">
-                        <h5 class="panel-title"><i class="fa fa-list-ul"></i> Détails du transfert</h5>
-                    </div>
-                    <div class="panel-body">
-                        <div class="row" id="formTableContainer">
-                            <!-- Formulaire d'ajout à gauche -->
-                            {% include "produits/transfert/partials/_form_container.html" %}
-                            <!-- Tableau à droite -->
-                            <div class="col-md-8">
-                                <div class="table-responsive" id="linesTableContainer">
-                                    {% include "produits/transfert/partials/_table.html" %}
-                                </div>
-                                <button type="button" class="btn btn-danger">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                    Bon de transfert
-                                </button>
-                            </div>
-                        </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite : tableau + actions -->
+        <div>
+            <div class="card-premium">
+                <div class="card-header-bar">
+                    <span class="card-title"><i class="fa fa-list-ul"></i> Lignes du transfert</span>
+                    <span class="text-muted" style="font-size:12px;">
+                        {{ details_transfert|length }}
+                        article{% if details_transfert|length != 1 %}s{% endif %}
+                    </span>
+                </div>
+                <div class="card-body no-padding">
+                    <div class="table-responsive" id="linesTableContainer">
+                        {% include "produits/transfert/partials/_table.html" %}
                     </div>
                 </div>
             </div>
-            <div class="container-fluid text-right">
-                <a class="btn btn-primary" href="{% url 'transfert_save' transfert.pk %}">
-                    <i class="fa fa-save"></i>
-                    Valider transfert
+
+            <div class="action-bar">
+                <a href="{% url 'transferts_stock' %}" class="btn btn-default btn-sm">
+                    <i class="fa fa-arrow-left"></i> Retour à la liste
                 </a>
-                <a class="btn btn-default" href="">
-                    <i class="fa fa-trash"></i>
-                    Annuler transfert
-                </a>
+                {% if not transfert.valide %}
+                    <a href="{% url 'transfert_save' transfert.pk %}" class="btn btn-success btn-sm">
+                        <i class="fa fa-check-circle"></i> Valider le transfert
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
+
 </div>
+</div>
+
+<!-- Modale (cible HTMX pour la confirmation de suppression) -->
+<div class="modal fade" id="mainModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="modalContent">
+            <!-- Contenu injecté par HTMX -->
+        </div>
+    </div>
+</div>
+
 <script>
-    $(document).ready(() => {
-        $('#transfert_stock').addClass('current-page');
-        $('#articles').addClass('active');
-        let parent = document.getElementById('articles');
+$(document).ready(function () {
+
+    function initSelect2(container) {
+        $(container).find('.js-simple-select').each(function () {
+            if ($(this).data('select2')) $(this).select2('destroy');
+            $(this).select2({ width: '100%' });
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2(document);
+
+    document.body.addEventListener('htmx:afterSettle', function (evt) {
+        var targetId = evt.detail.target.id;
+
+        // Formulaire add rechargé avec erreurs (HX-Retarget)
+        if (targetId === 'addFormContainer') {
+            initSelect2(document.getElementById('addFormContainer'));
+        }
+
+        // Formulaire update chargé (GET ou erreur HX-Retarget)
+        if (targetId === 'updateFormContainer') {
+            initSelect2(document.getElementById('updateFormContainer'));
+            var addContainer = document.getElementById('addFormContainer');
+            if (addContainer) addContainer.style.display = 'none';
+        }
+
+        // Table rafraîchie → reset formulaires, fermer modale
+        if (targetId === 'linesTableContainer') {
+            var addContainer = document.getElementById('addFormContainer');
+            var updateContainer = document.getElementById('updateFormContainer');
+            if (addContainer) {
+                addContainer.style.display = 'block';
+                var addForm = addContainer.querySelector('form');
+                if (addForm) {
+                    addForm.reset();
+                    $(addForm).find('.js-simple-select').val(null).trigger('change');
+                }
+                initSelect2(addContainer);
+            }
+            if (updateContainer) updateContainer.innerHTML = '';
+            if ($('#mainModal').hasClass('in')) {
+                $('#mainModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+            }
+        }
+
+        // Fragment de suppression chargé → ouvrir la modale
+        if (targetId === 'modalContent') {
+            $('#mainModal').modal('show');
+        }
+    });
+
+    // Activer le menu latéral
+    $('#transfert_stock').addClass('current-page');
+    $('#articles').addClass('active');
+    var parent = document.getElementById('articles');
+    if (parent && parent.childNodes[2]) {
         parent.childNodes[2].style.display = 'block';
-    })
+    }
+});
 </script>
 {% endblock content %}
