@@ -293,7 +293,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
 
         # formulaire affiché au chargement
         context["add_form"] = CaisseForm(
-            caisse_pk=self.object.caisse.pk
+            caisse_pk=self.object.pk
         )
 
         return self.render_to_response(context)
@@ -304,7 +304,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
         total_sorties = self.total_sorties()
 
         ctx = {
-            "add_form": CaisseForm(caisse_pk=self.object.caisse.pk),
+            "add_form": CaisseForm(caisse_pk=self.object.pk),
             "caisse": self.object.caisse,
             "caisse_courante": self.object,
             "ventes": ventes,
@@ -352,7 +352,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
         form_type = request.POST.get("form_type")
 
         if form_type == "add":
-            form = CaisseForm(request.POST, caisse_pk=self.object.caisse.pk)
+            form = CaisseForm(request.POST, caisse_pk=self.object.pk)
             if not form.is_valid():
                 return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
@@ -374,7 +374,7 @@ class CaisseView(CaisseAccessMixin, DetailView):
         form = CaisseForm(
             request.POST,
             instance=mouvement,
-            caisse_pk=self.object.caisse.pk,
+            caisse_pk=self.object.pk,
         )
         if not form.is_valid():
             return JsonResponse({"success": False, "errors": form.errors}, status=400)

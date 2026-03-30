@@ -22,6 +22,7 @@ class CaisseForm(forms.ModelForm):
 
 
     def __init__(self, *args, **kwargs):
+        # PK CaisseCourante (session ouverte), requis par rubrique_champ_view.
         self.caisse_pk = kwargs.pop('caisse_pk', None)
         super().__init__(*args, **kwargs)
         self.fields['rubrique'].queryset = RubriqueCaisse.objects.filter(visible=True)

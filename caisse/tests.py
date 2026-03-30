@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from caisse.forms import CaisseForm
@@ -87,7 +88,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         caisse_courante = self._create_caisse_courante(est_ouverte=True)
         form = CaisseForm(
             self._valid_form_data(self.caisse.pk),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_courante.pk,
         )
 
         mouvement = MouvementCaisseService.create(
@@ -109,7 +110,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         caisse_courante = self._create_caisse_courante(est_ouverte=False)
         form = CaisseForm(
             self._valid_form_data(self.caisse.pk),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_courante.pk,
         )
 
         with self.assertRaises(ValidationError) as ctx:
@@ -145,7 +146,7 @@ class MouvementCaisseServiceTestCase(TestCase):
                 "motif": "Modifié",
             },
             instance=mouvement,
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_courante.pk,
         )
 
         with self.assertRaises(ValidationError) as ctx:
@@ -202,7 +203,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         caisse_destination = self._create_caisse_destination_courante(est_ouverte=True)
         form = CaisseForm(
             self._transfer_form_data(),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_source.pk,
         )
 
         mouvement = MouvementCaisseService.create(
@@ -231,7 +232,7 @@ class MouvementCaisseServiceTestCase(TestCase):
 
         create_form = CaisseForm(
             self._transfer_form_data(),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_source.pk,
         )
         mouvement = MouvementCaisseService.create(
             form=create_form,
@@ -244,7 +245,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         update_form = CaisseForm(
             self._transfer_form_data(montant="120.00", motif="Transfert modifié"),
             instance=mouvement,
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_source.pk,
         )
         mouvement = MouvementCaisseService.update(
             form=update_form,
@@ -264,7 +265,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         self._create_caisse_destination_courante(est_ouverte=True)
         form = CaisseForm(
             self._transfer_form_data(),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_source.pk,
         )
         mouvement = MouvementCaisseService.create(
             form=form,
@@ -284,7 +285,7 @@ class MouvementCaisseServiceTestCase(TestCase):
         self._create_caisse_destination_courante(est_ouverte=True)
         form = CaisseForm(
             self._transfer_form_data(),
-            caisse_pk=self.caisse.pk,
+            caisse_pk=caisse_source.pk,
         )
         mouvement = MouvementCaisseService.create(
             form=form,
@@ -362,6 +363,24 @@ class OuvertureCaisseViewTestCase(TestCase):
         view.get_caisse = lambda: caisse
 
         self.assertEqual(view.solde_initial(), Decimal("0"))
+
+
+class CaisseFormRubriqueHtmxTestCase(TestCase):
+    """Régression : hx-get rubrique doit cibler rubrique_champ par pk CaisseCourante."""
+
+    def test_rubrique_hx_get_utilise_pk_caisse_courante(self) -> None:
+        caisse = Caisse.objects.create(nom="Caisse HTMX", is_principal=True)
+        caisse_courante = CaisseCourante.objects.create(
+            caisse=caisse,
+            solde_initial=Decimal("100.00"),
+            est_ouverte=True,
+        )
+        form = CaisseForm(caisse_pk=caisse_courante.pk)
+        attendu = reverse(
+            "rubrique_champ",
+            kwargs={"caisse_pk": caisse_courante.pk},
+        )
+        self.assertEqual(form.fields["rubrique"].widget.attrs["hx-get"], attendu)
 
 
 class RubriqueChampViewTestCase(TestCase):
