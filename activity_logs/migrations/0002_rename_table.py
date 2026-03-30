@@ -13,7 +13,31 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql="ALTER TABLE logs_activitylog RENAME TO activity_logs_activitylog;",
-            reverse_sql="ALTER TABLE activity_logs_activitylog RENAME TO logs_activitylog;",
+            # Conditionnel : sur une DB existante, renomme l'ancienne table.
+            # Sur une DB fraîche (tests), 0001_initial crée déjà le bon nom — no-op.
+            sql="""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT FROM information_schema.tables
+                        WHERE table_name = 'logs_activitylog'
+                    ) THEN
+                        ALTER TABLE logs_activitylog
+                            RENAME TO activity_logs_activitylog;
+                    END IF;
+                END $$;
+            """,
+            reverse_sql="""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT FROM information_schema.tables
+                        WHERE table_name = 'activity_logs_activitylog'
+                    ) THEN
+                        ALTER TABLE activity_logs_activitylog
+                            RENAME TO logs_activitylog;
+                    END IF;
+                END $$;
+            """,
         ),
     ]

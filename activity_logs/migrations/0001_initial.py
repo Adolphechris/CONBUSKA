@@ -9,8 +9,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     """
     Migration initiale de l'app activity_logs (anciennement 'logs').
-    Utilise SeparateDatabaseAndState : l'état Django est enregistré mais aucune
-    opération SQL n'est effectuée ici (la table sera renommée par 0002_rename_table).
+    Sur DB existante (prod) la table porte le nom logs_activitylog et sera
+    renommée par 0002_rename_table.
+    Sur DB fraîche (tests / nouvelle installation) cette migration crée
+    directement la table activity_logs_activitylog via la RunSQL conditionnelle.
     """
 
     initial = True
@@ -40,6 +42,25 @@ class Migration(migrations.Migration):
                     },
                 ),
             ],
-            database_operations=[],  # La table existe déjà sous le nom logs_activitylog
+            # Sur DB fraîche : crée la table avec le nom définitif si elle n'existe pas encore.
+            # Sur DB existante (avant renommage) : la table logs_activitylog est déjà là,
+            # cette instruction est un no-op grâce au IF NOT EXISTS.
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                        CREATE TABLE IF NOT EXISTS activity_logs_activitylog (
+                            id          bigserial PRIMARY KEY,
+                            action      varchar(20)  NOT NULL,
+                            module      varchar(30)  NOT NULL,
+                            description varchar(500) NOT NULL,
+                            created_at  timestamptz  NOT NULL,
+                            ip_address  inet,
+                            user_id     bigint REFERENCES %(user_table)s (id)
+                                            ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED
+                        );
+                    """ % {"user_table": "users_customuser"},
+                    reverse_sql="DROP TABLE IF EXISTS activity_logs_activitylog;",
+                ),
+            ],
         ),
     ]
