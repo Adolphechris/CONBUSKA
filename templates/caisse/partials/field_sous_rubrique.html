@@ -3,7 +3,7 @@
     <div class="col-md-9 col-sm-9 col-xs-12">
         <select name="sous_rubrique" class="form-control js-simple-select" id="id_sous_rubrique">
             {% for sous_rubrique in sous_rubriques %}
-                <option value="{{ sous_rubrique.pk }}">{{ sous_rubrique.nom }}</option>
+                <option value="{{ sous_rubrique.pk }}"{% if sous_rubrique.pk == selected_id %} selected{% endif %}>{{ sous_rubrique.nom }}</option>
             {% endfor %}
         </select>
     </div>

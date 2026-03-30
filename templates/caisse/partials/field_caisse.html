@@ -3,7 +3,7 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
         <select name="caisse_destination" class="form-control js-simple-select">
             {% for caisse in caisses %}
-                <option value="{{ caisse.pk }}">{{ caisse.nom }}</option>
+                <option value="{{ caisse.pk }}"{% if caisse.pk == selected_id %} selected{% endif %}>{{ caisse.nom }}</option>
             {% endfor %}
         </select>
     </div>

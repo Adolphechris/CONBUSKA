@@ -36,6 +36,14 @@ class MouvementCaisseService:
     _assert_caisse_ouverte(), appelée dans create, update et delete.
     Ne pas surcharger MouvementCaisse.save() pour ce contrôle.
     """
+    AGENT_RUBRIQUES = {
+        "transport",
+        "avance sur salaire",
+        "restauration",
+        "assistance sociale",
+    }
+    CHARGE_PARENT_RUBRIQUES = {"charges exploitation", "charges personnelles"}
+
     # ----------------- Guards -----------------
 
     @staticmethod
@@ -256,9 +264,9 @@ class MouvementCaisseService:
             cls._handle_creancier(mouvement, creancier_id)
         elif key == "débiteurs":
             cls._handle_debiteur(mouvement, debiteur_id)
-        elif key in {"transport", "avance sur salaire", "restauration", "assistance sociale"}:
+        elif key in cls.AGENT_RUBRIQUES:
             cls._handle_agent(mouvement, agent_id)
-        elif key in {"charges exploitation", "charges personnelles"}:
+        elif key in cls.CHARGE_PARENT_RUBRIQUES:
             cls._handle_charge(mouvement, sous_rubrique_id)
         elif key == "transfert caisse":
             return cls._handle_transfert(mouvement, user)

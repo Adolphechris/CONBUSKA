@@ -27,9 +27,23 @@ class CaisseCourante(models.Model):
 
 
 class RubriqueCaisse(models.Model):
+    class ClassificationMetier(models.TextChoices):
+        NONE = "NONE", "Aucune"
+        CHARGE_EXPLOITATION = (
+            "CHARGE_EXPLOITATION",
+            "Charge d'exploitation",
+        )
+        CHARGE_PERSONNELLE = "CHARGE_PERSONNELLE", "Charge personnelle"
+
     nom = models.CharField(max_length=150)
     description = models.TextField()
     visible = models.BooleanField(default=True)
+    classification_metier = models.CharField(
+        max_length=32,
+        choices=ClassificationMetier.choices,
+        default=ClassificationMetier.NONE,
+        db_index=True,
+    )
     objects = models.Manager()
 
     def __str__(self):

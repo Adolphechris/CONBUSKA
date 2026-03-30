@@ -3,7 +3,7 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
         <select name="creancier" class="form-control js-simple-select">
             {% for creancier in creanciers %}
-                <option value="{{ creancier.pk }}">{{ creancier.nom }}</option>
+                <option value="{{ creancier.pk }}"{% if creancier.pk == selected_id %} selected{% endif %}>{{ creancier.nom }}</option>
             {% endfor %}
         </select>
     </div>

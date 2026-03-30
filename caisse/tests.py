@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from caisse.forms import CaisseForm
@@ -16,7 +16,7 @@ from caisse.models import (
 )
 from caisse.selectors import get_total_ventes_caisse
 from caisse.services.mouvement_caisse import MouvementCaisseService
-from caisse.views import OuvertureCaisseView
+from caisse.views import OuvertureCaisseView, rubrique_champ_view
 from factures.tests.factories import (
     ClientFactory,
     DetailsFactureFactory,
@@ -362,6 +362,49 @@ class OuvertureCaisseViewTestCase(TestCase):
         view.get_caisse = lambda: caisse
 
         self.assertEqual(view.solde_initial(), Decimal("0"))
+
+
+class RubriqueChampViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username="rubrique_test",
+            password="testpass123",
+            force_password_change=False,
+        )
+        self.caisse = Caisse.objects.create(
+            nom="Caisse Rubrique",
+            is_principal=True,
+        )
+        self.caisse_courante = CaisseCourante.objects.create(
+            caisse=self.caisse,
+            solde_initial=Decimal("1000.00"),
+            est_ouverte=True,
+        )
+
+    @patch("caisse.views.assert_caisse_write_access")
+    def test_rubrique_transport_reste_sur_le_champ_agent(
+        self,
+        mock_assert_access,
+    ):
+        rubrique_transport = RubriqueCaisse.objects.create(
+            nom="Transport",
+            description="Rubrique transport",
+            visible=True,
+            classification_metier=(
+                RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION
+            ),
+        )
+        request = self.factory.get(
+            "/caisse/rubrique-champ/",
+            {"rubrique": rubrique_transport.pk},
+        )
+        request.user = self.user
+
+        response = rubrique_champ_view(request, caisse_pk=self.caisse_courante.pk)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('name="agent"', response.content.decode())
 
 
 class GetTotalVentesCaisseTestCase(TestCase):

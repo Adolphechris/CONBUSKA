@@ -25,8 +25,13 @@ class CaisseForm(forms.ModelForm):
         self.caisse_pk = kwargs.pop('caisse_pk', None)
         super().__init__(*args, **kwargs)
         self.fields['rubrique'].queryset = RubriqueCaisse.objects.filter(visible=True)
+        # In edit mode the server pre-renders the correct dependent field, so we
+        # must NOT fire 'load' (it would overwrite the pre-filled content with the
+        # first item in the list). Only listen to explicit user changes.
+        editing = bool(self.instance and self.instance.pk)
+        trigger = 'change' if editing else 'load, change'
         self.fields['rubrique'].widget.attrs.update({
-            'hx-get': reverse('rubrique_champ',  kwargs={'caisse_pk': self.caisse_pk}),
+            'hx-get': reverse('rubrique_champ', kwargs={'caisse_pk': self.caisse_pk}),
             'hx-target': 'next .rubrique-dependent-fields',
-            'hx-trigger': 'load, change'
+            'hx-trigger': trigger,
         })

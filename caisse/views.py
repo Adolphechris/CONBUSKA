@@ -105,20 +105,96 @@ class OuvertureCaisseView(CaisseAccessMixin, FormView):
         return context
 
 
+def _render_champ_for_mouvement(mouvement):
+    """Pre-render the dependent field partial with the correct entity pre-selected.
+
+    Called when opening a movement for editing so the form shows the right
+    client / agent / etc. without relying on the HTMX 'load' trigger (which
+    would default to the first item in the list).
+    """
+    rubrique_nom = mouvement.rubrique.nom.lower() if mouvement.rubrique else ""
+
+    if rubrique_nom == "clients":
+        rel = mouvement.mouvements_caisse_c.first()
+        selected_id = rel.client_id if rel else None
+        return render_to_string("caisse/partials/field_client.html",
+                                {"clients": Client.objects.all(), "selected_id": selected_id})
+
+    if rubrique_nom == "fournisseurs":
+        rel = mouvement.mouvements_caisse_f.first()
+        selected_id = rel.fournisseur_id if rel else None
+        return render_to_string("caisse/partials/field_fournisseur.html",
+                                {"fournisseurs": Fournisseur.objects.all(), "selected_id": selected_id})
+
+    if rubrique_nom == "créanciers":
+        rel = mouvement.mouvements_caisse_cr.first()
+        selected_id = rel.creancier_id if rel else None
+        return render_to_string("caisse/partials/field_creancier.html",
+                                {"creanciers": Creancier.objects.all(), "selected_id": selected_id})
+
+    if rubrique_nom == "débiteurs":
+        rel = mouvement.mouvements_caisse_db.first()
+        selected_id = rel.debiteur_id if rel else None
+        return render_to_string("caisse/partials/field_debiteur.html",
+                                {"debiteurs": Debiteur.objects.all(), "selected_id": selected_id})
+
+    if rubrique_nom == "transfert caisse":
+        selected_id = mouvement.caisse_destination_id
+        caisses = Caisse.objects.exclude(pk=mouvement.caisse.caisse_id)
+        return render_to_string("caisse/partials/field_caisse.html",
+                                {"caisses": caisses, "selected_id": selected_id})
+
+    if rubrique_nom in MouvementCaisseService.AGENT_RUBRIQUES:
+        rel = mouvement.mouvements_caisse_ag.first()
+        selected_id = rel.agent_id if rel else None
+        return render_to_string("caisse/partials/field_agent.html",
+                                {"agents": Agent.objects.all(), "selected_id": selected_id})
+
+    if (
+        rubrique_nom == "charges exploitation"
+        and mouvement.rubrique.classification_metier
+        == RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION
+    ):
+        rel = mouvement.mouvements_caisse_ce.first()
+        selected_id = (rel.sous_rubrique_id if rel else None) or mouvement.sous_rubrique_id
+        return render_to_string("caisse/partials/field_sous_rubrique.html",
+                                {"sous_rubriques": SousRubriqueCaisse.objects.filter(
+                                    rubrique__nom="Charges exploitation"),
+                                 "selected_id": selected_id})
+
+    if (
+        rubrique_nom == "charges personnelles"
+        and mouvement.rubrique.classification_metier
+        == RubriqueCaisse.ClassificationMetier.CHARGE_PERSONNELLE
+    ):
+        rel = mouvement.mouvements_caisse_cp.first()
+        selected_id = (rel.sous_rubrique_id if rel else None) or mouvement.sous_rubrique_id
+        return render_to_string("caisse/partials/field_sous_rubrique.html",
+                                {"sous_rubriques": SousRubriqueCaisse.objects.filter(
+                                    rubrique__nom="Charges personnelles"),
+                                 "selected_id": selected_id})
+
+    return ""
+
+
 @login_required
 @require_GET
 def get_update_caisse_form(request, pk):
     instance = get_object_or_404(MouvementCaisse, pk=pk)
     assert_caisse_write_access(request.user, instance.caisse.caisse)
     form = CaisseForm(instance=instance, caisse_pk=instance.caisse.pk)
+    prefilled_champ_html = _render_champ_for_mouvement(instance)
     return render(request, "caisse/partials/update_form.html",
-                  {"update_form": form, "caisse_pk": instance.caisse.pk, "mouvement_pk": pk})
+                  {"update_form": form, "caisse_pk": instance.caisse.pk,
+                   "mouvement_pk": pk, "prefilled_champ_html": prefilled_champ_html})
 
 
 @login_required
 @require_GET
 def rubrique_champ_view(request, caisse_pk):
-    caisse = get_object_or_404(Caisse, pk=caisse_pk)
+    # caisse_pk is the pk of CaisseCourante (the open session), not Caisse.
+    caisse_courante = get_object_or_404(CaisseCourante, pk=caisse_pk)
+    caisse = caisse_courante.caisse
     assert_caisse_write_access(request.user, caisse)
     logger.debug("rubrique_champ_view GET params: %s", request.GET)
     rubrique_id = request.GET.get('rubrique')
@@ -147,19 +223,27 @@ def rubrique_champ_view(request, caisse_pk):
                                           context={'debiteurs': Debiteur.objects.all()})
 
         elif rubrique.nom.lower() == "transfert caisse":
-            caisses = Caisse.objects.exclude(pk=caisse_pk)
+            caisses = Caisse.objects.exclude(pk=caisse.pk)
             champ_html = render_to_string("caisse/partials/field_caisse.html",
                                           context={'caisses': caisses})
 
-        elif rubrique.nom.lower() in ["transport", "avance sur salaire", "restauration", "assistance sociale"]:
+        elif rubrique.nom.lower() in MouvementCaisseService.AGENT_RUBRIQUES:
             champ_html = render_to_string("caisse/partials/field_agent.html",
                                           context={'agents': Agent.objects.all()})
 
-        elif rubrique.nom.lower() == "charges exploitation":
+        elif (
+            rubrique.nom.lower() == "charges exploitation"
+            and rubrique.classification_metier
+            == RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION
+        ):
             champ_html = render_to_string("caisse/partials/field_sous_rubrique.html",
                                           context={'sous_rubriques': SousRubriqueCaisse.objects.filter(rubrique__nom="Charges exploitation")})
 
-        elif rubrique.nom.lower() == "charges personnelles":
+        elif (
+            rubrique.nom.lower() == "charges personnelles"
+            and rubrique.classification_metier
+            == RubriqueCaisse.ClassificationMetier.CHARGE_PERSONNELLE
+        ):
             champ_html = render_to_string("caisse/partials/field_sous_rubrique.html",
                                           context={'sous_rubriques': SousRubriqueCaisse.objects.filter(rubrique__nom="Charges personnelles")})
 
