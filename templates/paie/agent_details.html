@@ -37,6 +37,16 @@
   .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
   .kpi-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
 
+  /* ── Profil info grid ───────────────────────────────────────── */
+  .profil-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; padding: 20px; }
+  .profil-item { display: flex; flex-direction: column; gap: 3px; }
+  .profil-item .pi-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #999; font-weight: 600; }
+  .profil-item .pi-value { font-size: 14px; color: #2A3F54; font-weight: 500; }
+  .profil-item .pi-value.empty { color: #bbb; font-style: italic; font-size: 12px; }
+  .statut-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .statut-actif { background: #d4edda; color: #26B99A; border: 1px solid #26B99A; }
+  .statut-inactif { background: #fee; color: #E74C3C; border: 1px solid #fcc; }
+
   /* ── Tabs ──────────────────────────────────────────────────── */
   .det-tabs-wrap {
     background: #fff; border-radius: 12px;
@@ -151,7 +161,10 @@
     <!-- ── Tabs ──────────────────────────────────────────────── -->
     <div class="det-tabs-wrap">
       <div class="det-tabs-nav">
-        <a href="#" class="tab-link active" data-tab="tab-paie">
+        <a href="#" class="tab-link active" data-tab="tab-profil">
+          <i class="fa fa-id-card-o"></i> Profil
+        </a>
+        <a href="#" class="tab-link" data-tab="tab-paie">
           <i class="fa fa-list-alt"></i> Historique de paie
         </a>
         <a href="#" class="tab-link" data-tab="tab-mvts">
@@ -159,8 +172,74 @@
         </a>
       </div>
 
+      <!-- Tab Profil -->
+      <div id="tab-profil" class="det-tab-pane active">
+        <div class="profil-grid">
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-user"></i> Matricule</span>
+            <span class="pi-value">{{ agent.matricule }}</span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-calendar"></i> Date de naissance</span>
+            <span class="pi-value {% if not agent.date_naissance %}empty{% endif %}">
+              {% if agent.date_naissance %}{{ agent.date_naissance|date:"d/m/Y" }}{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-calendar-check-o"></i> Date d'engagement</span>
+            <span class="pi-value {% if not agent.date_engagement %}empty{% endif %}">
+              {% if agent.date_engagement %}{{ agent.date_engagement|date:"d/m/Y" }}{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-briefcase"></i> Poste</span>
+            <span class="pi-value {% if not agent.poste %}empty{% endif %}">
+              {{ agent.poste|default:"Non renseigné" }}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-building"></i> Département</span>
+            <span class="pi-value {% if not agent.departement %}empty{% endif %}">
+              {{ agent.departement|default:"Non renseigné" }}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-file-text-o"></i> Type de contrat</span>
+            <span class="pi-value">{{ agent.get_type_contrat_display }}</span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-phone"></i> Téléphone</span>
+            <span class="pi-value {% if not agent.telephone %}empty{% endif %}">
+              {{ agent.telephone|default:"—" }}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-envelope"></i> E-mail</span>
+            <span class="pi-value {% if not agent.email %}empty{% endif %}">
+              {{ agent.email|default:"—" }}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-map-marker"></i> Adresse</span>
+            <span class="pi-value {% if not agent.adresse %}empty{% endif %}">
+              {{ agent.adresse|default:"—" }}{% if agent.ville %}, {{ agent.ville }}{% endif %}
+            </span>
+          </div>
+          <div class="profil-item">
+            <span class="pi-label"><i class="fa fa-toggle-on"></i> Statut</span>
+            <span class="pi-value">
+              {% if agent.actif %}
+                <span class="statut-badge statut-actif"><i class="fa fa-check-circle"></i> Actif</span>
+              {% else %}
+                <span class="statut-badge statut-inactif"><i class="fa fa-ban"></i> Inactif</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Tab Paie -->
-      <div id="tab-paie" class="det-tab-pane active">
+      <div id="tab-paie" class="det-tab-pane">
         <div class="det-panel-body">
           <div class="table-responsive">
             <table id="tablePaie" class="table table-hover" style="margin:0;">
@@ -169,8 +248,8 @@
                   <th>N°</th>
                   <th>Mois</th>
                   <th class="text-right">Jours prestés</th>
-                  <th class="text-right">Salaire net perçu</th>
-                  <th class="text-right">Rémunération totale</th>
+                  <th class="text-right">Salaire brut</th>
+                  <th class="text-right">Net à payer</th>
                   <th class="text-center">Actions</th>
                 </tr>
               </thead>
@@ -180,8 +259,8 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ i.mois|date:"F Y" }}</td>
                     <td class="text-right">{{ i.jp }} j</td>
-                    <td class="text-right">{{ i.montant_percu|floatformat:0 }} FC</td>
-                    <td class="text-right">{{ i.remuneration_totale|floatformat:0 }} FC</td>
+                    <td class="text-right">{{ i.salaire_brut|floatformat:0 }} FC</td>
+                    <td class="text-right">{{ i.net_a_payer|floatformat:0 }} FC</td>
                     <td class="text-center">
                       <a href="{% url 'paie_agent_details' i.pk agent.pk %}" class="btn btn-warning btn-xs">
                         <i class="fa fa-eye"></i> Détails
@@ -217,6 +296,8 @@
                 <tr>
                   <th>N°</th>
                   <th>Date</th>
+                  <th>Rubrique</th>
+                  <th>Motif</th>
                   <th class="text-right">Montant</th>
                   <th>Percepteur</th>
                 </tr>
@@ -225,12 +306,20 @@
                 {% for i in paiements %}
                   <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ i.date_paiement|date:"d/m/Y" }}</td>
-                    <td class="text-right">{{ i.montant|floatformat:0 }} FC</td>
-                    <td>{{ i.cree_par }}</td>
+                    <td style="white-space: nowrap;">{{ i.date_mouvement|date:"d/m/Y" }}</td>
+                    <td>
+                      <span style="display: inline-block; background: #f0f0f0; color: #555; border-radius: 3px; padding: 1px 8px; font-size: 11px; font-weight: 600;">
+                        {{ i.rubrique.nom }}
+                      </span>
+                    </td>
+                    <td style="font-size: 12px; color: #73879C; max-width: 220px;">{{ i.motif|default:"—" }}</td>
+                    <td class="text-right" style="font-family: 'Courier New', monospace; font-weight: 600; white-space: nowrap;">
+                      {{ i.montant|floatformat:0 }} FC
+                    </td>
+                    <td style="font-size: 12px;">{{ i.effectue_par }}</td>
                   </tr>
                 {% empty %}
-                  <tr><td colspan="4" class="text-center text-muted" style="padding:24px;">Aucun mouvement enregistré.</td></tr>
+                  <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Aucun mouvement enregistré.</td></tr>
                 {% endfor %}
               </tbody>
             </table>

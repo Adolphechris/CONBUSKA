@@ -1,76 +1,387 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Paie/Details {% endblock title %}
-{% block stylesheets %}
-{{block.super}}
-<style>
-    .img_container {
-        width: 20px;
-        height: 12px;
-    }
+{% block title %}Bulletin — {{ agent.nom }} {{ paie.mois|date:"m/Y" }}{% endblock %}
 
-    /* Resize images */
-    .img_container img {
-        width: 100%;
-        height: auto;
-    }
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  /* ── Tile-stats (patrimoine pattern) ──────────────────────── */
+  .tile-stats {
+    position: relative; display: block; margin-bottom: 20px;
+    border: 1px solid #E4E4E4; border-radius: 5px;
+    background: #fff; padding: 20px;
+    transition: all 0.3s ease; overflow: hidden;
+  }
+  .tile-stats:hover { box-shadow: 0 4px 8px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .tile-stats .icon {
+    position: absolute; right: 20px; top: 20px;
+    font-size: 48px; opacity: 0.08;
+  }
+  .tile-stats .count { font-size: 24px; font-weight: 700; margin: 10px 0 4px; }
+  .tile-stats h3 {
+    margin: 0; font-size: 11px; font-weight: 400;
+    color: #BAB8B8; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tile-stats.success-stat .count { color: #26B99A; }
+  .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+  .tile-stats.danger-stat .count { color: #E74C3C; }
+  .tile-stats.danger-stat { border-left: 4px solid #E74C3C; }
+  .tile-stats.info-stat .count { color: #3498DB; }
+  .tile-stats.info-stat { border-left: 4px solid #3498DB; }
+  .tile-stats.purple-stat .count { color: #8E44AD; }
+  .tile-stats.purple-stat { border-left: 4px solid #8E44AD; }
+
+  /* ── Bulletin columns ─────────────────────────────────────── */
+  .bulletin-col {
+    border: 1px solid #E6E9ED; border-radius: 4px;
+    overflow: hidden; margin-bottom: 16px;
+  }
+  .bulletin-col-header {
+    padding: 10px 14px;
+    background: #F5F7FA;
+    border-bottom: 2px solid #E6E9ED;
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bulletin-col-header.gains { border-bottom-color: #26B99A; color: #26B99A; }
+  .bulletin-col-header.retenues { border-bottom-color: #E74C3C; color: #E74C3C; }
+  .bulletin-col-header .total-badge {
+    margin-left: auto;
+    font-size: 13px; font-family: 'Courier New', monospace;
+  }
+  .bulletin-line {
+    padding: 9px 14px; border-bottom: 1px solid #F5F7FA;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #2A3F54;
+    transition: background .15s;
+  }
+  .bulletin-line:hover { background: #FAFBFC; }
+  .bulletin-line:last-child { border-bottom: none; }
+  .bulletin-line .libelle { color: #2A3F54; }
+  .bulletin-line .montant {
+    font-family: 'Courier New', monospace; font-weight: 600;
+    white-space: nowrap;
+  }
+  .bulletin-line.base-line .libelle { font-weight: 600; }
+  .bulletin-line .montant.gain { color: #26B99A; }
+  .bulletin-line .montant.retenue { color: #E74C3C; }
+
+  /* ── Net à payer footer ───────────────────────────────────── */
+  .net-footer {
+    border: 2px solid #E6E9ED; border-radius: 6px;
+    padding: 16px 20px; margin-top: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff;
+  }
+  .net-footer-left { font-size: 13px; color: #73879C; }
+  .net-footer-left .formula { font-size: 11px; font-style: italic; margin-top: 3px; }
+  .net-footer-right { text-align: right; }
+  .net-footer-right .net-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    color: #73879C; margin-bottom: 2px;
+  }
+  .net-footer-right .net-value {
+    font-size: 26px; font-weight: 700; color: #26B99A;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── Statut banner ────────────────────────────────────────── */
+  .statut-brouillon {
+    background: #fff8e1; border: 1px solid #F39C12;
+    border-radius: 4px; padding: 8px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #7d5a00;
+  }
+  .statut-valide {
+    background: #e8f8f5; border: 1px solid #26B99A;
+    border-radius: 4px; padding: 8px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #1a6b58;
+  }
+
+  /* ── Action buttons ───────────────────────────────────────── */
+  .btn-validate {
+    background: #26B99A; border-color: #169F85;
+    color: #fff; font-weight: 600;
+    border-radius: 3px;
+  }
+  .btn-validate:hover { background: #1a9479; border-color: #14785e; color: #fff; }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>
-                        <a href="{% url 'agents' %}"> Agents </a> / <a href="{% url 'agent_details' agent.pk %}"> Détails agent </a> / Détails paie #{{ paie.mois }}
-                    </h5>
-                </div>
+<div class="right_col" role="main">
+  <div class="container-fluid">
+
+    <!-- ── Breadcrumb ─────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+      <li><a href="{% url 'agents' %}"><i class="fa fa-id-badge"></i> Agents</a></li>
+      <li><a href="{% url 'agent_details' agent.pk %}">{{ agent.nom }}</a></li>
+      <li class="active">Paie {{ paie.mois|date:"m/Y" }}</li>
+    </ol>
+
+    <!-- ── Page Header (patrimoine pattern) ───────────────────── -->
+    <div style="background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+      <div class="row" style="margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="flex: 1; display: flex; align-items: center; gap: 16px; min-width: 260px;">
+          <div style="width: 54px; height: 54px; background: rgba(255,255,255,.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: #fff; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255,255,255,.4);">
+            {% if agent.photo %}<img src="{{ agent.photo.url }}" alt="{{ agent.nom }}" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}{{ agent.nom|slice:":1"|upper }}{% endif %}
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: .6; margin-bottom: 2px;">Bulletin de paie</div>
+            <h2 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #fff;">{{ agent.nom }}</h2>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <span style="background: rgba(255,255,255,.2); border-radius: 20px; padding: 1px 10px; font-size: 11px;">Mat. {{ agent.matricule }}</span>
+              {% if agent.poste %}<span style="opacity: .8; font-size: 12px;">{{ agent.poste }}</span>{% endif %}
             </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Détails de la paie de #{{ paie.mois }} pour l'agent #{{ agent }}<small></small></h2>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div class="content table-responsive display">
-                                <table id="tablePaie" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title"> N°</th>
-                                            <th class="column-title"> Libéllé</th>
-                                            <th class="column-title"> Motant perçu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for item in details_paie_agent %}
-										    <tr>
-                                                <td>{{ forloop.counter }}</td>
-                                                <td>{{ item.libelle }}</td>
-                                                <td>{{ item.montant }}FC</td>
-										    </tr>
-									    {% endfor %}
-                                    </tbody>
-                                    <tfoot>
-                                        <tr class="bg-warning">
-                                            <td colspan="2" class="text-right"><strong>Total rémunération perçue:</strong></td>
-                                            <td class=""><strong>{{ total_remuneration }} FC</strong></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <div style="background: rgba(255,255,255,.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,.15); text-align: center;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: .65; margin-bottom: 3px;"><i class="fa fa-calendar-o"></i> Mois</div>
+            <div style="font-size: 16px; font-weight: 600;">{{ paie.mois|date:"F Y" }}</div>
+          </div>
+          <div style="background: rgba(255,255,255,.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,.15); text-align: center;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: .65; margin-bottom: 3px;"><i class="fa fa-calendar-check-o"></i> Jours</div>
+            <div style="font-size: 16px; font-weight: 600;">{{ paie.jp }}/{{ paie.jap }}</div>
+          </div>
+          <div style="background: rgba(255,255,255,.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,.15); text-align: center;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: .65; margin-bottom: 3px;">Statut</div>
+            {% if paie.valide %}
+            <div style="font-size: 13px; font-weight: 700; color: #a8f0e0;"><i class="fa fa-check-circle"></i> VALIDÉ</div>
+            {% else %}
+            <div style="font-size: 13px; font-weight: 700; color: #ffd57a;"><i class="fa fa-clock-o"></i> BROUILLON</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#paies').addClass('active');
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── KPI Tiles ───────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats purple-stat">
+          <i class="fa fa-money icon"></i>
+          <h3>Salaire de base</h3>
+          <div class="count">{{ paie.salaire_base|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats info-stat">
+          <i class="fa fa-plus-circle icon"></i>
+          <h3>Salaire brut</h3>
+          <div class="count">{{ paie.salaire_brut|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+          {% if paie.absence > 0 %}
+          <p style="font-size:11px;color:#73879C;margin:0;">Prorata {{ paie.jp }}/{{ paie.jap }} j</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats success-stat">
+          <i class="fa fa-arrow-up icon"></i>
+          <h3>Total primes</h3>
+          <div class="count">{{ paie.total_primes|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats danger-stat">
+          <i class="fa fa-arrow-down icon"></i>
+          <h3>Total retenues</h3>
+          <div class="count">{{ paie.total_retenues|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Panel bulletin ─────────────────────────────────────── -->
+    <div class="x_panel">
+      <div class="x_title">
+        <h2>Détail du bulletin <small>{{ paie.mois|date:"F Y" }}</small></h2>
+        <ul class="nav navbar-right panel_toolbox" style="padding-right: 0;">
+          {% if not paie.valide %}
+          <li>
+            <button type="button" class="btn btn-sm btn-validate" data-toggle="modal" data-target="#modalValiderPaie">
+              <i class="fa fa-check"></i> Valider la paie
+            </button>
+          </li>
+          {% endif %}
+          <li><a class="collapse-link" style="margin-left:8px;"><i class="fa fa-chevron-up"></i></a></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="x_content">
+
+        <!-- Statut banner -->
+        {% if not paie.valide %}
+        <div class="statut-brouillon">
+          <i class="fa fa-exclamation-triangle" style="font-size:16px; color:#F39C12;"></i>
+          <div>
+            <strong>Brouillon</strong> — Ce bulletin n'est pas encore validé.
+            La validation créera automatiquement un mouvement « Solde sur salaire » en caisse.
+          </div>
+        </div>
+        {% else %}
+        <div class="statut-valide">
+          <i class="fa fa-check-circle" style="font-size:16px; color:#26B99A;"></i>
+          <div>
+            <strong>Validé</strong> — Bulletin validé par {{ paie.modifie_par|default:paie.cree_par }}.
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Deux colonnes GAINS / RETENUES -->
+        <div class="row">
+          <!-- Gains -->
+          <div class="col-md-6 col-sm-12">
+            <div class="bulletin-col">
+              <div class="bulletin-col-header gains">
+                <i class="fa fa-arrow-circle-up"></i> Gains
+                <span class="total-badge">{{ paie.salaire_brut|floatformat:0 }} FC</span>
+              </div>
+              {% for ligne in lignes_gain %}
+              <div class="bulletin-line {% if forloop.first %}base-line{% endif %}">
+                <span class="libelle">{{ ligne.libelle }}</span>
+                <span class="montant gain">+ {{ ligne.montant|floatformat:0 }} FC</span>
+              </div>
+              {% empty %}
+              <div class="bulletin-line" style="color:#BAB8B8; justify-content:center;">Aucun gain</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Retenues -->
+          <div class="col-md-6 col-sm-12">
+            <div class="bulletin-col">
+              <div class="bulletin-col-header retenues">
+                <i class="fa fa-arrow-circle-down"></i> Retenues
+                <span class="total-badge">{{ paie.total_retenues|floatformat:0 }} FC</span>
+              </div>
+              {% for ligne in lignes_retenue %}
+              <div class="bulletin-line">
+                <span class="libelle">{{ ligne.libelle }}</span>
+                <span class="montant retenue">− {{ ligne.montant|floatformat:0 }} FC</span>
+              </div>
+              {% empty %}
+              <div class="bulletin-line" style="color:#BAB8B8; justify-content:center;">Aucune retenue</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Net à payer -->
+        <div class="net-footer">
+          <div class="net-footer-left">
+            <div style="font-size:13px;font-weight:600;color:#2A3F54;">Récapitulatif</div>
+            <div class="formula" style="color:#73879C;">
+              Salaire brut <strong>{{ paie.salaire_brut|floatformat:0 }}</strong>
+              + Primes <strong>{{ paie.total_primes|floatformat:0 }}</strong>
+              − Retenues <strong>{{ paie.total_retenues|floatformat:0 }}</strong>
+            </div>
+          </div>
+          <div class="net-footer-right">
+            <div class="net-label">Net à payer</div>
+            <div class="net-value">{{ paie.net_a_payer|floatformat:0 }} FC</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+          <a href="{% url 'agent_details' agent.pk %}" class="btn btn-default btn-sm">
+            <i class="fa fa-arrow-left"></i> Retour à l'agent
+          </a>
+          <a href="{% url 'listes_paie' %}" class="btn btn-default btn-sm">
+            <i class="fa fa-list"></i> Livre de paie
+          </a>
+          <a href="{% url 'paie_pdf' paie.pk agent.pk %}" class="btn btn-sm" target="_blank"
+             style="background:#2A3F54; color:#fff; border-color:#2A3F54;">
+            <i class="fa fa-file-pdf-o"></i> Télécharger le bulletin
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Modale de validation ────────────────────────────────────── -->
+{% if not paie.valide %}
+<div class="modal fade" id="modalValiderPaie" tabindex="-1" role="dialog" aria-labelledby="modalValiderPaieLabel">
+  <div class="modal-dialog" role="document" style="max-width: 480px;">
+    <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0,0,0,.2);">
+
+      <div class="modal-header" style="background: linear-gradient(135deg, #26B99A 0%, #1a9479 100%); border: none; padding: 20px 24px;">
+        <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: .8; font-size: 20px; margin-top: -2px;">&times;</button>
+        <h4 class="modal-title" id="modalValiderPaieLabel" style="color: #fff; font-weight: 700; font-size: 16px;">
+          <i class="fa fa-check-circle" style="margin-right: 8px;"></i>Valider le bulletin de paie
+        </h4>
+      </div>
+
+      <div class="modal-body" style="padding: 24px; background: #fff;">
+        <div style="display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px;">
+          <div style="width: 44px; height: 44px; background: #e8f8f5; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa fa-user" style="color: #26B99A; font-size: 18px;"></i>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: #2A3F54; font-size: 14px;">{{ agent.nom }}</div>
+            <div style="font-size: 12px; color: #73879C;">Mat. {{ agent.matricule }} &mdash; {{ paie.mois|date:"F Y" }}</div>
+          </div>
+        </div>
+
+        <div style="background: #F5F7FA; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px; border: 1px solid #E6E9ED;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
+            <span>Salaire brut</span>
+            <span style="font-family: 'Courier New', monospace; color: #2A3F54;">{{ paie.salaire_brut|floatformat:0 }} FC</span>
+          </div>
+          {% if paie.total_primes %}
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
+            <span>+ Primes</span>
+            <span style="font-family: 'Courier New', monospace; color: #26B99A;">{{ paie.total_primes|floatformat:0 }} FC</span>
+          </div>
+          {% endif %}
+          {% if paie.total_retenues %}
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
+            <span>&minus; Retenues</span>
+            <span style="font-family: 'Courier New', monospace; color: #E74C3C;">{{ paie.total_retenues|floatformat:0 }} FC</span>
+          </div>
+          {% endif %}
+          <div style="border-top: 1px solid #E6E9ED; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; color: #2A3F54;">Net à payer</span>
+            <span style="font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #26B99A;">{{ paie.net_a_payer|floatformat:0 }} FC</span>
+          </div>
+        </div>
+
+        <div style="background: #fff8e1; border: 1px solid #F39C12; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #7d5a00; display: flex; gap: 8px; align-items: flex-start;">
+          <i class="fa fa-info-circle" style="color: #F39C12; margin-top: 1px; flex-shrink: 0;"></i>
+          <span>Un mouvement <strong>Solde sur salaire</strong> sera automatiquement créé dans la caisse principale. Cette action est irréversible.</span>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #F5F7FA; border-top: 1px solid #E6E9ED; padding: 14px 24px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+          <i class="fa fa-times"></i> Annuler
+        </button>
+        <form method="post" action="{% url 'paie_agent_valider' paie.pk agent.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-validate">
+            <i class="fa fa-check"></i> Confirmer la validation
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  $(document).ready(function() {
+    $('#paie').addClass('active');
+    var parent = document.getElementById('paie');
+    if (parent && parent.childNodes[2]) parent.childNodes[2].style.display = 'block';
+  });
+</script>
+{% endblock %}

@@ -1,73 +1,157 @@
+"""
+paie/models.py
+
+Modèles du module paie.
+Structure uniquement. Aucune logique métier.
+"""
+
 from django.db import models
 from django.urls import reverse
-from django.db.models import Max
-from caisse.models import MouvementCaisseAgent, MouvementCaisse
+
+
+class TypeContrat(models.TextChoices):
+    CDI        = 'CDI',        'CDI'
+    CDD        = 'CDD',        'CDD'
+    CONSULTANT = 'CONSULTANT', 'Consultant'
+
+
+class TypeLigne(models.TextChoices):
+    GAIN    = 'GAIN',    'Gain'     # s'ajoute au net à payer
+    RETENUE = 'RETENUE', 'Retenue'  # se soustrait du net à payer
 
 
 class Agent(models.Model):
-    matricule = models.IntegerField(unique=True, blank=False)
-    date_naissance = models.DateField(blank=False, null=False)
-    date_engagement = models.DateField(blank=False, null=False)
-    photo = models.ImageField(upload_to='agents/', blank=True)
-    nom = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(unique=True, blank=True, null=True)
-    adresse = models.CharField(max_length=150)
-    telephone = models.CharField(max_length=150)
-    ville = models.CharField(max_length=30)
-    salaire = models.DecimalField(max_digits=10, decimal_places=2)
+    matricule         = models.IntegerField(unique=True)
+    nom               = models.CharField(max_length=150, unique=True)
+    date_naissance    = models.DateField()
+    date_engagement   = models.DateField()
+    photo             = models.ImageField(upload_to='agents/', blank=True)
+    email             = models.EmailField(unique=True, blank=True, null=True)
+    adresse           = models.CharField(max_length=150)
+    telephone         = models.CharField(max_length=50)
+    ville             = models.CharField(max_length=50)
+    poste             = models.CharField(max_length=100, blank=True)
+    departement       = models.CharField(max_length=100, blank=True)
+    type_contrat      = models.CharField(
+        max_length=20,
+        choices=TypeContrat.choices,
+        default=TypeContrat.CDI,
+    )
+    salaire           = models.DecimalField(max_digits=12, decimal_places=2)
+    actif             = models.BooleanField(default=True)
+    date_creation     = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
 
-    def __str__(self):
+    class Meta:
+        ordering            = ['nom']
+        verbose_name        = 'Agent'
+        verbose_name_plural = 'Agents'
+
+    def __str__(self) -> str:
         return self.nom
 
-    @classmethod
-    def get_next_matricule(cls):
-        last_matricule = cls.objects.aggregate(Max('matricule'))['matricule__max']
-        if last_matricule:
-            return last_matricule + 1
-        return 4000
-
-    def save(self, *args, **kwargs):
-        if self.matricule is None:
-            self.matricule = self.get_next_matricule()
-
-        super(Agent, self).save(*args, **kwargs)
-
-
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse('agent_details', args=[self.pk])
 
 
 class Paie(models.Model):
-    mois = models.DateField(blank=False, null=False)
-    agent = models.ForeignKey(Agent, related_name='agent_paie_details', on_delete=models.PROTECT)
-    salaire = models.DecimalField(max_digits=10, decimal_places=2)
-    montant_percu = models.DecimalField(max_digits=10, decimal_places=2)
-    jap = models.IntegerField(default=26)
-    jp = models.IntegerField(default=26)
-    absence = models.IntegerField(default=0)
-    cree_par = models.ForeignKey('users.CustomUser',
-                                 related_name='paiecreepar',
-                                 on_delete=models.PROTECT)
-    modifie_par = models.ForeignKey('users.CustomUser',
-                                    blank=True, null=True,
-                                    related_name='paiemodpar',
-                                    on_delete=models.PROTECT)
-    date_creation = models.DateTimeField(auto_now_add=True)
+    """
+    Bulletin de paie mensuel d'un agent.
+
+    Toutes les valeurs calculées sont des snapshots pris au moment
+    de la création — indépendants des modifications ultérieures
+    du salaire ou des mouvements caisse.
+
+    Formule :
+        salaire_brut   = salaire_base × (jp / jap)
+        total_primes   = Σ LignePaie[type=GAIN]
+        total_retenues = Σ LignePaie[type=RETENUE]
+        net_a_payer    = salaire_brut + total_primes − total_retenues
+    """
+
+    mois  = models.DateField()   # toujours normalisé au 1er du mois
+    agent = models.ForeignKey(
+        Agent,
+        related_name='paies',
+        on_delete=models.PROTECT,
+    )
+
+    # ── Snapshot de présence ──────────────────────────────────────────
+    salaire_base = models.DecimalField(max_digits=12, decimal_places=2)
+    jap          = models.IntegerField(default=26)   # jours ouvrables du mois
+    jp           = models.IntegerField(default=26)   # jours payés (jap − absence)
+    absence      = models.IntegerField(default=0)
+
+    # ── Résultats calculés (snapshot immuable après validation) ───────
+    salaire_brut   = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_primes   = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_retenues = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    net_a_payer    = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # ── Workflow ──────────────────────────────────────────────────────
+    valide      = models.BooleanField(default=False)
+    cree_par    = models.ForeignKey(
+        'users.CustomUser',
+        related_name='paie_cree_par',
+        on_delete=models.PROTECT,
+    )
+    modifie_par = models.ForeignKey(
+        'users.CustomUser',
+        related_name='paie_modifie_par',
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+    )
+    date_creation     = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
-    valide = models.BooleanField(default=False)
+
     objects = models.Manager()
 
-    def remuneration_totale(self):
-        qs = MouvementCaisseAgent.objects.filter(
-            agent=self.pk,
-            mouvement_caisse__date_mouvement__year=self.mois.year,
-            mouvement_caisse__date_mouvement__month=self.mois.month
-        ).select_related('mouvement_caisse', 'agent')
+    class Meta:
+        unique_together     = [('agent', 'mois')]
+        ordering            = ['-mois', 'agent__nom']
+        verbose_name        = 'Paie'
+        verbose_name_plural = 'Paies'
 
-        total = self.montant_percu
-        for i in qs:
-            if i.rubrique.nom.lower() in ["transport", "restauration", "assistance sociale"]:
-                total += i.mouvement_caisse.montant
-        return total
+    def __str__(self) -> str:
+        return f"{self.agent} — {self.mois.strftime('%m/%Y')}"
+
+    def get_absolute_url(self) -> str:
+        return reverse('paie_agent_details', args=[self.pk, self.agent_id])
+
+
+class LignePaie(models.Model):
+    """
+    Ligne de détail d'un bulletin de paie.
+
+    Chaque rubrique (prime, retenue, avance…) est une ligne distincte.
+    Les lignes sont des snapshots — elles persistent même si la Paie
+    est supprimée (on_delete=PROTECT : supprimer les lignes d'abord via service).
+
+    Extensibilité : pour ajouter CNSS ou IPR, créer une LignePaie
+    supplémentaire avec type_ligne=RETENUE et le libellé approprié.
+    Le net_a_payer de Paie est recalculé automatiquement depuis ces lignes.
+    """
+
+    paie       = models.ForeignKey(
+        Paie,
+        related_name='lignes',
+        on_delete=models.PROTECT,
+    )
+    libelle    = models.CharField(max_length=150)
+    type_ligne = models.CharField(max_length=10, choices=TypeLigne.choices)
+    montant    = models.DecimalField(max_digits=12, decimal_places=2)
+    ordre      = models.PositiveSmallIntegerField(default=0)
+
+    objects = models.Manager()
+
+    class Meta:
+        ordering            = ['ordre', 'id']
+        verbose_name        = 'Ligne de paie'
+        verbose_name_plural = 'Lignes de paie'
+
+    def __str__(self) -> str:
+        signe = '+' if self.type_ligne == TypeLigne.GAIN else '−'
+        return f"{signe} {self.libelle} : {self.montant}"

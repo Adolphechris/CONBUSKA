@@ -1,85 +1,302 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %} Paie {% endblock title %}
-{% block stylesheets %}
-{{block.super}}
-<style>
-    .img_container {
-        width: 20px;
-        height: 12px;
-    }
+{% block title %}Livre de paie — {{ mois|date:"F Y" }}{% endblock %}
 
-    /* Resize images */
-    .img_container img {
-        width: 100%;
-        height: auto;
-    }
+{% block stylesheets %}
+{{ block.super }}
+<style>
+  /* ── Tile-stats (patrimoine pattern) ──────────────────────── */
+  .tile-stats {
+    position: relative; display: block; margin-bottom: 20px;
+    border: 1px solid #E4E4E4; border-radius: 5px;
+    background: #fff; padding: 20px;
+    transition: all 0.3s ease; overflow: hidden;
+  }
+  .tile-stats:hover { box-shadow: 0 4px 8px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .tile-stats .icon {
+    position: absolute; right: 20px; top: 20px;
+    font-size: 50px; opacity: 0.1; transition: all 0.3s ease;
+  }
+  .tile-stats:hover .icon { opacity: 0.15; transform: scale(1.1); }
+  .tile-stats .count { font-size: 28px; font-weight: 700; margin: 10px 0; }
+  .tile-stats h3 {
+    margin: 0; font-size: 12px; font-weight: 400;
+    color: #BAB8B8; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tile-stats.success-stat .count { color: #26B99A; }
+  .tile-stats.success-stat { border-left: 4px solid #26B99A; }
+  .tile-stats.warning-stat .count { color: #F39C12; }
+  .tile-stats.warning-stat { border-left: 4px solid #F39C12; }
+  .tile-stats.info-stat .count { color: #3498DB; }
+  .tile-stats.info-stat { border-left: 4px solid #3498DB; }
+  .tile-stats.purple-stat .count { color: #8E44AD; }
+  .tile-stats.purple-stat { border-left: 4px solid #8E44AD; }
+
+  /* ── Filter bar (patrimoine pattern) ─────────────────────── */
+  .filter-bar {
+    background: #F5F7FA; padding: 12px 15px;
+    margin: -10px -17px 15px -17px;
+    border-bottom: 1px solid #E6E9ED;
+  }
+  .filter-bar .form-control { height: 32px; font-size: 12px; }
+  .filter-bar .btn { height: 32px; padding: 5px 12px; font-size: 12px; }
+
+  /* ── Statut badges ────────────────────────────────────────── */
+  .badge-valide {
+    background: #d4edda; color: #26B99A;
+    border: 1px solid #26B99A; border-radius: 20px;
+    padding: 2px 10px; font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .badge-brouillon {
+    background: #fff8e1; color: #F39C12;
+    border: 1px solid #F39C12; border-radius: 20px;
+    padding: 2px 10px; font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* ── Table ────────────────────────────────────────────────── */
+  #tablePaies thead th {
+    background: #F5F7FA; color: #73879C;
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: .4px; border-bottom: 2px solid #E6E9ED;
+    padding: 10px 12px; white-space: nowrap;
+  }
+  #tablePaies tbody td {
+    padding: 10px 12px; vertical-align: middle; font-size: 13px;
+    border-bottom: 1px solid #F5F7FA; color: #2A3F54;
+  }
+  #tablePaies tbody tr:hover { background: #F9FAFB; }
+  .agent-cell { display: flex; align-items: center; gap: 10px; }
+  .agent-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #9B59B6, #8E44AD);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+    overflow: hidden;
+  }
+  .agent-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .montant-cell { font-family: 'Courier New', monospace; font-weight: 600; }
+  .montant-net { color: #26B99A; font-size: 14px; }
+  .btn-action {
+    padding: 4px 10px; border-radius: 3px; font-size: 11px;
+    display: inline-flex; align-items: center; gap: 4px;
+    text-decoration: none; transition: opacity .15s;
+  }
+  .btn-action:hover { opacity: .8; text-decoration: none; }
+  .btn-view { background: #3498DB; color: #fff; }
+  .btn-delete { background: #fee; color: #E74C3C; border: 1px solid #fcc; }
+
+  /* ── Empty state ──────────────────────────────────────────── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: #BAB8B8;
+  }
+  .empty-state i { font-size: 48px; margin-bottom: 14px; display: block; }
+  .empty-state p { font-size: 14px; margin-bottom: 16px; }
 </style>
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-    <div class="right_col" role="main">
-        <div class="">
-            <div class="page-title">
-                <div class="title_left">
-                    <h5>Listes de paie</h5>
-                </div>
+<div class="right_col" role="main">
+  <div class="container-fluid">
+
+    <!-- ── Breadcrumb ─────────────────────────────────────────── -->
+    <ol class="breadcrumb" style="background: transparent; padding: 8px 0; margin-bottom: 10px;">
+      <li><a href="{% url 'index' %}"><i class="fa fa-home"></i> Accueil</a></li>
+      <li><a href="{% url 'agents' %}">Agents</a></li>
+      <li class="active">Livre de paie</li>
+    </ol>
+
+    <!-- ── Page Header (patrimoine pattern) ───────────────────── -->
+    <div style="background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); border-radius: 8px; padding: 22px 28px; margin-bottom: 22px; color: #fff;">
+      <div class="row" style="margin: 0; display: flex; align-items: center;">
+        <div class="col-md-8 col-sm-7" style="padding: 0;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 54px; height: 54px; background: rgba(255,255,255,.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fa fa-money" style="font-size: 24px;"></i>
             </div>
-             <div class="row">
-                <div class="col-md-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Listes de paie<small></small></h2>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div class="content table-responsive display">
-                                <div class="row">
-                                    <button type="button" class="btn btn-link pull-right creer">
-                                        <a href="{% url 'paie_create' %}">
-                                            <i class="fa fa-plus"></i>
-                                            COMMENCER LA PAIE
-                                        </a>
-                                    </button>
-                                </div>
-                                <table id="tablePaies" class="table table-striped jambo_table bulk_action">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title"> Mois de paie</th>
-                                            <th class="column-title"> Effectif total</th>
-                                            <th class="column-title"> Motant total dû</th>
-                                            <th class="column-title"> Motant total payé</th>
-                                            <th class="column-title"> Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for item in liste_paies %}
-										    <tr>
-                                                <td>{{ item.mois }}</td>
-                                                <td>{{ item.effectif_total }}</td>
-                                                <td>{{ item.montant_a_payer }}</td>
-                                                <td>{{ item.montant_paye }}</td>
-                                                <td>
-                                                    <a href="{% url 'paie_details' item.pk %}" class="btn btn-warning btn-xs">
-                                                        <i class="fa fa-eye"></i>
-                                                        Details
-                                                    </a>
-                                                </td>
-										    </tr>
-									    {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div>
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: .6; margin-bottom: 4px;">Paie</div>
+              <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2;">Livre de paie</h2>
+              <p style="margin: 4px 0 0; font-size: 12px; opacity: .7;">Bulletins mensuels par agent</p>
             </div>
+          </div>
         </div>
+        <div class="col-md-4 col-sm-5 text-right" style="padding: 0;">
+          <div style="display: inline-block; background: rgba(255,255,255,.1); border-radius: 8px; padding: 10px 18px; border: 1px solid rgba(255,255,255,.15);">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: .65; margin-bottom: 3px;">
+              <i class="fa fa-calendar-o"></i>&nbsp; Mois affiché
+            </div>
+            <div style="font-size: 16px; font-weight: 600;">{{ mois|date:"F Y" }}</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#paies').addClass('active');
-         });
-    </script>
-{% endblock content %}
+
+    <!-- ── KPI Tiles ───────────────────────────────────────────── -->
+    <div class="row">
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats purple-stat">
+          <i class="fa fa-file-text icon"></i>
+          <h3>Bulletins du mois</h3>
+          <div class="count">{{ nb_total }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats success-stat">
+          <i class="fa fa-check-circle icon"></i>
+          <h3>Validés</h3>
+          <div class="count">{{ nb_validees }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats warning-stat">
+          <i class="fa fa-clock-o icon"></i>
+          <h3>Brouillons</h3>
+          <div class="count">{{ nb_brouillons }}</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="tile-stats success-stat">
+          <i class="fa fa-bank icon"></i>
+          <h3>Masse salariale (validées)</h3>
+          <div class="count" style="font-size: 20px;">{{ masse_salariale|floatformat:0 }} <small style="font-size: 12px; font-weight: 400;">FC</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Panel principal ────────────────────────────────────── -->
+    <div class="x_panel">
+      <div class="x_title">
+        <h2>Bulletins — {{ mois|date:"F Y" }} <small>{{ nb_total }} bulletin{{ nb_total|pluralize }}</small></h2>
+        <ul class="nav navbar-right panel_toolbox" style="min-width: 0; padding-right: 0;">
+          <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <form method="get" action="">
+          <div class="row">
+            <div class="col-md-3 col-sm-5 col-xs-12">
+              <div class="form-group" style="margin: 0;">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                  <input type="month" name="mois" value="{{ mois_str }}"
+                         class="form-control" style="height:32px; font-size:12px;">
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-3 col-xs-12">
+              <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa fa-filter"></i> Filtrer
+              </button>
+            </div>
+            <div class="col-md-7 col-sm-4 col-xs-12 text-right" style="padding-top: 2px;">
+              <a href="{% url 'agents' %}" class="btn btn-default btn-sm">
+                <i class="fa fa-id-badge"></i> Voir les agents
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="x_content">
+        {% if liste_paies %}
+        <div class="table-responsive">
+          <table id="tablePaies" class="table table-hover" style="margin: 0;">
+            <thead>
+              <tr>
+                <th>Agent</th>
+                <th class="text-center">Mois</th>
+                <th class="text-center">Jours</th>
+                <th class="text-right">Salaire brut</th>
+                <th class="text-right">Net à payer</th>
+                <th class="text-center">Statut</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for paie in liste_paies %}
+              <tr>
+                <td>
+                  <div class="agent-cell">
+                    <div class="agent-avatar">
+                      {% if paie.agent.photo %}
+                        <img src="{{ paie.agent.photo.url }}" alt="{{ paie.agent.nom }}">
+                      {% else %}
+                        {{ paie.agent.nom|slice:":1"|upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div style="font-weight: 600; color: #2A3F54;">{{ paie.agent.nom }}</div>
+                      <div style="font-size: 11px; color: #73879C;">Mat. {{ paie.agent.matricule }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center" style="color: #73879C;">{{ paie.mois|date:"m/Y" }}</td>
+                <td class="text-center">
+                  <span style="color: #2A3F54; font-weight: 500;">{{ paie.jp }}</span>
+                  <span style="color: #BAB8B8;">/{{ paie.jap }}</span>
+                  {% if paie.absence > 0 %}
+                    <span style="font-size: 11px; color: #E74C3C; margin-left: 4px;">({{ paie.absence }} abs.)</span>
+                  {% endif %}
+                </td>
+                <td class="text-right montant-cell" style="color: #2A3F54;">{{ paie.salaire_brut|floatformat:0 }} FC</td>
+                <td class="text-right montant-cell montant-net">{{ paie.net_a_payer|floatformat:0 }} FC</td>
+                <td class="text-center">
+                  {% if paie.valide %}
+                    <span class="badge-valide"><i class="fa fa-check-circle"></i> Validé</span>
+                  {% else %}
+                    <span class="badge-brouillon"><i class="fa fa-clock-o"></i> Brouillon</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'paie_agent_details' paie.pk paie.agent.pk %}" class="btn-action btn-view">
+                    <i class="fa fa-eye"></i> Voir
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fa fa-calendar-o"></i>
+          <p>Aucun bulletin de paie pour <strong>{{ mois|date:"F Y" }}</strong>.</p>
+          <a href="{% url 'agents' %}" class="btn btn-default btn-sm">
+            <i class="fa fa-id-badge"></i> Aller aux agents
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  $(document).ready(function() {
+    $('#paie').addClass('active');
+    var parent = document.getElementById('paie');
+    if (parent && parent.childNodes[2]) parent.childNodes[2].style.display = 'block';
+
+    {% if liste_paies %}
+    $('#tablePaies').DataTable({
+      language: {
+        search: "Rechercher :", searchPlaceholder: "Nom, mois...",
+        lengthMenu: "Afficher _MENU_ lignes",
+        info: "_START_–_END_ sur _TOTAL_",
+        infoEmpty: "0 résultat", zeroRecords: "Aucun résultat",
+        paginate: { first:"«", last:"»", next:"›", previous:"‹" }
+      },
+      order: [[0, 'asc']],
+      dom: 'rft<"bottom"ip>',
+      pageLength: 25,
+    });
+    {% endif %}
+  });
+</script>
+{% endblock %}

@@ -68,18 +68,11 @@
         });
 
         $(document).ready(function() {
-            $('#id_mois').daterangepicker({
-                singleDatePicker: true,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            });
-
             $('#listes_paie').addClass('current-page');
             $('#paie').addClass('active');
             let parent = document.getElementById('paie');
-            parent.childNodes[2].style.display = 'block';
-         });
+            if (parent && parent.childNodes[2]) parent.childNodes[2].style.display = 'block';
+        });
     </script>
 
 {% endblock content %}
