@@ -21,12 +21,14 @@ import math
 import mimetypes
 import os
 import datetime
+from decimal import Decimal
 from functools import cached_property
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.template.defaultfilters import date as django_date_filter
 
 from openpyxl import Workbook
 from openpyxl.styles import Font
@@ -179,6 +181,20 @@ class FooterCanvas(canvas.Canvas):
         self.restoreState()
 
 
+def _fc_to_usd_equiv(valeur_fc, taux) -> Decimal | None:
+    """
+    Contre-valeur USD : valeur_fc (FC) / taux.
+    Accepte Decimal, int ou float pour valeur_fc ; évite Decimal / float (TypeError).
+    """
+    if taux is None:
+        return None
+    tx = taux if isinstance(taux, Decimal) else Decimal(str(taux))
+    if tx <= 0:
+        return None
+    v = valeur_fc if isinstance(valeur_fc, Decimal) else Decimal(str(valeur_fc))
+    return v / tx
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PdfBuilder — briques génériques
 # ══════════════════════════════════════════════════════════════════════════════
@@ -324,7 +340,7 @@ class PdfBuilder:
 
     # ── Bloc de totaux ────────────────────────────────────────────────────────
 
-    def _totals_block(self, lines: list, taux: float = None) -> list:
+    def _totals_block(self, lines: list, taux: float | Decimal | None = None) -> list:
         """
         lines = [(label, valeur_fc), ...]
         Si taux fourni, affiche la contre-valeur USD entre parenthèses.
@@ -334,8 +350,8 @@ class PdfBuilder:
         for i, (label, valeur_fc) in enumerate(lines):
             is_last = (i == len(lines) - 1)
             cv = ''
-            if taux and taux > 0:
-                cv_usd = valeur_fc / taux
+            cv_usd = _fc_to_usd_equiv(valeur_fc, taux)
+            if cv_usd is not None:
                 cv = f' <font size=8 color=grey>(≈ {cv_usd:,.2f} USD)</font>'
 
             fc_str = f'{valeur_fc:,.0f} FC'
@@ -363,7 +379,7 @@ class PdfBuilder:
 
     # ── Bloc KPI synthèse (section colorée) ───────────────────────────────────
 
-    def _kpi_table(self, kpis: list, taux: float = None) -> Table:
+    def _kpi_table(self, kpis: list, taux: float | Decimal | None = None) -> Table:
         """
         kpis = [(label, valeur_fc), ...]
         Retourne une Table une ligne, cellules colorées alternées.
@@ -371,8 +387,9 @@ class PdfBuilder:
         cells = []
         for label, val in kpis:
             cv = ''
-            if taux and taux > 0:
-                cv = f'\n≈ {val / taux:,.2f} USD'
+            cv_usd = _fc_to_usd_equiv(val, taux)
+            if cv_usd is not None:
+                cv = f'\n≈ {cv_usd:,.2f} USD'
             cells.append(
                 Paragraph(
                     f'<font size=7 color=grey>{label}</font>\n'
@@ -646,6 +663,8 @@ class DocumentGenerator(PdfBuilder):
         mouvements: list,
         total_entrees: float,
         total_sorties: float,
+        solde_total: float,
+        net_periode: float,
         debut: datetime.date,
         fin: datetime.date,
         taux: float = 0,
@@ -656,7 +675,6 @@ class DocumentGenerator(PdfBuilder):
                        'montant', 'effectue_par'}, ...]
         """
         page_w = LETTER[0]
-        solde_net = total_entrees - total_sorties
         subtitle = f'Période : du {debut.strftime("%d/%m/%Y")} au {fin.strftime("%d/%m/%Y")}'
 
         flowables = [self._header_flowable(page_w), Spacer(1, 6)]
@@ -686,7 +704,8 @@ class DocumentGenerator(PdfBuilder):
         flowables += self._totals_block([
             ('Total entrées', total_entrees),
             ('Total sorties', total_sorties),
-            ('Solde net',     solde_net),
+            ('Net période',   net_periode),
+            ('Solde réel',    solde_total),
         ], taux=taux)
 
         if total_entrees > 0:
@@ -1371,7 +1390,7 @@ class DocumentGenerator(PdfBuilder):
 
     # ── Bon de Commande / Demande de Proforma ─────────────────────────────────
 
-    def generate_bon_commande(self, commande, details, avec_prix: bool = True) -> HttpResponse:
+    def generate_bon_commande_fournisseur(self, commande, details, avec_prix: bool = True) -> HttpResponse:
         """
         commande   : instance Commande (select_related fournisseur, devise)
         details    : queryset DetailsCommande (select_related article)
@@ -1539,6 +1558,241 @@ class DocumentGenerator(PdfBuilder):
         return self._build(flowables, orientation='portrait')
 
     # ── Excel ─────────────────────────────────────────────────────────────────
+
+    # ── Bulletin de Paie ──────────────────────────────────────────────────────
+
+    def generate_bulletin_paie(self, paie, lignes) -> HttpResponse:
+        """
+        paie   : instance Paie (select_related agent recommandé)
+        lignes : queryset ou liste LignePaie, pré-chargé
+        """
+        ZEBRA       = colors.Color(0.95, 0.95, 0.95)
+        LIGHT       = colors.Color(0.88, 0.88, 0.88)
+        BORDER      = colors.Color(0.70, 0.70, 0.70)
+        GREEN_PALE  = colors.Color(0.92, 0.99, 0.96)
+        RED_PALE    = colors.Color(1.00, 0.95, 0.95)
+        GREEN_HDR   = colors.Color(0.15, 0.73, 0.60)
+        RED_HDR     = colors.Color(0.91, 0.30, 0.24)
+
+        page_w  = LETTER[0]
+        inner_w = page_w - 30
+
+        agent      = paie.agent
+        statut_txt = 'VALIDÉ' if paie.valide else 'BROUILLON'
+
+        # ── Flowables ─────────────────────────────────────────────────────
+        flowables = [self._header_flowable(page_w), Spacer(1, 6)]
+        flowables.append(self._separator(page_w))
+        flowables.append(Spacer(1, 10))
+
+        # Bandeau BROUILLON
+        if not paie.valide:
+            draft_tbl = Table(
+                [['⚠  DOCUMENT NON VALIDÉ — BROUILLON']],
+                colWidths=[inner_w],
+            )
+            draft_tbl.setStyle(TableStyle([
+                ('BACKGROUND',    (0, 0), (-1, -1), LIGHT),
+                ('FONTNAME',      (0, 0), (-1, -1), 'RobotoBd'),
+                ('FONTSIZE',      (0, 0), (-1, -1), 8),
+                ('ALIGN',         (0, 0), (-1, -1), 'CENTER'),
+                ('TOPPADDING',    (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('BOX',           (0, 0), (-1, -1), 0.5, BORDER),
+            ]))
+            flowables += [draft_tbl, Spacer(1, 8)]
+
+        # ── Titre ─────────────────────────────────────────────────────────
+        titre_cell = Paragraph(
+            f'BULLETIN DE PAIE — {django_date_filter(paie.mois, "F Y").upper()}',
+            style=_styles['Titre_gauche'],
+        )
+        date_cell = Paragraph(
+            f'Date d\'émission : <b>{datetime.datetime.now().strftime("%d/%m/%Y")}</b><br/>'
+            f'Statut : {statut_txt}',
+            style=_styles['Droite'],
+        )
+        titre_tbl = Table(
+            [[titre_cell, date_cell]],
+            colWidths=[inner_w * 0.60, inner_w * 0.40],
+        )
+        titre_tbl.setStyle(TableStyle([
+            ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        flowables += [titre_tbl, Spacer(1, 8)]
+
+        # ── Bloc agent ────────────────────────────────────────────────────
+        half = inner_w / 2
+        agent_para = Paragraph(
+            f'<font size=7 color=grey>AGENT</font><br/>'
+            f'<b>{agent.nom}</b><br/>'
+            f'<font size=8>Matricule : {agent.matricule}</font>',
+            style=_styles['Gauche'],
+        )
+        contrat_lines = (
+            f'<font size=7 color=grey>CONTRAT</font><br/>'
+            f'<b>{agent.get_type_contrat_display()}</b><br/>'
+        )
+        if agent.poste:
+            contrat_lines += f'<font size=8>Poste : {agent.poste}</font><br/>'
+        if agent.departement:
+            contrat_lines += f'<font size=8>Département : {agent.departement}</font><br/>'
+        if agent.date_engagement:
+            contrat_lines += (
+                f'<font size=8>Engagé le : {agent.date_engagement.strftime("%d/%m/%Y")}</font>'
+            )
+        contrat_para = Paragraph(contrat_lines, style=_styles['Droite'])
+        info_tbl = Table([[agent_para, contrat_para]], colWidths=[half, half])
+        info_tbl.setStyle(TableStyle([
+            ('BOX',           (0, 0), (-1, -1), 0.5, BORDER),
+            ('LINEBEFORE',    (1, 0), (1, -1),  0.5, BORDER),
+            ('BACKGROUND',    (0, 0), (-1, -1), ZEBRA),
+            ('TOPPADDING',    (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING',   (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 10),
+            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+        ]))
+        flowables += [info_tbl, Spacer(1, 14)]
+
+        # ── Tableau GAINS / RETENUES côte à côte ─────────────────────────
+        lignes_list  = list(lignes)
+        gains    = [l for l in lignes_list if l.type_ligne == 'GAIN']
+        retenues = [l for l in lignes_list if l.type_ligne == 'RETENUE']
+
+        col_w = (inner_w - 8) / 2   # 4 pt de gutter entre les deux moitiés
+
+        def _side_table(rows_data, hdr_label, hdr_color, bg_color):
+            hdr = Table(
+                [[Paragraph(f'<b>{hdr_label}</b>', style=_styles['Gauche'])]],
+                colWidths=[col_w],
+            )
+            hdr.setStyle(TableStyle([
+                ('BACKGROUND',    (0, 0), (-1, -1), hdr_color),
+                ('FONTNAME',      (0, 0), (-1, -1), 'RobotoBd'),
+                ('FONTSIZE',      (0, 0), (-1, -1), 8),
+                ('TOPPADDING',    (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+                ('TEXTCOLOR',     (0, 0), (-1, -1), colors.white),
+            ]))
+            if not rows_data:
+                body = Table(
+                    [['—', '—']],
+                    colWidths=[col_w * 0.65, col_w * 0.35],
+                )
+                body.setStyle(TableStyle([
+                    ('FONTNAME',   (0, 0), (-1, -1), 'RobotoIt'),
+                    ('FONTSIZE',   (0, 0), (-1, -1), 8),
+                    ('TEXTCOLOR',  (0, 0), (-1, -1), BORDER),
+                    ('TOPPADDING',    (0, 0), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                    ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+                    ('BACKGROUND', (0, 0), (-1, -1), bg_color),
+                ]))
+            else:
+                body = Table(
+                    rows_data,
+                    colWidths=[col_w * 0.65, col_w * 0.35],
+                )
+                body.setStyle(TableStyle([
+                    ('FONTNAME',      (0, 0), (-1, -1), 'Roboto'),
+                    ('FONTSIZE',      (0, 0), (-1, -1), 8),
+                    ('ALIGN',         (1, 0), (1, -1),  'RIGHT'),
+                    ('TOPPADDING',    (0, 0), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                    ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+                    ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
+                    ('BACKGROUND',    (0, 0), (-1, -1), bg_color),
+                    ('LINEBELOW',     (0, 0), (-1, -2), 0.3, BORDER),
+                    ('FONTNAME',      (0, 0), (1, 0),   'RobotoBd'),  # 1re ligne en gras
+                ]))
+            return [hdr, body]
+
+        gains_rows = [
+            [l.libelle, f'{float(l.montant):,.0f} FC']
+            for l in gains
+        ]
+        retenues_rows = [
+            [l.libelle, f'− {float(l.montant):,.0f} FC']
+            for l in retenues
+        ]
+
+        gains_flowables   = _side_table(gains_rows,    'GAINS',    GREEN_HDR, GREEN_PALE)
+        retenues_flowables = _side_table(retenues_rows, 'RETENUES', RED_HDR,   RED_PALE)
+
+        # Assemblage en 2 colonnes avec une Table enveloppante
+        max_rows = max(len(gains_flowables), len(retenues_flowables))
+        side_tbl = Table(
+            [[gains_flowables[0],    retenues_flowables[0]],
+             [gains_flowables[1],    retenues_flowables[1]]],
+            colWidths=[col_w, col_w],
+            spaceBefore=0,
+            spaceAfter=0,
+        )
+        side_tbl.setStyle(TableStyle([
+            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+            ('TOPPADDING',    (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('COLPADDING',    (0, 0), (-1, -1), 4),
+        ]))
+        flowables += [side_tbl, Spacer(1, 14)]
+
+        # ── Récapitulatif ─────────────────────────────────────────────────
+        flowables.append(self._thin_separator(page_w))
+        flowables.append(Spacer(1, 8))
+
+        recap_rows = [
+            ('Salaire brut',    f'{float(paie.salaire_brut):,.0f} FC'),
+            ('Total retenues',  f'− {float(paie.total_retenues):,.0f} FC'),
+        ]
+        for label, valeur in recap_rows:
+            flowables.append(Paragraph(
+                f'<font name="Roboto" size="9">{label} : {valeur}</font>',
+                style=_styles['Droite'],
+            ))
+            flowables.append(Spacer(1, 3))
+
+        flowables.append(Spacer(1, 4))
+        flowables.append(self._thin_separator(page_w))
+        flowables.append(Spacer(1, 6))
+        flowables.append(Paragraph(
+            f'<font name="RobotoBd" size="12">NET À PAYER : '
+            f'{float(paie.net_a_payer):,.0f} FC</font>',
+            style=_styles['Total'],
+        ))
+
+        # ── Période de paie ───────────────────────────────────────────────
+        flowables.append(Spacer(1, 8))
+        jours_txt = f'{paie.jp} jour{"s" if paie.jp > 1 else ""} prestés sur {paie.jap}'
+        if paie.absence:
+            jours_txt += f' ({paie.absence} jour{"s" if paie.absence > 1 else ""} d\'absence)'
+        flowables.append(Paragraph(
+            f'<font name="RobotoIt" size="8" color="grey">{jours_txt}</font>',
+            style=_styles['Droite'],
+        ))
+
+        # ── Zone signature ────────────────────────────────────────────────
+        flowables.append(Spacer(1, 32))
+        sig_tbl = Table(
+            [['Responsable paie', '', "Signature de l'agent"]],
+            colWidths=[inner_w * 0.35, inner_w * 0.30, inner_w * 0.35],
+        )
+        sig_tbl.setStyle(TableStyle([
+            ('FONTNAME',    (0, 0), (-1, -1), 'RobotoIt'),
+            ('FONTSIZE',    (0, 0), (-1, -1), 9),
+            ('ALIGN',       (0, 0), (0, -1),  'LEFT'),
+            ('ALIGN',       (2, 0), (2, -1),  'RIGHT'),
+            ('LINEABOVE',   (0, 0), (0, -1),  0.5, BORDER),
+            ('LINEABOVE',   (2, 0), (2, -1),  0.5, BORDER),
+            ('TOPPADDING',  (0, 0), (-1, -1), 5),
+        ]))
+        flowables.append(sig_tbl)
+
+        return self._build(flowables, orientation='portrait')
 
     def generate_excel(self, data: list, header: list = None) -> HttpResponse:
         """Export Excel générique."""
