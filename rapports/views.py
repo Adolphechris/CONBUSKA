@@ -157,7 +157,7 @@ class RapportResultatView(RoleRequiredMixin, TemplateView):
         results = []
         for article_id, item in par_article.items():
             pct = (
-                round(float(item['resultat']) / float(total_global) * 100, 2)
+                round(float(item['resultat']) / float(total_global) * 100, 4)
                 if total_global
                 else 0
             )
@@ -351,54 +351,111 @@ class RapportCaisseView(RoleRequiredMixin, TemplateView):
             fin = today
         return debut, fin
 
-    def get_context_data(self, **kwargs):
-        from caisse.models import MouvementCaisse, Caisse
-        from patrimoine.models import SnapshotJournalier
+    @staticmethod
+    def _ventes_comptoir_periode(debut, fin):
+        """
+        Total des ventes comptoir sur une plage de dates (hors FactureClient).
+        Utilise la même règle métier que le snapshot journalier.
+        """
+        from caisse.selectors import get_total_ventes_comptoir_par_date
+        from decimal import Decimal
+        import datetime as dt
 
-        context = super().get_context_data(**kwargs)
-        debut, fin = self._get_periode()
+        total = Decimal("0")
+        current = debut
+        while current <= fin:
+            total += get_total_ventes_comptoir_par_date(current)
+            current += dt.timedelta(days=1)
+        return total
+
+    @classmethod
+    def _build_rapport_data(cls, *, debut, fin):
+        from decimal import Decimal
+
+        from caisse.models import Caisse, MouvementCaisse
+        from patrimoine.models import SnapshotJournalier
 
         base_qs = MouvementCaisse.objects.filter(
             date_mouvement__date__range=(debut, fin)
         ).select_related('caisse', 'caisse__caisse', 'rubrique', 'effectue_par')
 
-        total_entrees = base_qs.filter(type_mouvement='ENTREE').aggregate(
-            t=Sum('montant'))['t'] or 0
+        mouvements_entrees = base_qs.filter(type_mouvement='ENTREE').aggregate(
+            t=Sum('montant')
+        )['t'] or Decimal("0")
         total_sorties = base_qs.filter(type_mouvement='SORTIE').aggregate(
-            t=Sum('montant'))['t'] or 0
+            t=Sum('montant')
+        )['t'] or Decimal("0")
+        ventes_periode = cls._ventes_comptoir_periode(debut, fin)
+        total_entrees = mouvements_entrees + ventes_periode
 
-        # Solde par caisse
         solde_par_caisse = []
         for caisse in Caisse.objects.all():
-            snap = (SnapshotJournalier.objects
-                    .filter(caisse=caisse, date__lte=fin)
-                    .order_by('-date').first())
-            entrees = base_qs.filter(
-                caisse__caisse=caisse, type_mouvement='ENTREE'
-            ).aggregate(t=Sum('montant'))['t'] or 0
+            snap = (
+                SnapshotJournalier.objects
+                .filter(caisse=caisse, date__lte=fin)
+                .order_by('-date')
+                .first()
+            )
+            entrees_mvt = base_qs.filter(
+                caisse__caisse=caisse,
+                type_mouvement='ENTREE',
+            ).aggregate(t=Sum('montant'))['t'] or Decimal("0")
             sorties = base_qs.filter(
-                caisse__caisse=caisse, type_mouvement='SORTIE'
-            ).aggregate(t=Sum('montant'))['t'] or 0
-            solde_par_caisse.append({
-                'nom': caisse.nom,
-                'entrees': float(entrees),
-                'sorties': float(sorties),
-                'solde': float(snap.solde_fermeture) if snap else 0,
-            })
+                caisse__caisse=caisse,
+                type_mouvement='SORTIE',
+            ).aggregate(t=Sum('montant'))['t'] or Decimal("0")
+            entrees = entrees_mvt + (
+                ventes_periode if caisse.is_principal else Decimal("0")
+            )
+            solde = snap.solde_fermeture if snap else Decimal("0")
+            solde_par_caisse.append(
+                {
+                    'nom': caisse.nom,
+                    'entrees': entrees,
+                    'sorties': sorties,
+                    'solde': solde,
+                }
+            )
+
+        net_periode = total_entrees - total_sorties
+        solde_total = sum(
+            (item['solde'] for item in solde_par_caisse),
+            Decimal("0"),
+        )
+
+        return {
+            'base_qs': base_qs,
+            'total_caisses': len(solde_par_caisse),
+            'total_entrees': total_entrees,
+            'total_sorties': total_sorties,
+            'net_periode': net_periode,
+            'solde_total': solde_total,
+            'solde_par_caisse': solde_par_caisse,
+            'chart_labels': [c['nom'] for c in solde_par_caisse],
+            'chart_entrees': [float(c['entrees']) for c in solde_par_caisse],
+            'chart_sorties': [float(c['sorties']) for c in solde_par_caisse],
+            'chart_soldes': [float(c['solde']) for c in solde_par_caisse],
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        debut, fin = self._get_periode()
+        data = self._build_rapport_data(debut=debut, fin=fin)
 
         context.update({
             'debut': debut.isoformat(),
             'fin': fin.isoformat(),
-            'total_caisses': Caisse.objects.count(),
-            'total_entrees': total_entrees,
-            'total_sorties': total_sorties,
-            'solde_total': total_entrees - total_sorties,
-            'mouvements': base_qs.order_by('-date_mouvement')[:300],
-            'solde_par_caisse': solde_par_caisse,
-            'chart_labels': [c['nom'] for c in solde_par_caisse],
-            'chart_entrees': [c['entrees'] for c in solde_par_caisse],
-            'chart_sorties': [c['sorties'] for c in solde_par_caisse],
-            'chart_soldes': [c['solde'] for c in solde_par_caisse],
+            'total_caisses': data['total_caisses'],
+            'total_entrees': data['total_entrees'],
+            'total_sorties': data['total_sorties'],
+            'net_periode': data['net_periode'],
+            'solde_total': data['solde_total'],
+            'mouvements': data['base_qs'].order_by('-date_mouvement')[:300],
+            'solde_par_caisse': data['solde_par_caisse'],
+            'chart_labels': data['chart_labels'],
+            'chart_entrees': data['chart_entrees'],
+            'chart_sorties': data['chart_sorties'],
+            'chart_soldes': data['chart_soldes'],
         })
         return context
 
@@ -680,9 +737,6 @@ def export_rapport_articles_pdf(request):
 
 def export_rapport_caisse_pdf(request):
     """Export PDF du rapport des caisses sur la période fournie en GET."""
-    from caisse.models import MouvementCaisse, Caisse
-    from patrimoine.models import SnapshotJournalier
-
     today = timezone.now().date()
     try:
         debut = datetime.date.fromisoformat(request.GET.get('debut', ''))
@@ -693,30 +747,7 @@ def export_rapport_caisse_pdf(request):
     except ValueError:
         fin = today
 
-    base_qs = MouvementCaisse.objects.filter(
-        date_mouvement__date__range=(debut, fin)
-    ).select_related('caisse', 'caisse__caisse', 'rubrique', 'effectue_par')
-
-    total_entrees = float(base_qs.filter(type_mouvement='ENTREE').aggregate(
-        t=Sum('montant'))['t'] or 0)
-    total_sorties = float(base_qs.filter(type_mouvement='SORTIE').aggregate(
-        t=Sum('montant'))['t'] or 0)
-
-    solde_par_caisse = []
-    for caisse in Caisse.objects.all():
-        snap = (SnapshotJournalier.objects
-                .filter(caisse=caisse, date__lte=fin)
-                .order_by('-date').first())
-        entrees = float(base_qs.filter(caisse__caisse=caisse, type_mouvement='ENTREE')
-                        .aggregate(t=Sum('montant'))['t'] or 0)
-        sorties = float(base_qs.filter(caisse__caisse=caisse, type_mouvement='SORTIE')
-                        .aggregate(t=Sum('montant'))['t'] or 0)
-        solde_par_caisse.append({
-            'nom'    : caisse.nom,
-            'entrees': entrees,
-            'sorties': sorties,
-            'solde'  : float(snap.solde_fermeture) if snap else 0,
-        })
+    data = RapportCaisseView._build_rapport_data(debut=debut, fin=fin)
 
     mouvements = [
         {
@@ -727,16 +758,18 @@ def export_rapport_caisse_pdf(request):
             'montant'     : float(m.montant),
             'effectue_par': str(m.effectue_par) if m.effectue_par else '—',
         }
-        for m in base_qs.order_by('-date_mouvement')[:300]
+        for m in data['base_qs'].order_by('-date_mouvement')[:300]
     ]
 
     filename = f'RAPPORT_CAISSES_{debut.strftime("%Y%m%d")}_{fin.strftime("%Y%m%d")}.pdf'
     doc = DocumentGenerator(filename, 'RAPPORT DES CAISSES')
     return doc.generate_rapport_caisse(
-        solde_par_caisse=solde_par_caisse,
+        solde_par_caisse=data['solde_par_caisse'],
         mouvements=mouvements,
-        total_entrees=total_entrees,
-        total_sorties=total_sorties,
+        total_entrees=data['total_entrees'],
+        total_sorties=data['total_sorties'],
+        solde_total=data['solde_total'],
+        net_periode=data['net_periode'],
         debut=debut,
         fin=fin,
         taux=_get_taux(),

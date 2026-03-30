@@ -1,16 +1,31 @@
 import datetime
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from approvisionnements.models import Approvisionnement, DetailsApprovisionnement
+from caisse.models import Caisse, CaisseCourante, MouvementCaisse, RubriqueCaisse
 from factures.models import DetailsFacture, Facture
+from factures.tests.factories import (
+    ArticleFactory,
+    ClientFactory,
+    DetailsFactureFactory,
+    FactureClientFactory,
+    FactureFactory,
+)
 from parametres.models import Magasin, TauxEchange
+from patrimoine.models import SnapshotJournalier
 from produits.models import Article, Categorie, Unite
 from fournisseurs.models import Fournisseur
-from rapports.views import RapportResultatView
+from rapports.views import (
+    RapportCaisseView,
+    RapportResultatView,
+    export_rapport_caisse_pdf,
+)
 
 User = get_user_model()
 
@@ -194,3 +209,186 @@ class RapportResultatViewTestCase(TestCase):
         self.assertEqual(context["total_appros"], 0)
         self.assertEqual(context["total_global"], 0)
         self.assertEqual(context["resultat_articles"], [])
+
+
+class RapportCaisseViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username="rapport_caisse_test",
+            password="testpass123",
+            force_password_change=False,
+        )
+        self.caisse_principale = Caisse.objects.create(
+            nom="Caisse principale",
+            is_principal=True,
+        )
+        self.caisse_secondaire = Caisse.objects.create(
+            nom="Caisse secondaire",
+            is_principal=False,
+        )
+        self.session_principale = CaisseCourante.objects.create(
+            caisse=self.caisse_principale,
+            ouvert_par=self.user,
+            solde_initial=Decimal("800.00"),
+            est_ouverte=True,
+        )
+        self.session_secondaire = CaisseCourante.objects.create(
+            caisse=self.caisse_secondaire,
+            ouvert_par=self.user,
+            solde_initial=Decimal("200.00"),
+            est_ouverte=True,
+        )
+        self.today = timezone.now().date()
+        SnapshotJournalier.objects.create(
+            date=self.today,
+            caisse=self.caisse_principale,
+            total_entrees=Decimal("150.00"),
+            total_sorties=Decimal("10.00"),
+            solde_ouverture=Decimal("860.00"),
+            solde_fermeture=Decimal("1000.00"),
+            est_cloture=False,
+        )
+        SnapshotJournalier.objects.create(
+            date=self.today,
+            caisse=self.caisse_secondaire,
+            total_entrees=Decimal("0.00"),
+            total_sorties=Decimal("0.00"),
+            solde_ouverture=Decimal("200.00"),
+            solde_fermeture=Decimal("200.00"),
+            est_cloture=False,
+        )
+        self.article = ArticleFactory(
+            devise="FC",
+            prix_achat=Decimal("40.00"),
+            prix_vente=Decimal("60.00"),
+        )
+        self.client_maison = ClientFactory()
+        self.rubrique_divers = RubriqueCaisse.objects.create(
+            nom="Divers rapport",
+            description="Rubrique de test",
+            visible=True,
+        )
+
+    def _create_view(self):
+        request = self.factory.get(
+            "/rapports/caisses/",
+            {"debut": self.today.isoformat(), "fin": self.today.isoformat()},
+        )
+        request.user = self.user
+        view = RapportCaisseView()
+        view.request = request
+        return view
+
+    def _create_comptoir_facture(self):
+        facture = FactureFactory(
+            cree_par=self.user,
+            valide=True,
+            client_comptoir="Client comptoir",
+            date_facture=self.today,
+            devise="FC",
+            taux=Decimal("1.00"),
+        )
+        DetailsFactureFactory(
+            facture=facture,
+            article=self.article,
+            qte=2,
+            prix=Decimal("60.00"),
+        )
+        return facture
+
+    def _create_client_maison_facture(self):
+        facture = FactureFactory(
+            cree_par=self.user,
+            valide=True,
+            client_comptoir=None,
+            date_facture=self.today,
+            devise="FC",
+            taux=Decimal("1.00"),
+        )
+        FactureClientFactory(
+            facture=facture,
+            client=self.client_maison,
+        )
+        DetailsFactureFactory(
+            facture=facture,
+            article=self.article,
+            qte=3,
+            prix=Decimal("50.00"),
+        )
+        return facture
+
+    def test_rapport_caisse_aligne_le_solde_reel_et_exclut_les_clients_maison(
+        self,
+    ):
+        MouvementCaisse.objects.create(
+            caisse=self.session_principale,
+            type_mouvement="ENTREE",
+            rubrique=self.rubrique_divers,
+            montant=Decimal("30.00"),
+            motif="Versement",
+            effectue_par=self.user,
+        )
+        MouvementCaisse.objects.create(
+            caisse=self.session_principale,
+            type_mouvement="SORTIE",
+            rubrique=self.rubrique_divers,
+            montant=Decimal("10.00"),
+            motif="Depense",
+            effectue_par=self.user,
+        )
+        self._create_comptoir_facture()
+        self._create_client_maison_facture()
+
+        context = self._create_view().get_context_data()
+        principale = next(
+            item
+            for item in context["solde_par_caisse"]
+            if item["nom"] == "Caisse principale"
+        )
+
+        self.assertEqual(context["total_entrees"], Decimal("150.00"))
+        self.assertEqual(context["total_sorties"], Decimal("10.00"))
+        self.assertEqual(context["net_periode"], Decimal("140.00"))
+        self.assertEqual(context["solde_total"], Decimal("1200.00"))
+        self.assertEqual(principale["entrees"], Decimal("150.00"))
+        self.assertEqual(principale["sorties"], Decimal("10.00"))
+        self.assertEqual(principale["solde"], Decimal("1000.00"))
+
+    @patch("rapports.views.DocumentGenerator.generate_rapport_caisse")
+    def test_export_pdf_reutilise_la_meme_logique_que_la_vue(
+        self,
+        mock_generate_rapport_caisse,
+    ):
+        mock_generate_rapport_caisse.return_value = HttpResponse("ok")
+        MouvementCaisse.objects.create(
+            caisse=self.session_principale,
+            type_mouvement="ENTREE",
+            rubrique=self.rubrique_divers,
+            montant=Decimal("30.00"),
+            motif="Versement",
+            effectue_par=self.user,
+        )
+        self._create_comptoir_facture()
+        self._create_client_maison_facture()
+
+        request = self.factory.get(
+            "/rapports/caisses/pdf/",
+            {"debut": self.today.isoformat(), "fin": self.today.isoformat()},
+        )
+        request.user = self.user
+
+        response = export_rapport_caisse_pdf(request)
+
+        self.assertEqual(response.status_code, 200)
+        kwargs = mock_generate_rapport_caisse.call_args.kwargs
+        principale = next(
+            item
+            for item in kwargs["solde_par_caisse"]
+            if item["nom"] == "Caisse principale"
+        )
+        self.assertEqual(kwargs["total_entrees"], Decimal("150.00"))
+        self.assertEqual(kwargs["total_sorties"], Decimal("0.00"))
+        self.assertEqual(kwargs["net_periode"], Decimal("150.00"))
+        self.assertEqual(kwargs["solde_total"], Decimal("1200.00"))
+        self.assertEqual(principale["entrees"], Decimal("150.00"))

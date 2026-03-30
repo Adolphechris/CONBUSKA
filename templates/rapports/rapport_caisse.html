@@ -158,13 +158,13 @@
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card dark">
                 <div class="kpi-top">
-                    <span class="kpi-label">Solde Net Période</span>
+                    <span class="kpi-label">Solde Réel</span>
                     <div class="kpi-icon dark"><i class="fa fa-balance-scale"></i></div>
                 </div>
                 <div class="kpi-value" style="{% if solde_total >= 0 %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
                     {{ solde_total|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>
                 </div>
-                <div class="kpi-sub">Entrées − Sorties de la période</div>
+                <div class="kpi-sub">Somme des soldes réels des caisses à la fin de période</div>
             </div>
         </div>
     </div>
@@ -270,7 +270,7 @@
     <div class="synthese-box">
         <div>
             <div class="s-label">Solde net de la période (Entrées − Sorties)</div>
-            <div class="s-value">{{ solde_total|floatformat:0 }} FC</div>
+            <div class="s-value">{{ net_periode|floatformat:0 }} FC</div>
             <div class="s-note">Ce montant reflète le flux net de trésorerie sur la période sélectionnée.</div>
         </div>
         <div style="text-align:right;">
