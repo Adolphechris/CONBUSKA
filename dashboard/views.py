@@ -205,7 +205,7 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         return Paie.objects.filter(
             mois__year=now.year, mois__month=now.month
         ).aggregate(
-            total=Coalesce(Sum('montant_percu'), Value(0),
+            total=Coalesce(Sum('net_a_payer'), Value(0),
                            output_field=DecimalField(max_digits=14, decimal_places=2))
         )['total']
 
