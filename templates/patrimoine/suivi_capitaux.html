@@ -536,7 +536,9 @@
                                     <div class="label-text">TSCF</div>
                                     <div class="label-desc">Total Soldes Comptes Fournisseurs</div>
                                 </div>
-                                <div class="value text-danger">- {{ contreverif.tscf|floatformat:0 }} FC</div>
+                                <div class="value {% if contreverif.tscf < 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ contreverif.tscf|floatformat:0 }} FC
+                                </div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds de Roulement (Contre-vérifié)</strong></div>
@@ -584,14 +586,18 @@
                                     <div class="label-text">Comptes Débiteurs</div>
                                     <div class="label-desc">Créances reçues</div>
                                 </div>
-                                <div class="value text-success">+ {{ total_debiteurs|floatformat:0 }} FC</div>
+                                <div class="value {% if total_debiteurs < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ total_debiteurs|floatformat:0 }} FC
+                                </div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">Comptes Créanciers</div>
                                     <div class="label-desc">Dettes à payer</div>
                                 </div>
-                                <div class="value text-danger">- {{ total_creanciers|floatformat:0 }} FC</div>
+                                <div class="value {% if total_creanciers < 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ total_creanciers|floatformat:0 }} FC
+                                </div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds Propre (FP)</strong></div>

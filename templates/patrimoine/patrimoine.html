@@ -566,8 +566,12 @@
                   <div class="kpi-value" style="color: #9B59B6;">{{ fonds_propre|floatformat:0 }} FC</div>
                   <div class="kpi-footer neutral" style="display:flex; gap:15px; margin-top:6px;">
                       <span><i class="fa fa-bank" style="color:#26B99A;"></i> FR&nbsp;{{ solde_global|floatformat:0 }}</span>
-                      <span><i class="fa fa-plus-circle" style="color:#3498DB;"></i>&nbsp;{{ total_debiteurs|floatformat:0 }}</span>
-                      <span><i class="fa fa-minus-circle" style="color:#E74C3C;"></i>&nbsp;{{ total_creanciers|floatformat:0 }}</span>
+                      <span class="{% if total_debiteurs < 0 %}text-danger{% else %}text-success{% endif %}">
+                          <i class="fa fa-exchange" style="color:#3498DB;"></i>&nbsp;{{ total_debiteurs|floatformat:0 }}
+                      </span>
+                      <span class="{% if total_creanciers < 0 %}text-success{% else %}text-danger{% endif %}">
+                          <i class="fa fa-exchange" style="color:#E74C3C;"></i>&nbsp;{{ total_creanciers|floatformat:0 }}
+                      </span>
                       <a href="{% url 'patrimoine_capitaux' %}" style="margin-left:auto; font-size:11px;">Détail →</a>
                   </div>
               </div>

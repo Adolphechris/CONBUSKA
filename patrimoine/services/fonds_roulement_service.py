@@ -1,12 +1,12 @@
 from decimal import Decimal
 from django.db import transaction
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+from django.db.models import Q, Sum, F, DecimalField, ExpressionWrapper
 
 
 class FondsRoulementService:
 
     RUBRIQUES_EJ_CAISSE = {"Créanciers"}
-    RUBRIQUES_SJ = {"Créanciers", "Charges exploitation", "Charges personnelles"}
+    RUBRIQUES_SJ = {"Créanciers"}
 
     @staticmethod
     def _get_taux():
@@ -43,14 +43,22 @@ class FondsRoulementService:
     # ------------------------------------------------------------------
     @staticmethod
     def compute_sj(date):
-        from caisse.models import MouvementCaisse
+        from caisse.models import MouvementCaisse, RubriqueCaisse
 
         total = (
             MouvementCaisse.objects
             .filter(
                 date_mouvement__date=date,
                 type_mouvement="SORTIE",
-                rubrique__nom__in=FondsRoulementService.RUBRIQUES_SJ,
+            )
+            .filter(
+                Q(rubrique__nom__in=FondsRoulementService.RUBRIQUES_SJ)
+                | Q(
+                    rubrique__classification_metier__in={
+                        RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION,
+                        RubriqueCaisse.ClassificationMetier.CHARGE_PERSONNELLE,
+                    }
+                )
             )
             .aggregate(total=Sum("montant"))["total"] or Decimal("0")
         )
@@ -81,7 +89,7 @@ class FondsRoulementService:
 
     @staticmethod
     def _compute_tvms():
-        """Valeur totale des marchandises en stock au coût d'achat."""
+        """Valeur totale des marchandises en stock au prix de vente."""
         from produits.models import Stock
 
         taux = FondsRoulementService._get_taux()
@@ -94,7 +102,7 @@ class FondsRoulementService:
 
         total = Decimal("0")
         for s in stocks:
-            prix = s.article.prix_achat
+            prix = s.article.prix_vente
             if s.article.devise == "$":
                 prix = prix * taux
             total += prix * s.qte
@@ -127,9 +135,7 @@ class FondsRoulementService:
 
         total = Decimal("0")
         for client in Client.objects.all():
-            solde = client.solde()
-            if solde and solde > 0:
-                total += solde
+            total += client.solde() or Decimal("0")
 
         return total
 
@@ -140,9 +146,7 @@ class FondsRoulementService:
 
         total = Decimal("0")
         for fournisseur in Fournisseur.objects.all():
-            solde = fournisseur.solde()
-            if solde and solde > 0:
-                total += solde
+            total += fournisseur.solde() or Decimal("0")
 
         return total
 

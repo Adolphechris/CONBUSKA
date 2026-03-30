@@ -35,13 +35,21 @@ class SnapshotService:
         )
 
         total_entrees = (
-                mouvements.filter(type_mouvement="ENTREE")
-                .aggregate(total=Sum("montant"))["total"] or 0
+            mouvements.filter(type_mouvement="ENTREE")
+            .aggregate(total=Sum("montant"))["total"] or Decimal("0")
         )
 
+        # Les ventes comptoir (factures validées hors FactureClient) alimentent
+        # la caisse principale mais ne génèrent pas de MouvementCaisse.
+        # On les intègre ici pour que solde_fermeture soit cohérent avec
+        # CaisseCourante.solde_final et que _compute_tsc() du FR soit juste.
+        if caisse.is_principal:
+            from caisse.selectors import get_total_ventes_comptoir_par_date
+            total_entrees += get_total_ventes_comptoir_par_date(date)
+
         total_sorties = (
-                mouvements.filter(type_mouvement="SORTIE")
-                .aggregate(total=Sum("montant"))["total"] or 0
+            mouvements.filter(type_mouvement="SORTIE")
+            .aggregate(total=Sum("montant"))["total"] or Decimal("0")
         )
 
         previous = (

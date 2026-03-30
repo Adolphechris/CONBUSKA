@@ -1,3 +1,4 @@
+from collections import defaultdict
 from users.permissions import RoleRequiredMixin, ROLE_ADMIN
 from django.views.generic import ListView, TemplateView
 from django.views import View
@@ -10,7 +11,7 @@ from django.db.models import Sum, Count
 import calendar
 import datetime
 from patrimoine.models import SnapshotJournalier, ResultatApprovisionnementSnapshot, ResultatJournalier, ResultatMensuel
-from caisse.models import (MouvementCaisse, SousRubriqueCaisse, MouvementCaisseChargesExploitation,
+from caisse.models import (MouvementCaisse, RubriqueCaisse, SousRubriqueCaisse, MouvementCaisseChargesExploitation,
                            MouvementCaisseChargesPersonnelles)
 from patrimoine.services import JournalTransactionService, SnapshotService
 
@@ -202,7 +203,7 @@ class CalendrierFinancierView(RoleRequiredMixin, TemplateView):
                 entrees_caisse = snap['total_entrees'] if snap else 0
                 sorties = snap['total_sorties'] if snap else 0
                 entrees = entrees_caisse + (appro_par_jour.get(day) or 0)
-                solde = snap['solde_fermeture'] if snap else (entrees_caisse - sorties)
+                solde = entrees - sorties
 
                 week_days.append({
                     "date": day,
@@ -463,31 +464,109 @@ class ResultatsView(RoleRequiredMixin, TemplateView):
         """
         Dépenses catégorisées EXPLOITATION
         """
-        charges_exploitation_detail = (
+        linked_qs = (
             MouvementCaisseChargesExploitation.objects
             .filter(
                 mouvement_caisse__date_mouvement__month=mois,
                 mouvement_caisse__date_mouvement__year=annee,
+                mouvement_caisse__type_mouvement="SORTIE",
             )
             .values("sous_rubrique__nom")
             .annotate(total=Sum("mouvement_caisse__montant"))
         )
-        return charges_exploitation_detail
+        linked_ids = list(
+            MouvementCaisseChargesExploitation.objects
+            .filter(
+                mouvement_caisse__date_mouvement__month=mois,
+                mouvement_caisse__date_mouvement__year=annee,
+                mouvement_caisse__type_mouvement="SORTIE",
+            )
+            .values_list("mouvement_caisse_id", flat=True)
+        )
+
+        direct_qs = (
+            MouvementCaisse.objects
+            .filter(
+                date_mouvement__month=mois,
+                date_mouvement__year=annee,
+                type_mouvement="SORTIE",
+                rubrique__classification_metier=(
+                    RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION
+                ),
+            )
+            .exclude(id__in=linked_ids)
+            .values("rubrique__nom")
+            .annotate(total=Sum("montant"))
+        )
+
+        totals = defaultdict(int)
+        for item in linked_qs:
+            totals[item["sous_rubrique__nom"]] += item["total"] or 0
+        for item in direct_qs:
+            totals[item["rubrique__nom"]] += item["total"] or 0
+
+        return [
+            {"sous_rubrique__nom": label, "total": total}
+            for label, total in sorted(
+                totals.items(),
+                key=lambda entry: entry[1],
+                reverse=True,
+            )
+        ]
 
     def get_charges_personnelles(self, mois, annee):
         """
         Dépenses catégorisées PERSONNEL — retourne (total, detail)
         """
-        detail = list(
+        linked_qs = list(
             MouvementCaisseChargesPersonnelles.objects
             .filter(
                 mouvement_caisse__date_mouvement__month=mois,
                 mouvement_caisse__date_mouvement__year=annee,
+                mouvement_caisse__type_mouvement="SORTIE",
             )
             .values("sous_rubrique__nom")
             .annotate(total=Sum("mouvement_caisse__montant"))
-            .order_by("-total")
         )
+        linked_ids = list(
+            MouvementCaisseChargesPersonnelles.objects
+            .filter(
+                mouvement_caisse__date_mouvement__month=mois,
+                mouvement_caisse__date_mouvement__year=annee,
+                mouvement_caisse__type_mouvement="SORTIE",
+            )
+            .values_list("mouvement_caisse_id", flat=True)
+        )
+
+        direct_qs = list(
+            MouvementCaisse.objects
+            .filter(
+                date_mouvement__month=mois,
+                date_mouvement__year=annee,
+                type_mouvement="SORTIE",
+                rubrique__classification_metier=(
+                    RubriqueCaisse.ClassificationMetier.CHARGE_PERSONNELLE
+                ),
+            )
+            .exclude(id__in=linked_ids)
+            .values("rubrique__nom")
+            .annotate(total=Sum("montant"))
+        )
+
+        totals = defaultdict(int)
+        for item in linked_qs:
+            totals[item["sous_rubrique__nom"]] += item["total"] or 0
+        for item in direct_qs:
+            totals[item["rubrique__nom"]] += item["total"] or 0
+
+        detail = [
+            {"sous_rubrique__nom": label, "total": total}
+            for label, total in sorted(
+                totals.items(),
+                key=lambda entry: entry[1],
+                reverse=True,
+            )
+        ]
         total = sum(item["total"] for item in detail) if detail else 0
         return total, detail
 
