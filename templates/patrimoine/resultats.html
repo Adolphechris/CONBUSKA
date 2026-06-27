@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
+{% load currency_tags %}
 {% block title %}{% endblock %}
 
 {% block stylesheets %}
@@ -388,7 +390,7 @@
                     </div>
                     <div class="x_content">
                         <div class="metric-label">Chiffre d'Affaires Mensuel</div>
-                        <div class="metric-value">{{ chiffre_affaires }} FC</div>
+                        <div class="metric-value">{% if chiffre_affaires_usd %}{% autoescape off %}{{ chiffre_affaires_usd|dual_amount }}{% endautoescape %}{% else %}{{ chiffre_affaires }} FC{% endif %}</div>
 
                         <div class="breakdown-section">
                             <div class="metric-label" style="color: #E74C3C;">
@@ -396,21 +398,21 @@
                             </div>
                             <div class="breakdown-item">
                                 <span class="label">Prix d'achat de marchandises</span>
-                                <span class="value">- {{ cout_achat|floatformat:0 }} FC</span>
+                                <span class="value">- {% if cout_achat_usd %}{% autoescape off %}{{ cout_achat_usd|dual_amount }}{% endautoescape %}{% else %}{{ cout_achat|floatformat:0 }} FC{% endif %}</span>
                             </div>
                             <div class="breakdown-item">
                                 <span class="label">Frais de livraison</span>
-                                <span class="value">- {{ frais_achat|floatformat:0 }} FC</span>
+                                <span class="value">- {% if frais_achat_usd %}{% autoescape off %}{{ frais_achat_usd|dual_amount }}{% endautoescape %}{% else %}{{ frais_achat|floatformat:0 }} FC{% endif %}</span>
                             </div>
                             <div style="text-align: right; margin-top: 10px; padding-top: 10px; border-top: 2px solid #E74C3C;">
-                                <strong style="color: #E74C3C; font-size: 16px;">Total : - {{ total_cout_achat|floatformat:0 }} FC</strong>
+                                <strong style="color: #E74C3C; font-size: 16px;">Total : - {% if total_cout_achat_usd %}{% autoescape off %}{{ total_cout_achat_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_cout_achat|floatformat:0 }} FC{% endif %}</strong>
                             </div>
                         </div>
 
                         <div class="result-summary">
                             <div class="metric-label">MARGE BRUTE</div>
                             <div class="metric-highlight positive">
-                                {{ resultat_brut|floatformat:0 }} FC
+                                {% if resultat_brut_usd %}{% autoescape off %}{{ resultat_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ resultat_brut|floatformat:0 }} FC{% endif %}
                                 <span class="result-badge success">{{ marge_pct }}%</span>
                             </div>
                         </div>
@@ -445,20 +447,20 @@
                             {% for item in charges_exploitation %}
                                 <div class="breakdown-item">
                                     <span class="label">{{ item.sous_rubrique__nom }}</span>
-                                    <span class="value">- {{ item.total|floatformat:0 }} FC</span>
+                                    <span class="value">- {% if item.total_usd %}{% autoescape off %}{{ item.total_usd|dual_amount }}{% endautoescape %}{% else %}{{ item.total|floatformat:0 }} FC{% endif %}</span>
                                 </div>
                             {% endfor %}
                         </div>
 
                         <div class="breakdown-total">
                             <span class="label">Total Frais d'Exploitation</span>
-                            <span class="value">- {{ total_charges_exploitation|floatformat:0 }} FC</span>
+                            <span class="value">- {% if total_charges_exploitation_usd %}{% autoescape off %}{{ total_charges_exploitation_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_charges_exploitation|floatformat:0 }} FC{% endif %}</span>
                         </div>
 
                         <div class="result-summary">
                             <div class="metric-label">RNE DU MOIS</div>
                             <div class="metric-highlight neutral">
-                                {{ resultat_net_exploitation|floatformat:0 }} FC
+                                {% if resultat_net_exploitation_usd %}{% autoescape off %}{{ resultat_net_exploitation_usd|dual_amount }}{% endautoescape %}{% else %}{{ resultat_net_exploitation|floatformat:0 }} FC{% endif %}
                                 <span class="result-badge">{{ rne_pct }}%</span>
                             </div>
                         </div>
@@ -480,7 +482,7 @@
                     <div class="x_content">
                         <div class="centered-result">
                             <div class="metric-label">BÉNÉFICE NET</div>
-                            <div class="metric-highlight final">{{ resultat_net|floatformat:0 }} FC</div>
+                            <div class="metric-highlight final">{% if resultat_net_usd %}{% autoescape off %}{{ resultat_net_usd|dual_amount }}{% endautoescape %}{% else %}{{ resultat_net|floatformat:0 }} FC{% endif %}</div>
                             <span class="status-badge" style="background: {% if resultat_net >= 0 %}#26B99A{% else %}#E74C3C{% endif %};">
                                 <i class="fa fa-{% if resultat_net >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
                                 {% if resultat_net >= 0 %}Performance Positive{% else %}Résultat Déficitaire{% endif %}
@@ -493,7 +495,7 @@
                                 {% for item in charges_personnelles_detail %}
                                 <div class="breakdown-item">
                                     <span class="label">{{ item.sous_rubrique__nom }}</span>
-                                    <span class="value" style="color: #26B99A;">- {{ item.total|floatformat:0 }} FC</span>
+                                    <span class="value" style="color: #26B99A;">- {% if item.total_usd %}{% autoescape off %}{{ item.total_usd|dual_amount }}{% endautoescape %}{% else %}{{ item.total|floatformat:0 }} FC{% endif %}</span>
                                 </div>
                                 {% empty %}
                                 <div style="color: #73879C; font-size: 12px; padding: 8px 0;">
@@ -501,7 +503,7 @@
                                 </div>
                                 {% endfor %}
                                 <div style="text-align: right; margin-top: 8px; padding-top: 8px; border-top: 2px solid #26B99A;">
-                                    <strong style="color: #26B99A;">Total : - {{ charges_personnelles|floatformat:0 }} FC</strong>
+                                    <strong style="color: #26B99A;">Total : - {% if charges_personnelles_usd %}{% autoescape off %}{{ charges_personnelles_usd|dual_amount }}{% endautoescape %}{% else %}{{ charges_personnelles|floatformat:0 }} FC{% endif %}</strong>
                                 </div>
                             </div>
                         </div>

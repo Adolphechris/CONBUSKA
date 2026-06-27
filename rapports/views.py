@@ -72,6 +72,17 @@ class RapportVenteView(RoleRequiredMixin, TemplateView):
         context['debut'] = debut.isoformat()
         context['fin'] = fin.isoformat()
         context['total_ventes'] = total_ventes
+
+        # Dual currency: calculer le total USD
+        from decimal import Decimal
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        total_usd = Decimal('0')
+        for v in ventes:
+            if v.get('total_vendu'):
+                total_usd += Decimal(str(v['total_vendu'])) / taux
+        context['total_ventes_usd'] = total_usd
+
         context['ventes'] = Facture.objects.ventes_journalieres(debut, fin)
         context['mois_labels'] = self.get_mois()
         context['chart_data'] = self.get_ventes_chart()
@@ -180,13 +191,36 @@ class RapportResultatView(RoleRequiredMixin, TemplateView):
 
         articles = self._get_resultat_par_article(debut, fin, total_global)
 
+        # Dual currency: conversion USD
+        from decimal import Decimal
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        total_ventes_usd = (Decimal(str(total_ventes)) / taux) if taux else Decimal('0')
+        total_appros_usd = (Decimal(str(total_appros)) / taux) if taux else Decimal('0')
+        total_global_usd = (Decimal(str(total_global)) / taux) if taux else Decimal('0')
+
+        # Ajouter USD à chaque article
+        articles_usd = []
+        for a in articles:
+            resultat_usd = (Decimal(str(a['resultat'])) / taux) if taux else Decimal('0')
+            articles_usd.append({
+                'article_id': a['article_id'],
+                'designation': a['designation'],
+                'resultat': a['resultat'],
+                'resultat_usd': resultat_usd,
+                'pourcentage': a['pourcentage'],
+            })
+
         context.update({
             'debut': debut.isoformat(),
             'fin': fin.isoformat(),
             'total_ventes': total_ventes,
             'total_appros': total_appros,
             'total_global': total_global,
-            'resultat_articles': articles,
+            'total_ventes_usd': total_ventes_usd,
+            'total_appros_usd': total_appros_usd,
+            'total_global_usd': total_global_usd,
+            'resultat_articles': articles_usd,
             'chart_labels': [a['designation'] for a in articles[:10]],
             'chart_data': [float(a['resultat']) for a in articles[:10]],
         })
@@ -297,7 +331,9 @@ class RapportArticleView(RoleRequiredMixin, TemplateView):
 
         total_moy = sum(moy_stock_30j.values())
 
-        # ── 7. Assemblage des lignes ──────────────────────────────────
+        # ── 7. Assemblage des lignes avec conversion USD ───────────────
+        from decimal import Decimal
+        
         rows = []
         for aid in article_ids:
             a = articles.get(aid)
@@ -307,25 +343,44 @@ class RapportArticleView(RoleRequiredMixin, TemplateView):
             ca   = ca_30j.get(aid, 0)
             res  = resultat_30j.get(aid, 0)
             moy  = moy_stock_30j.get(aid, 0)
+            
+            # Conversion USD
+            val_usd = (Decimal(str(val)) / taux) if taux else Decimal('0')
+            ca_usd = (Decimal(str(ca)) / taux) if taux else Decimal('0')
+            res_usd = (Decimal(str(res)) / taux) if taux else Decimal('0')
+            moy_usd = (Decimal(str(moy)) / taux) if taux else Decimal('0')
+            
             rows.append({
                 'designation'  : a.designation,
                 'valeur_stock' : round(val, 0),
+                'valeur_stock_usd': val_usd,
                 'pct_stock'    : round(val  / total_valeur_stock  * 100, 1) if total_valeur_stock  else 0,
                 'ca_30j'       : round(ca,  0),
+                'ca_30j_usd'   : ca_usd,
                 'pct_ca'       : round(ca   / ca_total_30j        * 100, 1) if ca_total_30j        else 0,
                 'resultat_30j' : round(res, 0),
+                'resultat_30j_usd': res_usd,
                 'pct_resultat' : round(res  / resultat_total_30j  * 100, 1) if resultat_total_30j  else 0,
                 'moy_stock_30j': round(moy, 0),
+                'moy_stock_30j_usd': moy_usd,
                 'pct_moy_stock': round(moy  / total_moy           * 100, 1) if total_moy           else 0,
             })
 
         rows.sort(key=lambda x: x['valeur_stock'], reverse=True)
         top10 = rows[:10]
 
+        # Totaux USD
+        total_valeur_stock_usd = (Decimal(str(total_valeur_stock)) / taux) if taux else Decimal('0')
+        ca_total_30j_usd = (Decimal(str(ca_total_30j)) / taux) if taux else Decimal('0')
+        resultat_total_30j_usd = (Decimal(str(resultat_total_30j)) / taux) if taux else Decimal('0')
+
         context.update({
             'total_valeur_stock' : round(total_valeur_stock, 0),
+            'total_valeur_stock_usd': total_valeur_stock_usd,
             'ca_total_30j'       : round(ca_total_30j, 0),
+            'ca_total_30j_usd'   : ca_total_30j_usd,
             'resultat_total_30j' : round(resultat_total_30j, 0),
+            'resultat_total_30j_usd': resultat_total_30j_usd,
             'nb_articles'        : len(rows),
             'articles_data'      : rows,
             'chart_labels'       : [r['designation'] for r in top10],
@@ -442,6 +497,31 @@ class RapportCaisseView(RoleRequiredMixin, TemplateView):
         debut, fin = self._get_periode()
         data = self._build_rapport_data(debut=debut, fin=fin)
 
+        # Dual currency: conversion USD
+        from decimal import Decimal
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        total_entrees_usd = (Decimal(str(data['total_entrees'])) / taux) if taux else Decimal('0')
+        total_sorties_usd = (Decimal(str(data['total_sorties'])) / taux) if taux else Decimal('0')
+        net_periode_usd = (Decimal(str(data['net_periode'])) / taux) if taux else Decimal('0')
+        solde_total_usd = (Decimal(str(data['solde_total'])) / taux) if taux else Decimal('0')
+
+        # Conversion USD pour chaque caisse
+        solde_par_caisse_usd = []
+        for c in data['solde_par_caisse']:
+            entrees_usd = (Decimal(str(c['entrees'])) / taux) if taux else Decimal('0')
+            sorties_usd = (Decimal(str(c['sorties'])) / taux) if taux else Decimal('0')
+            solde_usd = (Decimal(str(c['solde'])) / taux) if taux else Decimal('0')
+            solde_par_caisse_usd.append({
+                'nom': c['nom'],
+                'entrees': c['entrees'],
+                'entrees_usd': entrees_usd,
+                'sorties': c['sorties'],
+                'sorties_usd': sorties_usd,
+                'solde': c['solde'],
+                'solde_usd': solde_usd,
+            })
+
         context.update({
             'debut': debut.isoformat(),
             'fin': fin.isoformat(),
@@ -450,8 +530,12 @@ class RapportCaisseView(RoleRequiredMixin, TemplateView):
             'total_sorties': data['total_sorties'],
             'net_periode': data['net_periode'],
             'solde_total': data['solde_total'],
+            'total_entrees_usd': total_entrees_usd,
+            'total_sorties_usd': total_sorties_usd,
+            'net_periode_usd': net_periode_usd,
+            'solde_total_usd': solde_total_usd,
             'mouvements': data['base_qs'].order_by('-date_mouvement')[:300],
-            'solde_par_caisse': data['solde_par_caisse'],
+            'solde_par_caisse': solde_par_caisse_usd,
             'chart_labels': data['chart_labels'],
             'chart_entrees': data['chart_entrees'],
             'chart_sorties': data['chart_sorties'],

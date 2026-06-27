@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Fournisseur — {{ fournisseur.nom }}{% endblock %}
 
@@ -98,7 +99,7 @@
           </div>
           <div>
             <div class="kpi-label">Total approvisionnements</div>
-            <div class="kpi-value">{{ total_mouvements|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ total_mouvements_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
@@ -109,19 +110,19 @@
           </div>
           <div>
             <div class="kpi-label">Total paiements</div>
-            <div class="kpi-value">{{ total_paiements|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ total_paiements_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
       <div class="col-md-4 col-sm-4">
         <div class="kpi-tile">
-          <div class="kpi-icon" style="background: linear-gradient(135deg, {% if solde_fournisseur < 0 %}#e74c3c, #c0392b{% else %}#1abc9c, #16a085{% endif %});">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, {% if solde_fournisseur_usd < 0 %}#e74c3c, #c0392b{% else %}#1abc9c, #16a085{% endif %});">
             <i class="fa fa-balance-scale"></i>
           </div>
           <div>
             <div class="kpi-label">Solde fournisseur</div>
-            <div class="kpi-value {% if solde_fournisseur < 0 %}negative{% else %}positive{% endif %}">
-              {{ solde_fournisseur|floatformat:0 }} FC
+            <div class="kpi-value {% if solde_fournisseur_usd < 0 %}negative{% else %}positive{% endif %}">
+              {{ solde_fournisseur_usd|dual_amount }}
             </div>
           </div>
         </div>
@@ -163,8 +164,8 @@
                         <td><span style="font-family:monospace;font-size:12px;">{{ i.facture }}</span></td>
                         <td>{{ i.article.designation }}</td>
                         <td class="text-right">{{ i.qte }}</td>
-                        <td class="text-right">{{ i.prix|floatformat:0 }} FC</td>
-                        <td class="text-right">{{ i.prix_total|floatformat:0 }} FC</td>
+                        <td class="text-right">{{ i.prix|floatformat:2 }} {{ i.approvisionnement.devise }}</td>
+                        <td class="text-right">{{ i.valeur_usd|dual_amount }}</td>
                         <td>
                           <a href="{% url 'approvisionnement_show_details' i.approvisionnement.pk %}" class="btn btn-warning btn-xs">
                             <i class="fa fa-eye"></i>
@@ -182,10 +183,11 @@
                         <td><span style="font-family:monospace;font-size:12px;">{{ i.detail.facture }}</span></td>
                         <td>{{ i.detail.article.designation }}</td>
                         <td class="text-right">{{ i.detail.qte }}</td>
-                        <td class="text-right">{{ i.montant|floatformat:0 }} FC</td>
+                        <td class="text-right">{{ i.montant|floatformat:2 }} {{ i.detail.approvisionnement.devise }}</td>
+                        <td class="text-right">{{ i.valeur_usd|dual_amount }}</td>
                       </tr>
                     {% empty %}
-                      <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Aucun frais enregistré.</td></tr>
+                      <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Aucun frais enregistré.</td></tr>
                     {% endfor %}
                   {% endif %}
                 </tbody>
@@ -193,7 +195,7 @@
             </div>
           </div>
           <div class="det-panel-footer">
-            <span>Total : <strong>{{ total_mouvements|floatformat:0 }} FC</strong></span>
+            <span>Total : <strong>{{ total_mouvements_usd|dual_amount }}</strong></span>
           </div>
         </div>
       </div>
@@ -217,7 +219,7 @@
                     <tr>
                       <td>{{ forloop.counter }}</td>
                       <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
-                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                      <td class="text-right">{{ i.valeur_usd|dual_amount }}</td>
                     </tr>
                   {% empty %}
                     <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun paiement.</td></tr>
@@ -227,7 +229,7 @@
             </div>
           </div>
           <div class="det-panel-footer">
-            <span>Total : <strong>{{ total_paiements|floatformat:0 }} FC</strong></span>
+            <span>Total : <strong>{{ total_paiements_usd|dual_amount }}</strong></span>
           </div>
         </div>
       </div>

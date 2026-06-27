@@ -162,11 +162,17 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
 
     @staticmethod
     def get_solde_caisses():
-        """Retourne (total_solde, liste de dicts par caisse ouverte)."""
+        """Retourne (total_solde, liste de dicts par caisse ouverte) avec conversion USD."""
         from caisse.models import CaisseCourante
+        from parametres.models import get_taux_usd_cdf
+        from decimal import Decimal
+        
         caisses = CaisseCourante.objects.filter(est_ouverte=True).select_related('caisse')
         result = []
         total = Decimal('0')
+        
+        taux = Decimal(str(get_taux_usd_cdf()))
+        
         for cc in caisses:
             ventes = get_total_ventes_caisse(caisse_courante=cc)
             entrees = cc.mouvements.filter(type_mouvement='ENTREE').aggregate(
@@ -179,20 +185,37 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
             )['t']
             solde = cc.solde_initial + ventes + entrees - sorties
             total += solde
+            
+            # Conversion USD
+            solde_usd = (solde / taux) if taux else Decimal('0')
+            ventes_usd = (ventes / taux) if taux else Decimal('0')
+            entrees_usd = (entrees / taux) if taux else Decimal('0')
+            sorties_usd = (sorties / taux) if taux else Decimal('0')
+            
             result.append({
                 'cc': cc,
                 'nom': cc.caisse.nom,
                 'solde_initial': cc.solde_initial,
                 'ventes': ventes,
+                'ventes_usd': ventes_usd,
                 'entrees': entrees,
+                'entrees_usd': entrees_usd,
                 'sorties': sorties,
+                'sorties_usd': sorties_usd,
                 'solde': solde,
+                'solde_usd': solde_usd,
             })
-        return total, result
+        
+        total_usd = (total / taux) if taux else Decimal('0')
+        return total, total_usd, result
 
     @staticmethod
     def get_creances_dettes():
-        """Retourne (total_creances, total_dettes) en FC."""
+        """Retourne (total_creances, total_dettes) en USD.
+        
+        Note: solde() retourne solde_usd() par défaut depuis la migration bi-devise.
+        Les valeurs retournées sont donc en USD.
+        """
         total_c = sum(c.solde() for c in Creancier.objects.all())
         total_d = sum(d.solde() for d in Debiteur.objects.all())
         return Decimal(str(total_c or 0)), Decimal(str(total_d or 0))
@@ -264,20 +287,28 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         first_this_month = today.replace(day=1)
         last_month_date = first_this_month - timedelta(days=1)
 
+        from parametres.models import get_taux_usd_cdf
+        current_taux = Decimal(str(get_taux_usd_cdf(today)))
+
         # ── KPI Ligne 1 : financier ───────────────────────────────────────
-        solde_caisses_total, caisses_detail = self.get_solde_caisses()
+        solde_caisses_total, solde_caisses_total_usd, caisses_detail = self.get_solde_caisses()
         context_data['solde_caisses_total'] = solde_caisses_total
+        context_data['solde_caisses_total_usd'] = solde_caisses_total_usd
         context_data['caisses_detail'] = caisses_detail
 
         ca, stat_ca = self.get_ca()
         context_data['ca'] = ca
+        context_data['ca_usd'] = (ca / current_taux) if current_taux else Decimal('0')
         context_data['stat_ca'] = round(stat_ca, 2)
 
         context_data['factures_jour_count'] = Facture.objects.filter(date_facture=today).count()
 
         total_creances, total_dettes = self.get_creances_dettes()
-        context_data['total_creances'] = total_creances
-        context_data['total_dettes'] = total_dettes
+        # get_creances_dettes() retourne déjà des valeurs en USD
+        context_data['total_creances'] = total_creances  # USD
+        context_data['total_creances_usd'] = total_creances  # USD (déjà en USD)
+        context_data['total_dettes'] = total_dettes  # USD
+        context_data['total_dettes_usd'] = total_dettes  # USD (déjà en USD)
 
         # ── KPI Ligne 2 : opérationnel ────────────────────────────────────
         context_data['articles'] = self.articles_critiques()
@@ -303,6 +334,22 @@ class DashboardAdminView(RoleRequiredMixin, TemplateView):
         context_data['factures_non_validees'] = factures_nv_qs.order_by('-date_facture')[:5]
 
         context_data['paie_mois'] = self.get_paie_mois()
+
+        # Taux de change actuel
+        from parametres.models import get_taux_usd_cdf, TauxEchange
+        try:
+            taux_actuel = get_taux_usd_cdf()
+            taux_obj = TauxEchange.objects.filter(
+                devise_source='USD',
+                devise_cible='CDF'
+            ).order_by('-effective_date').first()
+            context_data['taux_courant'] = taux_actuel
+            context_data['taux_date'] = taux_obj.effective_date if taux_obj else None
+            context_data['taux_usd'] = Decimal(str(taux_actuel))
+        except Exception:
+            context_data['taux_courant'] = None
+            context_data['taux_date'] = None
+            context_data['taux_usd'] = Decimal('0')
 
         # Comptages historiques (compatibilité)
         context_data['clients'] = Client.objects.count()

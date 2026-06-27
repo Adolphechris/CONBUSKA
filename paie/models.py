@@ -90,6 +90,12 @@ class Paie(models.Model):
     total_retenues = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     net_a_payer    = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # ── Dual currency ─────────────────────────────────────────────────
+    taux_creation = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True,
+                                        help_text="Taux de change historique au moment de la création")
+    valeur_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True,
+                                     help_text="Valeur USD du net à payer (historique, immuable)")
+
     # ── Workflow ──────────────────────────────────────────────────────
     valide      = models.BooleanField(default=False)
     cree_par    = models.ForeignKey(
@@ -144,6 +150,10 @@ class LignePaie(models.Model):
     type_ligne = models.CharField(max_length=10, choices=TypeLigne.choices)
     montant    = models.DecimalField(max_digits=12, decimal_places=2)
     ordre      = models.PositiveSmallIntegerField(default=0)
+    valeur_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True,
+                                     help_text="Valeur USD historique de cette ligne (immuable)")
+    taux_creation = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True,
+                                        help_text="Taux de change au moment de la création")
 
     objects = models.Manager()
 

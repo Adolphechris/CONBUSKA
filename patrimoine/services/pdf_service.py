@@ -24,10 +24,15 @@ _BLEU = colors.Color(red=42/255, green=63/255, blue=84/255)
 _GRIS = colors.Color(red=245/255, green=247/255, blue=250/255)
 
 
-def _fmt(value):
-    """Formate un Decimal ou float en entier avec séparateur milliers."""
+def _fmt(value, usd_value=None, taux=None):
+    """Formate un Decimal ou float en entier avec séparateur milliers.
+    Si usd_value est fourni, retourne un format dual currency."""
     try:
-        return f"{int(round(float(value))):,}".replace(",", " ") + " FC"
+        fc_str = f"{int(round(float(value))):,}".replace(",", " ") + " FC"
+        if usd_value is not None and taux:
+            usd_str = f"{float(usd_value):,.2f} $".replace(",", " ")
+            return f"{usd_str}\n{fc_str}"
+        return fc_str
     except (TypeError, ValueError):
         return "0 FC"
 
@@ -74,16 +79,20 @@ class PatrimoinePDFService:
             .order_by("-date")
         )
 
+        # Dual currency: récupérer le taux pour l'affichage USD
+        from parametres.models import get_taux_usd_cdf
+        taux = get_taux_usd_cdf()
+
         fr_header = [['Date', 'FR Initial', 'Entrées (EJ)', 'Sorties (SJ)', 'FR Final', 'Contre-vérif.', 'Écart']]
         fr_data = [
             [
                 s.date.strftime('%d/%m/%Y'),
-                _fmt(s.fr_initial),
-                _fmt(s.ej),
-                _fmt(s.sj),
-                _fmt(s.fr_final),
-                _fmt(s.fr_contreverif),
-                _fmt(s.ecart),
+                _fmt(s.fr_initial, s.fr_initial_usd, taux),
+                _fmt(s.ej, s.ej_usd, taux),
+                _fmt(s.sj, s.sj_usd, taux),
+                _fmt(s.fr_final, s.fr_final_usd, taux),
+                _fmt(s.fr_contreverif, None, None),  # Contre-vérif FC uniquement (historique)
+                _fmt(s.ecart, None, None),  # Écart FC uniquement
             ]
             for s in snapshots
         ]
@@ -127,7 +136,7 @@ class PatrimoinePDFService:
             .aggregate(t=Sum("montant"))["t"] or Decimal("0")
         )
 
-        def repartition(type_mvt, total):
+        def repartition(type_mvt, total, total_usd):
             qs = (
                 base_qs.filter(type_mouvement=type_mvt)
                 .values("rubrique__nom")
@@ -137,11 +146,12 @@ class PatrimoinePDFService:
             rows = []
             for r in qs:
                 pct = round(float(r["montant"]) / float(total) * 100, 1) if total else 0
-                rows.append([r["rubrique__nom"] or "—", _fmt(r["montant"]), f"{pct} %"])
+                montant_usd = (Decimal(str(r["montant"])) / taux) if taux else None
+                rows.append([r["rubrique__nom"] or "—", _fmt(r["montant"], montant_usd, taux), f"{pct} %"])
             return rows
 
-        rep_e = repartition("ENTREE", total_entrees) or [["Aucune donnée", "", ""]]
-        rep_s = repartition("SORTIE", total_sorties) or [["Aucune donnée", "", ""]]
+        rep_e = repartition("ENTREE", total_entrees, total_entrees_usd) or [["Aucune donnée", "", ""]]
+        rep_s = repartition("SORTIE", total_sorties, total_sorties_usd) or [["Aucune donnée", "", ""]]
 
         entrees_header = [['ENTRÉES — Catégorie', 'Montant', '%']]
         sorties_header = [['SORTIES — Catégorie', 'Montant', '%']]
@@ -180,8 +190,9 @@ class PatrimoinePDFService:
 
         # ── Solde final ───────────────────────────────────────────────
         solde = total_entrees - total_sorties
+        solde_usd = (Decimal(str(solde)) / taux) if taux else None
         flowables.append(Paragraph(
-            f"<b>Solde de la période : {_fmt(solde)}</b>",
+            f"<b>Solde de la période : {_fmt(solde, solde_usd, taux)}</b>",
             _styles['PDFDroite']
         ))
         flowables.append(Spacer(1, 20))
@@ -207,10 +218,10 @@ class PatrimoinePDFService:
             [
                 f"#{a.approvisionnement.numero}",
                 a.date.strftime('%d/%m/%Y'),
-                _fmt(a.chiffre_affaires),
-                _fmt(a.cout_achat),
-                _fmt(a.frais_achat),
-                _fmt(a.resultat_brut),
+                _fmt(a.chiffre_affaires, a.chiffre_affaires_usd, taux),
+                _fmt(a.cout_achat, a.cout_achat_usd, taux),
+                _fmt(a.frais_achat, a.frais_achat_usd, taux),
+                _fmt(a.resultat_brut, a.resultat_brut_usd, taux),
             ]
             for a in appros
         ] or [['Aucun approvisionnement sur la période', '', '', '', '', '']]

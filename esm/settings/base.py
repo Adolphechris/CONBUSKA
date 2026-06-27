@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'factures.apps.FacturesConfig',
     'fournisseurs.apps.FournisseursConfig',
     'produits.apps.ProduitsConfig',
+    'ecommerce.apps.EcommerceConfig',
     'paie.apps.PaieConfig',
     'parametres.apps.ParametresConfig',
     'patrimoine.apps.PatrimoineConfig',

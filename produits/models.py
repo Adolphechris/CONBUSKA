@@ -82,6 +82,26 @@ class Article(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     actif = models.BooleanField(default=True)
+    
+    # ── Nouveaux champs e-commerce (Sprint 1) ────────────────────────
+    est_publie = models.BooleanField(
+        default=False,
+        verbose_name="Publié en ligne",
+        help_text="Si True, l'article apparaît sur la boutique en ligne"
+    )
+    slug = models.SlugField(
+        max_length=250,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="URL SEO générée automatiquement depuis le nom"
+    )
+    derniere_sync_firestore = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Dernière synchronisation Firestore",
+        help_text="Timestamp de la dernière sync réussie vers Firestore"
+    )
 
     objects = ArticleManager()
 

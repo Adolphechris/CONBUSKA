@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
+{% load caisse_tags %}
 
 {% block title %}Bulletin — {{ agent.nom }} {{ paie.mois|date:"m/Y" }}{% endblock %}
 
@@ -166,14 +168,14 @@
         <div class="tile-stats purple-stat">
           <i class="fa fa-money icon"></i>
           <h3>Salaire de base</h3>
-          <div class="count">{{ paie.salaire_base|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+          <div class="count">{% if paie.salaire_base_usd %}{% autoescape off %}{{ paie.salaire_base_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.salaire_base|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small>{% endif %}</div>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 col-xs-12">
         <div class="tile-stats info-stat">
           <i class="fa fa-plus-circle icon"></i>
           <h3>Salaire brut</h3>
-          <div class="count">{{ paie.salaire_brut|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+            <div class="count">{% if paie.salaire_brut_usd %}{% autoescape off %}{{ paie.salaire_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.salaire_brut|floatformat:0 }} FC{% endif %}</div>
           {% if paie.absence > 0 %}
           <p style="font-size:11px;color:#73879C;margin:0;">Prorata {{ paie.jp }}/{{ paie.jap }} j</p>
           {% endif %}
@@ -183,14 +185,14 @@
         <div class="tile-stats success-stat">
           <i class="fa fa-arrow-up icon"></i>
           <h3>Total primes</h3>
-          <div class="count">{{ paie.total_primes|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+          <div class="count">{% if paie.total_primes_usd %}{% autoescape off %}{{ paie.total_primes_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_primes|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small>{% endif %}</div>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 col-xs-12">
         <div class="tile-stats danger-stat">
           <i class="fa fa-arrow-down icon"></i>
           <h3>Total retenues</h3>
-          <div class="count">{{ paie.total_retenues|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small></div>
+          <div class="count">{% if paie.total_retenues_usd %}{% autoescape off %}{{ paie.total_retenues_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_retenues|floatformat:0 }} <small style="font-size:12px;font-weight:400;">FC</small>{% endif %}</div>
         </div>
       </div>
     </div>
@@ -239,12 +241,12 @@
             <div class="bulletin-col">
               <div class="bulletin-col-header gains">
                 <i class="fa fa-arrow-circle-up"></i> Gains
-                <span class="total-badge">{{ paie.salaire_brut|floatformat:0 }} FC</span>
+                <span class="total-badge">{% if paie.salaire_brut_usd %}{% autoescape off %}{{ paie.salaire_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.salaire_brut|floatformat:0 }} FC{% endif %}</span>
               </div>
               {% for ligne in lignes_gain %}
               <div class="bulletin-line {% if forloop.first %}base-line{% endif %}">
                 <span class="libelle">{{ ligne.libelle }}</span>
-                <span class="montant gain">+ {{ ligne.montant|floatformat:0 }} FC</span>
+                <span class="montant gain">+ {% if ligne.montant_usd %}{% autoescape off %}{{ ligne.montant_usd|dual_amount }}{% endautoescape %}{% else %}{{ ligne.montant|floatformat:0 }} FC{% endif %}</span>
               </div>
               {% empty %}
               <div class="bulletin-line" style="color:#BAB8B8; justify-content:center;">Aucun gain</div>
@@ -257,12 +259,12 @@
             <div class="bulletin-col">
               <div class="bulletin-col-header retenues">
                 <i class="fa fa-arrow-circle-down"></i> Retenues
-                <span class="total-badge">{{ paie.total_retenues|floatformat:0 }} FC</span>
+                <span class="total-badge">{% if paie.total_retenues_usd %}{% autoescape off %}{{ paie.total_retenues_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_retenues|floatformat:0 }} FC{% endif %}</span>
               </div>
               {% for ligne in lignes_retenue %}
               <div class="bulletin-line">
                 <span class="libelle">{{ ligne.libelle }}</span>
-                <span class="montant retenue">− {{ ligne.montant|floatformat:0 }} FC</span>
+                <span class="montant retenue">− {% if ligne.montant_usd %}{% autoescape off %}{{ ligne.montant_usd|dual_amount }}{% endautoescape %}{% else %}{{ ligne.montant|floatformat:0 }} FC{% endif %}</span>
               </div>
               {% empty %}
               <div class="bulletin-line" style="color:#BAB8B8; justify-content:center;">Aucune retenue</div>
@@ -276,14 +278,14 @@
           <div class="net-footer-left">
             <div style="font-size:13px;font-weight:600;color:#2A3F54;">Récapitulatif</div>
             <div class="formula" style="color:#73879C;">
-              Salaire brut <strong>{{ paie.salaire_brut|floatformat:0 }}</strong>
-              + Primes <strong>{{ paie.total_primes|floatformat:0 }}</strong>
-              − Retenues <strong>{{ paie.total_retenues|floatformat:0 }}</strong>
+              Salaire brut <strong>{% if paie.salaire_brut_usd %}{% autoescape off %}{{ paie.salaire_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.salaire_brut|floatformat:0 }}{% endif %}</strong>
+              + Primes <strong>{% if paie.total_primes_usd %}{% autoescape off %}{{ paie.total_primes_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_primes|floatformat:0 }}{% endif %}</strong>
+              − Retenues <strong>{% if paie.total_retenues_usd %}{% autoescape off %}{{ paie.total_retenues_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_retenues|floatformat:0 }}{% endif %}</strong>
             </div>
           </div>
           <div class="net-footer-right">
             <div class="net-label">Net à payer</div>
-            <div class="net-value">{{ paie.net_a_payer|floatformat:0 }} FC</div>
+            <div class="net-value">{% if paie.net_a_payer_usd %}{% autoescape off %}{{ paie.net_a_payer_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.net_a_payer|floatformat:0 }} FC{% endif %}</div>
           </div>
         </div>
 
@@ -334,23 +336,23 @@
         <div style="background: #F5F7FA; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px; border: 1px solid #E6E9ED;">
           <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
             <span>Salaire brut</span>
-            <span style="font-family: 'Courier New', monospace; color: #2A3F54;">{{ paie.salaire_brut|floatformat:0 }} FC</span>
+            <span style="font-family: 'Courier New', monospace; color: #2A3F54;">{% if paie.salaire_brut_usd %}{% autoescape off %}{{ paie.salaire_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.salaire_brut|floatformat:0 }} FC{% endif %}</span>
           </div>
           {% if paie.total_primes %}
           <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
             <span>+ Primes</span>
-            <span style="font-family: 'Courier New', monospace; color: #26B99A;">{{ paie.total_primes|floatformat:0 }} FC</span>
+            <span style="font-family: 'Courier New', monospace; color: #26B99A;">{% if paie.total_primes_usd %}{% autoescape off %}{{ paie.total_primes_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_primes|floatformat:0 }} FC{% endif %}</span>
           </div>
           {% endif %}
           {% if paie.total_retenues %}
           <div style="display: flex; justify-content: space-between; font-size: 13px; color: #73879C; margin-bottom: 6px;">
             <span>&minus; Retenues</span>
-            <span style="font-family: 'Courier New', monospace; color: #E74C3C;">{{ paie.total_retenues|floatformat:0 }} FC</span>
+            <span style="font-family: 'Courier New', monospace; color: #E74C3C;">{% if paie.total_retenues_usd %}{% autoescape off %}{{ paie.total_retenues_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.total_retenues|floatformat:0 }} FC{% endif %}</span>
           </div>
           {% endif %}
           <div style="border-top: 1px solid #E6E9ED; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 13px; font-weight: 700; color: #2A3F54;">Net à payer</span>
-            <span style="font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #26B99A;">{{ paie.net_a_payer|floatformat:0 }} FC</span>
+            <span style="font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #26B99A;">{% if paie.net_a_payer_usd %}{% autoescape off %}{{ paie.net_a_payer_usd|dual_amount }}{% endautoescape %}{% else %}{{ paie.net_a_payer|floatformat:0 }} FC{% endif %}</span>
           </div>
         </div>
 

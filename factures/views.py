@@ -222,6 +222,27 @@ class FactureDetailView(RoleRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['details_facture'] = self.get_details_facture()
+
+        # Dual currency: passer les valeurs USD de la facture
+        facture = self.object
+        context['facture_valeur_usd'] = facture.valeur_usd
+        context['facture_taux'] = facture.taux
+
+        # Valeurs USD par ligne
+        details_with_usd = []
+        for detail in context['details_facture']:
+            detail_dict = {
+                'pk': detail.pk,
+                'article': detail.article,
+                'qte': detail.qte,
+                'prix': detail.prix,
+                'total': detail.total,
+                'valeur_usd': detail.valeur_usd,
+                'taux_creation': detail.taux_creation,
+            }
+            details_with_usd.append(detail_dict)
+        context['details_facture_usd'] = details_with_usd
+
         return context
 
 

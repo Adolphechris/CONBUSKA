@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
+{% load currency_tags %}
 
 {% block title %}Rapport des Caisses{% endblock %}
 
@@ -141,7 +143,7 @@
                     <span class="kpi-label">Total Entrées</span>
                     <div class="kpi-icon green"><i class="fa fa-arrow-circle-down"></i></div>
                 </div>
-                <div class="kpi-value">{{ total_entrees|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-value">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>{% endif %}</div>
                 <div class="kpi-sub">Somme des entrées sur la période</div>
             </div>
         </div>
@@ -151,7 +153,7 @@
                     <span class="kpi-label">Total Sorties</span>
                     <div class="kpi-icon red"><i class="fa fa-arrow-circle-up"></i></div>
                 </div>
-                <div class="kpi-value">{{ total_sorties|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small></div>
+                <div class="kpi-value">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>{% endif %}</div>
                 <div class="kpi-sub">Somme des sorties sur la période</div>
             </div>
         </div>
@@ -162,7 +164,7 @@
                     <div class="kpi-icon dark"><i class="fa fa-balance-scale"></i></div>
                 </div>
                 <div class="kpi-value" style="{% if solde_total >= 0 %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
-                    {{ solde_total|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>
+                    {% if solde_total_usd %}{% autoescape off %}{{ solde_total_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde_total|floatformat:0 }} <small style="font-size:13px;font-weight:500;">FC</small>{% endif %}
                 </div>
                 <div class="kpi-sub">Somme des soldes réels des caisses à la fin de période</div>
             </div>
@@ -175,10 +177,10 @@
         {% for c in solde_par_caisse %}
         <div class="caisse-card">
             <div class="caisse-name"><i class="fa fa-archive" style="margin-right:5px;"></i>{{ c.nom }}</div>
-            <div class="caisse-solde">{{ c.solde|floatformat:0 }} FC</div>
+            <div class="caisse-solde">{% if c.solde_usd %}{% autoescape off %}{{ c.solde_usd|dual_amount }}{% endautoescape %}{% else %}{{ c.solde|floatformat:0 }} FC{% endif %}</div>
             <div class="caisse-meta">
-                <span class="e"><i class="fa fa-arrow-down"></i> {{ c.entrees|floatformat:0 }}</span>
-                <span class="s"><i class="fa fa-arrow-up"></i> {{ c.sorties|floatformat:0 }}</span>
+                <span class="e"><i class="fa fa-arrow-down"></i> {% if c.entrees_usd %}{% autoescape off %}{{ c.entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ c.entrees|floatformat:0 }}{% endif %}</span>
+                <span class="s"><i class="fa fa-arrow-up"></i> {% if c.sorties_usd %}{% autoescape off %}{{ c.sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ c.sorties|floatformat:0 }}{% endif %}</span>
             </div>
         </div>
         {% endfor %}
@@ -250,7 +252,7 @@
                         </td>
                         <td style="color:#73879C;">{{ m.rubrique.nom }}</td>
                         <td class="text-right" style="font-weight:700;{% if m.type_mouvement == 'ENTREE' %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
-                            {% if m.type_mouvement == 'ENTREE' %}+{% else %}−{% endif %}{{ m.montant|floatformat:0 }}
+                            {% load caisse_tags %}{% autoescape off %}{% if m.type_mouvement == 'ENTREE' %}+{% else %}−{% endif %}{{ m|dual_from_mouvement }}{% endautoescape %}
                         </td>
                         <td style="font-size:12px;color:#555;">{{ m.motif|truncatechars:40 }}</td>
                         <td style="font-size:12px;color:#73879C;">{{ m.effectue_par }}</td>
@@ -270,7 +272,7 @@
     <div class="synthese-box">
         <div>
             <div class="s-label">Solde net de la période (Entrées − Sorties)</div>
-            <div class="s-value">{{ net_periode|floatformat:0 }} FC</div>
+            <div class="s-value">{% if net_periode_usd %}{% autoescape off %}{{ net_periode_usd|dual_amount }}{% endautoescape %}{% else %}{{ net_periode|floatformat:0 }} FC{% endif %}</div>
             <div class="s-note">Ce montant reflète le flux net de trésorerie sur la période sélectionnée.</div>
         </div>
         <div style="text-align:right;">
@@ -324,6 +326,15 @@ $(document).ready(function() {
     var chartSoldes = JSON.parse(document.getElementById('rapport-caisse-soldes').textContent);
     var COLORS = ['#3498DB','#9B59B6','#26B99A','#F39C12','#E74C3C','#1ABC9C','#E67E22'];
 
+    function formatCurrency(value, usdStr) {
+        try {
+            if (usdStr) return usdStr;
+            return value.toLocaleString('fr-FR') + ' FC';
+        } catch (e) {
+            return value + ' FC';
+        }
+    }
+
     // Bar chart entrées vs sorties
     new Chart(document.getElementById('chartCaisses').getContext('2d'), {
         type: 'bar',
@@ -339,7 +350,7 @@ $(document).ready(function() {
             plugins: { legend: { position: 'top' } },
             scales: {
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
-                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR'); } } },
+                     ticks: { callback: function(v){ return formatCurrency(v); } } },
                 x: { grid: { display: false } }
             }
         }

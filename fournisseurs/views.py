@@ -28,6 +28,7 @@ class FournisseursView(RoleRequiredMixin, FilterView):
         context['f_ordinaires'] = filtered_qs.filter(is_system=False)
 
         # Calcul du solde total basé uniquement sur les résultats filtrés
+        context['total_solde_usd'] = sum(f.solde_usd() for f in filtered_qs)
         context['total_solde'] = sum(f.solde() for f in filtered_qs)
 
         return context
@@ -48,6 +49,10 @@ class FournisseurDetailsView(RoleRequiredMixin, DetailView):
         context['total_mouvements'] = fournisseur.total_mouvements()
         context['total_paiements'] = fournisseur.total_paiements()
         context['solde_fournisseur'] = fournisseur.solde()
+
+        context['total_mouvements_usd'] = fournisseur.total_mouvements_usd()
+        context['total_paiements_usd'] = fournisseur.total_paiements_usd()
+        context['solde_fournisseur_usd'] = fournisseur.solde_usd()
         return context
 
 

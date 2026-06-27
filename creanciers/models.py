@@ -33,6 +33,20 @@ class Creancier(models.Model):
             .filter(creancier=self, mouvement_caisse__type_mouvement="SORTIE")
         )
 
+    def total_prets_usd(self):
+        from decimal import Decimal
+        return self.prets().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def total_paiements_usd(self):
+        from decimal import Decimal
+        return self.paiements().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def solde_usd(self):
+        return self.total_prets_usd() - self.total_paiements_usd()
+
+    def solde_fc(self):
+        return self.total_prets() - self.total_paiements()
+
     def total_prets(self):
         return self.prets().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
@@ -40,7 +54,7 @@ class Creancier(models.Model):
         return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
     def solde(self):
-        return self.total_prets() - self.total_paiements()
+        return self.solde_usd()
 
     @classmethod
     def get_next_code(cls):
@@ -83,6 +97,20 @@ class Debiteur(models.Model):
             .filter(debiteur=self, mouvement_caisse__type_mouvement="ENTREE")
         )
 
+    def total_prets_usd(self):
+        from decimal import Decimal
+        return self.prets().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def total_paiements_usd(self):
+        from decimal import Decimal
+        return self.paiements().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def solde_usd(self):
+        return self.total_prets_usd() - self.total_paiements_usd()
+
+    def solde_fc(self):
+        return self.total_prets() - self.total_paiements()
+
     def total_prets(self):
         return self.prets().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
@@ -90,7 +118,7 @@ class Debiteur(models.Model):
         return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
     def solde(self):
-        return self.total_prets() - self.total_paiements()
+        return self.solde_usd()
 
     def __str__(self):
         return self.nom

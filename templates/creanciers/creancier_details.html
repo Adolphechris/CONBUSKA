@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Créancier — {{ creancier.nom }}{% endblock %}
 
@@ -94,7 +95,7 @@
           </div>
           <div>
             <div class="kpi-label">Total prêts reçus</div>
-            <div class="kpi-value">{{ creancier.total_prets|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ creancier.total_prets_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
@@ -105,19 +106,19 @@
           </div>
           <div>
             <div class="kpi-label">Total remboursé</div>
-            <div class="kpi-value">{{ creancier.total_paiements|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ creancier.total_paiements_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
       <div class="col-md-4 col-sm-4">
         <div class="kpi-tile">
-          <div class="kpi-icon" style="background: linear-gradient(135deg, {% if creancier.solde < 0 %}#e74c3c, #c0392b{% else %}#1abc9c, #16a085{% endif %});">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, {% if creancier.solde_usd < 0 %}#e74c3c, #c0392b{% else %}#1abc9c, #16a085{% endif %});">
             <i class="fa fa-balance-scale"></i>
           </div>
           <div>
             <div class="kpi-label">Solde restant dû</div>
-            <div class="kpi-value {% if creancier.solde < 0 %}negative{% else %}positive{% endif %}">
-              {{ creancier.solde|floatformat:0 }} FC
+            <div class="kpi-value {% if creancier.solde_usd < 0 %}negative{% else %}positive{% endif %}">
+              {{ creancier.solde_usd|dual_amount }}
             </div>
           </div>
         </div>
@@ -142,7 +143,7 @@
                     <tr>
                       <td>{{ forloop.counter }}</td>
                       <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
-                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                      <td class="text-right">{{ i.valeur_usd|dual_amount }}</td>
                     </tr>
                   {% empty %}
                     <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun prêt enregistré.</td></tr>
@@ -152,7 +153,7 @@
             </div>
           </div>
           <div class="det-panel-footer">
-            <span>Total : <strong>{{ creancier.total_prets|floatformat:0 }} FC</strong></span>
+            <span>Total : <strong>{{ creancier.total_prets_usd|dual_amount }}</strong></span>
           </div>
         </div>
       </div>
@@ -173,7 +174,7 @@
                     <tr>
                       <td>{{ forloop.counter }}</td>
                       <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
-                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                      <td class="text-right">{{ i.valeur_usd|dual_amount }}</td>
                     </tr>
                   {% empty %}
                     <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun remboursement enregistré.</td></tr>
@@ -183,7 +184,7 @@
             </div>
           </div>
           <div class="det-panel-footer">
-            <span>Total : <strong>{{ creancier.total_paiements|floatformat:0 }} FC</strong></span>
+            <span>Total : <strong>{{ creancier.total_paiements_usd|dual_amount }}</strong></span>
           </div>
         </div>
       </div>

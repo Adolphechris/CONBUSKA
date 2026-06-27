@@ -28,6 +28,7 @@ class ClientsView(RoleRequiredMixin, FilterView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         clients = self.get_queryset()
+        context['total_solde_usd'] = sum(client.solde_usd() for client in clients)
         context['total_solde'] = sum(client.solde() for client in clients)
         return context
 
@@ -48,6 +49,9 @@ class ClientDetailsView(RoleRequiredMixin, DetailView):
         context['factures'] = client.factures()
         context['total_factures'] = client.total_factures()
         context['total_paiements'] = client.total_paiements()
+        context['total_factures_usd'] = client.total_factures_usd()
+        context['total_paiements_usd'] = client.total_paiements_usd()
+        context['solde_client_usd'] = client.solde_usd()
         return context
 
 

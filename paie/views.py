@@ -67,11 +67,20 @@ class AgentDetailsView(RoleRequiredMixin, View):
         total_paiements = (
             mouvements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
         )
+
+        # Dual currency: total USD des paiements
+        total_paiements_usd = sum(
+            (m.mouvements_caisse_ag.first().valeur_usd or Decimal('0'))
+            for m in mouvements
+            if hasattr(m, 'mouvements_caisse_ag') and m.mouvements_caisse_ag.first()
+        )
+
         return render(request, 'paie/agent_details.html', {
             'agent': agent,
             'paie_list': paie_list,
             'paiements': mouvements,
             'total_paiements': total_paiements,
+            'total_paiements_usd': total_paiements_usd,
         })
 
 
@@ -332,6 +341,25 @@ class ListePaiesView(RoleRequiredMixin, View):
             .aggregate(total=Sum('net_a_payer'))['total']
             or Decimal('0')
         )
+
+        # Dual currency: masse salariale USD
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        masse_salariale_usd = (masse_salariale / taux) if taux else Decimal('0')
+
+        # État récapitulatif par agent (validées uniquement)
+        paies_validees = paies.filter(valide=True).select_related('agent').order_by('agent__nom')
+        recapitulatif = []
+        for p in paies_validees:
+            recapitulatif.append({
+                'agent': p.agent.nom,
+                'matricule': p.agent.matricule,
+                'net_a_payer': p.net_a_payer,
+                'valeur_usd': p.valeur_usd,
+                'taux_creation': p.taux_creation,
+                'valide': p.valide,
+            })
+
         return render(request, 'paie/paies.html', {
             'liste_paies':    paies,
             'mois':           mois,
@@ -340,4 +368,6 @@ class ListePaiesView(RoleRequiredMixin, View):
             'nb_validees':    nb_validees,
             'nb_brouillons':  nb_brouillons,
             'masse_salariale': masse_salariale,
+            'masse_salariale_usd': masse_salariale_usd,
+            'recapitulatif': recapitulatif,
         })

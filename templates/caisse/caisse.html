@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
 
 {% block title %} Caisse {% endblock title %}
 {% block stylesheets %}
@@ -423,19 +424,19 @@
                                 <div class="col-sm-4 col-xs-6">
                                     <div class="well well-sm text-center">
                                         <h4 class="text-muted">Solde actuel</h4>
-                                        <h2 class="text-success"><strong>{{ solde_caisse }} FC</strong></h2>
+                                        <h2 class="text-success"><strong>{% if solde_caisse_usd %}{% autoescape off %}{{ solde_caisse_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde_caisse }} FC{% endif %}</strong></h2>
                                     </div>
                                 </div>
                                 <div class="col-sm-4 col-xs-6">
                                     <div class="well well-sm text-center">
                                         <h4 class="text-muted">Total entrées</h4>
-                                        <h2 class="text-info"><strong>{{ total_entrees }} FC</strong></h2>
+                                        <h2 class="text-info"><strong>{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees }} FC{% endif %}</strong></h2>
                                     </div>
                                 </div>
                                 <div class="col-sm-4 col-xs-6">
                                     <div class="well well-sm text-center">
                                         <h4 class="text-muted">Total sorties</h4>
-                                        <h2 class="text-danger"><strong>{{ total_sorties }} FC</strong></h2>
+                                        <h2 class="text-danger"><strong>{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties }} FC{% endif %}</strong></h2>
                                     </div>
                                 </div>
                             </div>

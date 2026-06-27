@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
+{% load currency_tags %}
 
 {% block title %} Dashboard {% endblock title %}
 {% block stylesheets %}
@@ -7,128 +9,172 @@
 <style>
     /* Statistics Cards */
     .stat-card {
-      background: #fff;
-      border-radius: 4px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-      transition: all 0.3s ease;
+      border-radius: 12px;
+      padding: 22px 20px;
+      margin-bottom: 25px;
+      transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
       position: relative;
       overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #ffffff !important;
     }
 
-    .stat-card:hover {
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .stat-card::before {
+    .stat-card::after {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
+      top: -50px;
+      right: -50px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
     }
 
-    .stat-card-blue::before {
-      background: #3498db;
+    /* Colors and gradients for each card */
+    .stat-card-green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      box-shadow: 0 10px 20px -5px rgba(17, 153, 142, 0.4), 0 2px 4px rgba(0,0,0,0.05);
     }
-    .stat-card-green::before {
-      background: #1abb9c;
+    .stat-card-green:hover {
+      box-shadow: 0 15px 30px -5px rgba(17, 153, 142, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
     }
-    .stat-card-orange::before {
-      background: #f39c12;
+
+    .stat-card-cyan {
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      box-shadow: 0 10px 20px -5px rgba(0, 114, 255, 0.4), 0 2px 4px rgba(0,0,0,0.05);
     }
-    .stat-card-red::before {
-      background: #e74c3c;
+    .stat-card-cyan:hover {
+      box-shadow: 0 15px 30px -5px rgba(0, 114, 255, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
     }
-    .stat-card-purple::before {
-      background: #9b59b6;
+
+    .stat-card-pink {
+      background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+      box-shadow: 0 10px 20px -5px rgba(248, 87, 166, 0.4), 0 2px 4px rgba(0,0,0,0.05);
     }
-    .stat-card-teal::before {
-      background: #16a085;
+    .stat-card-pink:hover {
+      box-shadow: 0 15px 30px -5px rgba(248, 87, 166, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
     }
-    .stat-card-pink::before {
-      background: #e91e63;
+
+    .stat-card-orange {
+      background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+      box-shadow: 0 10px 20px -5px rgba(245, 175, 25, 0.4), 0 2px 4px rgba(0,0,0,0.05);
     }
-    .stat-card-cyan::before {
-      background: #00bcd4;
+    .stat-card-orange:hover {
+      box-shadow: 0 15px 30px -5px rgba(245, 175, 25, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+
+    .stat-card-purple {
+      background: linear-gradient(135deg, #7F00FF 0%, #E100FF 100%);
+      box-shadow: 0 10px 20px -5px rgba(127, 0, 255, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stat-card-purple:hover {
+      box-shadow: 0 15px 30px -5px rgba(127, 0, 255, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+
+    .stat-card-teal {
+      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+      box-shadow: 0 10px 20px -5px rgba(0, 176, 155, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stat-card-teal:hover {
+      box-shadow: 0 15px 30px -5px rgba(0, 176, 155, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+
+    .stat-card-red {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+      box-shadow: 0 10px 20px -5px rgba(255, 65, 108, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stat-card-red:hover {
+      box-shadow: 0 15px 30px -5px rgba(255, 65, 108, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+
+    .stat-card-blue {
+      background: linear-gradient(135deg, #4776e6 0%, #8e54e9 100%);
+      box-shadow: 0 10px 20px -5px rgba(71, 118, 230, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stat-card-blue:hover {
+      box-shadow: 0 15px 30px -5px rgba(71, 118, 230, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
     }
 
     .stat-icon {
       float: left;
-      width: 60px;
-      height: 60px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 24px;
       color: #fff;
       margin-right: 15px;
+      background: rgba(255, 255, 255, 0.18) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .stat-card-blue .stat-icon {
-      background: linear-gradient(135deg, #667eea 0%, #3498db 100%);
-    }
-    .stat-card-green .stat-icon {
-      background: linear-gradient(135deg, #1abb9c 0%, #16a085 100%);
-    }
-    .stat-card-orange .stat-icon {
-      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    }
-    .stat-card-red .stat-icon {
-      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    }
-    .stat-card-purple .stat-icon {
-      background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-    }
-    .stat-card-teal .stat-icon {
-      background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);
-    }
-    .stat-card-pink .stat-icon {
-      background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
-    }
-    .stat-card-cyan .stat-icon {
-      background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    .stat-card:hover .stat-icon {
+      transform: scale(1.15) rotate(8deg);
+      background: rgba(255, 255, 255, 0.35) !important;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     .stat-content {
       overflow: hidden;
-      padding-top: 5px;
+      padding-top: 2px;
     }
 
     .stat-number {
-      font-size: 28px;
-      font-weight: 700;
-      color: #2a3f54;
-      line-height: 1;
-      margin-bottom: 5px;
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff !important;
+      line-height: 1.1;
+      margin-bottom: 3px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     .stat-label {
-      font-size: 13px;
-      color: #73879c;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.9) !important;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
     }
 
     .stat-footer {
       clear: both;
-      padding-top: 15px;
-      margin-top: 15px;
-      border-top: 1px solid #f0f0f0;
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
       font-size: 12px;
-      color: #73879c;
+      color: rgba(255, 255, 255, 0.9) !important;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-footer i {
+      font-size: 13px;
     }
 
     .stat-footer .fa-arrow-up {
-      color: #1abb9c;
+      color: #a3ffb4 !important;
+      font-weight: 700;
     }
 
     .stat-footer .fa-arrow-down {
-      color: #e74c3c;
+      color: #ffb3b3 !important;
+      font-weight: 700;
     }
 
     /* Panel Styles */
@@ -346,6 +392,7 @@
             </div>
             <div class="stat-footer">
                 <i class="fa fa-unlock"></i> {{ caisses_detail|length }} caisse{{ caisses_detail|length|pluralize }} ouverte{{ caisses_detail|length|pluralize }}
+                <span style="margin-left:auto;font-size:10px;opacity:0.8;">{% if solde_caisses_total_usd %}{% autoescape off %}{{ solde_caisses_total_usd|dual_amount }}{% endautoescape %}{% else %}0 ${% endif %}</span>
             </div>
         </div>
         </a>
@@ -368,6 +415,7 @@
                 {% else %}
                     <i class="fa fa-minus"></i> Stable vs hier
                 {% endif %}
+                <span style="margin-left:auto;font-size:10px;opacity:0.8;">{% if ca_usd %}{% autoescape off %}{{ ca_usd|dual_amount }}{% endautoescape %}{% else %}0 ${% endif %}</span>
             </div>
         </div>
         </a>
@@ -400,6 +448,7 @@
             </div>
             <div class="stat-footer">
                 <i class="fa fa-exchange"></i> {{ creanciers }} créancier{{ creanciers|pluralize }}
+                <span style="margin-left:auto;font-size:10px;opacity:0.8;">{% if total_creances_usd %}{% autoescape off %}{{ total_creances_usd|dual_amount }}{% endautoescape %}{% else %}0 ${% endif %}</span>
             </div>
         </div>
         </a>
@@ -466,17 +515,22 @@
         </a>
     </div>
 
-    <!-- Paie du mois -->
+    <!-- Taux de change -->
     <div class="col-md-3 col-sm-6">
-        <a href="{% url 'agents' %}" style="text-decoration:none;color:inherit;">
+        <a href="{% url 'taux_echange_list' %}" style="text-decoration:none;color:inherit;">
         <div class="stat-card stat-card-blue">
-            <div class="stat-icon"><i class="fa fa-users"></i></div>
+            <div class="stat-icon"><i class="fa fa-exchange"></i></div>
             <div class="stat-content">
-                <div class="stat-number">{{ paie_mois|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
-                <div class="stat-label">Paie du mois</div>
+                <div class="stat-number">{{ taux_courant|floatformat:0 }} <small style="font-size:13px;">FC</small></div>
+                <div class="stat-label">Taux USD/CDF</div>
             </div>
             <div class="stat-footer">
-                <i class="fa fa-calendar-check-o"></i> Montants perçus
+                <i class="fa fa-calendar"></i> 
+                {% if taux_date %}
+                    Mis à jour le {{ taux_date|date:"d/m/Y" }}
+                {% else %}
+                    Aucun taux défini
+                {% endif %}
             </div>
         </div>
         </a>
@@ -549,7 +603,7 @@
                     <li>
                         <div class="product-info">
                             <span class="product-name">{{ article.article__designation }}</span>
-                            <span class="product-sales">{{ article.total_ca|floatformat:0 }} FC</span>
+                            <span class="product-sales">{% if article.total_ca_usd %}{% autoescape off %}{{ article.total_ca_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.total_ca|floatformat:0 }} FC{% endif %}</span>
                         </div>
                         <div class="ca_articles" style="background:#e8e8e8;border-radius:3px;height:6px;overflow:hidden;">
                             <div style="width:{% widthratio article.total_ca top_articles_max 100 %}%;height:100%;background:#26B99A;border-radius:3px;"></div>
@@ -596,7 +650,7 @@
                                 {{ item.nom }}
                             </td>
                             <td style="padding:8px 12px;font-size:13px;font-weight:700;text-align:right;color:#2a3f54;">
-                                {{ item.solde|floatformat:0 }} FC
+                                {% if item.solde_usd %}{% autoescape off %}{{ item.solde_usd|dual_amount }}{% endautoescape %}{% else %}{{ item.solde|floatformat:0 }} FC{% endif %}
                             </td>
                             <td style="padding:8px 12px;text-align:center;">
                                 <a href="{% url 'caisse_details' item.cc.pk %}" class="btn btn-xs btn-warning">
@@ -671,7 +725,7 @@
                                 </span>
                             </td>
                             <td style="padding:8px 12px;text-align:right;">
-                                <span style="font-size:12px;font-weight:700;color:#e74c3c;">{{ fac.total|floatformat:0 }} FC</span><br>
+                                <span style="font-size:12px;font-weight:700;color:#e74c3c;">{% if fac.total_usd %}{% autoescape off %}{{ fac.total_usd|dual_amount }}{% endautoescape %}{% else %}{{ fac.total|floatformat:0 }} FC{% endif %}</span><br>
                                 <span style="font-size:11px;color:#73879c;">{{ fac.date_facture|date:"d/m/Y" }}</span>
                             </td>
                         </tr>

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
 
 {% block title %}Agents{% endblock %}
 
@@ -196,7 +197,7 @@
             <div class="ec-card-footer">
               <div class="ec-salaire">
                 <i class="fa fa-money"></i>
-                {{ agent.salaire|floatformat:0 }} FC/mois
+                {% if agent.salaire_usd %}{% autoescape off %}{{ agent.salaire_usd|dual_amount }}{% endautoescape %}{% else %}{{ agent.salaire|floatformat:0 }} FC{% endif %}/mois
               </div>
               <div class="ec-actions">
                 <a href="{% url 'agent_details' agent.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>

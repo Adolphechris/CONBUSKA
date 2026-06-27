@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
+{% load caisse_tags %}
 
 {% block title %} Détails Article {% endblock title %}
 {% block stylesheets %}
@@ -906,9 +908,10 @@ footer {
                                     </div>
                                 </div>
                                 <div class="col-md-4 text-right">
-                                    <button class="btn btn-default"><i class="fa fa-shopping-cart"></i> Commander l'article</button>
+                                    <a href="{% url 'commande_create' %}" class="btn btn-default"><i class="fa fa-shopping-cart"></i> Commander l'article</a>
                                     {% if article.actif %}
-                                        <button type="button" class="btn btn-danger"
+                                                            <a href="{% url 'article_update' article.pk %}" class="btn btn-primary"><i class="fa fa-edit"></i> Modifier l'article</a>
+                                                            <button type="button" class="btn btn-danger"
                                                 hx-get="{% url 'activate_or_deactivate' article.pk %}"
                                                 hx-target="#modal-activate-content"
                                                 hx-trigger="click"
@@ -1080,7 +1083,7 @@ footer {
                                                             <i class="fa fa-download"></i>
                                                         </div>
                                                         <div class="pricing-label">Prix d'achat</div>
-                                                        <div class="pricing-amount">{{ article.prix_achat }} {{ article.devise }}</div>
+                                                        <div class="pricing-amount">{% if article.prix_achat_usd %}{% autoescape off %}{{ article.prix_achat_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.prix_achat }} {{ article.devise }}{% endif %}</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
@@ -1089,7 +1092,7 @@ footer {
                                                             <i class="fa fa-shopping-cart"></i>
                                                         </div>
                                                         <div class="pricing-label">Prix de vente</div>
-                                                        <div class="pricing-amount">{{ article.prix_vente }} {{ article.devise }}</div>
+                                                        <div class="pricing-amount">{% if article.prix_vente_usd %}{% autoescape off %}{{ article.prix_vente_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.prix_vente }} {{ article.devise }}{% endif %}</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
@@ -1098,7 +1101,7 @@ footer {
                                                             <i class="fa fa-cubes"></i>
                                                         </div>
                                                         <div class="pricing-label">Prix de vente gros</div>
-                                                        <div class="pricing-amount">{{ article.prix_vente_gros }} {{ article.devise }}</div>
+                                                        <div class="pricing-amount">{% if article.prix_vente_gros_usd %}{% autoescape off %}{{ article.prix_vente_gros_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.prix_vente_gros }} {{ article.devise }}{% endif %}</div>
                                                     </div>
                                                 </div>
                                             </div>

@@ -201,6 +201,15 @@ class ArticleDetailsView(RoleRequiredMixin, DetailView):
         context['consommation_moyenne'] = self.consommation_moyenne(mouvements)
         context['fournisseurs_data'] = self.get_fournisseurs_data()
         context['stats'] = self.get_stats(mouvements)
+
+        # Dual currency: calcul des valeurs USD
+        from parametres.models import get_taux_usd_cdf
+        from decimal import Decimal
+        taux = Decimal(str(get_taux_usd_cdf()))
+        context['stock_usd'] = (Decimal(str(self.object.stock)) / taux) if taux else Decimal('0')
+        context['entrees_usd'] = (Decimal(str(entrees)) / taux) if taux else Decimal('0')
+        context['sorties_usd'] = (Decimal(str(sorties)) / taux) if taux else Decimal('0')
+
         return context
 
 

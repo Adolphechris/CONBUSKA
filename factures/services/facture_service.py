@@ -260,7 +260,7 @@ class FactureService:
                 source=facture,
             )
 
-        update_fields = ["valide", "actif", "modifie_par"]
+        update_fields = ["valide", "actif", "modifie_par", "valeur_usd"]
         facture.valide = True
         facture.actif = False
         facture.modifie_par = user

@@ -337,7 +337,7 @@
                 <div class="tile-stats success-stat">
                     <i class="fa fa-arrow-down icon text-success-gentelela"></i>
                     <h3>Total Entrées</h3>
-                    <div class="count">{{ total_entrees }}FC</div>
+                    <div class="count">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees }} FC{% endif %}</div>
                     <!--<p class="text-muted"><i class="fa fa-arrow-up"></i> +8.5% par rapport au mois dernier</p>-->
                 </div>
             </div>
@@ -346,7 +346,7 @@
                 <div class="tile-stats danger-stat">
                     <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
                     <h3>Total Sorties</h3>
-                    <div class="count">{{ total_sorties }}FC</div>
+                    <div class="count">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties }} FC{% endif %}</div>
                     <!--<p class="text-muted"><i class="fa fa-arrow-up"></i> +3.2% par rapport au mois dernier</p>-->
                 </div>
             </div>
@@ -355,7 +355,7 @@
                 <div class="tile-stats info-stat">
                     <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
                     <h3>Solde</h3>
-                    <div class="count" style="color: #26B99A;">{{ solde }}FC</div>
+                    <div class="count" style="color: #26B99A;">{% if solde_usd %}{% autoescape off %}{{ solde_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde }} FC{% endif %}</div>
                     <!--<p class="text-muted"><i class="fa fa-check-circle"></i> Budget respecté</p>-->
                 </div>
             </div>
@@ -417,7 +417,7 @@
                                     <div class="transaction-header entree">
                                         <i class="fa fa-arrow-circle-up green"></i>
                                         ENTRÉES
-                                        <span class="pull-right badge bg-green">{{ total_entrees }}FC</span>
+                                        <span class="pull-right badge bg-green">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees }} FC{% endif %}</span>
                                     </div>
                                     <div class="transaction-scroll">
                                         {% for i in entrees %}
@@ -435,7 +435,7 @@
                                                         <span class="label label-info" style="margin-left:4px;">{{ i.badge_entite }}</span>
                                                     {% endif %}
                                                 </div>
-                                                <div class="transaction-montant entree">{{ i.montant }} FC</div>
+                                                <div class="transaction-montant entree">{% load caisse_tags %}{% autoescape off %}{{ i|dual_from_mouvement }}{% endautoescape %}</div>
                                             </div>
                                         {% empty %}
                                             <div class="transaction-item" style="color:#999; text-align:center;">
@@ -467,7 +467,7 @@
                                     <div class="transaction-header sortie">
                                         <i class="fa fa-arrow-circle-down red"></i>
                                         SORTIES
-                                        <span class="pull-right badge bg-red">{{ total_sorties }}FC</span>
+                                        <span class="pull-right badge bg-red">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties }} FC{% endif %}</span>
                                     </div>
                                     <div class="transaction-scroll">
                                         {% for i in sorties %}
@@ -485,7 +485,7 @@
                                                         <span class="label label-warning" style="margin-left:4px;">{{ i.badge_entite }}</span>
                                                     {% endif %}
                                                 </div>
-                                                <div class="transaction-montant sortie">- {{ i.montant }} FC</div>
+                                                <div class="transaction-montant sortie">{% load caisse_tags %}{% autoescape off %}- {{ i|dual_from_mouvement }}{% endautoescape %}</div>
                                             </div>
                                         {% empty %}
                                             <div class="transaction-item" style="color:#999; text-align:center;">

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Débiteur — {{ debiteur.nom }}{% endblock %}
 
@@ -94,7 +95,7 @@
           </div>
           <div>
             <div class="kpi-label">Total prêts accordés</div>
-            <div class="kpi-value">{{ debiteur.total_prets|floatformat:0 }} FC</div>
+            <div class="kpi-value">{% load caisse_tags %}{% autoescape off %}{{ debiteur.total_prets_usd|dual_amount }}{% endautoescape %}</div>
           </div>
         </div>
       </div>
@@ -105,7 +106,7 @@
           </div>
           <div>
             <div class="kpi-label">Total remboursé</div>
-            <div class="kpi-value">{{ debiteur.total_paiements|floatformat:0 }} FC</div>
+            <div class="kpi-value">{% load caisse_tags %}{% autoescape off %}{{ debiteur.total_paiements_usd|dual_amount }}{% endautoescape %}</div>
           </div>
         </div>
       </div>
@@ -116,8 +117,8 @@
           </div>
           <div>
             <div class="kpi-label">Créance restante</div>
-            <div class="kpi-value {% if debiteur.solde < 0 %}negative{% else %}positive{% endif %}">
-              {{ debiteur.solde|floatformat:0 }} FC
+              <div class="kpi-value {% if debiteur.solde_usd < 0 %}negative{% else %}positive{% endif %}">
+              {% load caisse_tags %}{% autoescape off %}{{ debiteur.solde_usd|dual_amount }}{% endautoescape %}
             </div>
           </div>
         </div>
@@ -142,7 +143,7 @@
                     <tr>
                       <td>{{ forloop.counter }}</td>
                       <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
-                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                      <td class="text-right">{% load caisse_tags %}{% autoescape off %}{{ i.mouvement_caisse|dual_from_mouvement }}{% endautoescape %}</td>
                     </tr>
                   {% empty %}
                     <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun prêt enregistré.</td></tr>
@@ -151,8 +152,8 @@
               </table>
             </div>
           </div>
-          <div class="det-panel-footer">
-            <span>Total : <strong>{{ debiteur.total_prets|floatformat:0 }} FC</strong></span>
+            <div class="det-panel-footer">
+            <span>Total : <strong>{% load caisse_tags %}{% autoescape off %}{{ debiteur.total_prets_usd|dual_amount }}{% endautoescape %}</strong></span>
           </div>
         </div>
       </div>
@@ -173,7 +174,7 @@
                     <tr>
                       <td>{{ forloop.counter }}</td>
                       <td>{{ i.mouvement_caisse.date_mouvement|date:"d/m/Y" }}</td>
-                      <td class="text-right">{{ i.mouvement_caisse.montant|floatformat:0 }} FC</td>
+                      <td class="text-right">{% load caisse_tags %}{% autoescape off %}{{ i.mouvement_caisse|dual_from_mouvement }}{% endautoescape %}</td>
                     </tr>
                   {% empty %}
                     <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Aucun remboursement enregistré.</td></tr>
@@ -183,7 +184,7 @@
             </div>
           </div>
           <div class="det-panel-footer">
-            <span>Total : <strong>{{ debiteur.total_paiements|floatformat:0 }} FC</strong></span>
+            <span>Total : <strong>{% load caisse_tags %}{% autoescape off %}{{ debiteur.total_paiements_usd|dual_amount }}{% endautoescape %}</strong></span>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+{% load caisse_tags %}
 <div class="row">
     <!-- Cash Inflows -->
     <div class="col-md-6">
@@ -21,14 +22,14 @@
                             <tr>
                                 <td><span class="label label-default">Solde initial</span></td>
                                 <td>Solde initial</td>
-                                <td>{{ caisse_courante.solde_initial }} FC</td>
+                                <td>{% if caisse_courante.solde_initial_usd %}{% autoescape off %}{{ caisse_courante.solde_initial_usd|dual_amount }}{% endautoescape %}{% else %}{{ caisse_courante.solde_initial }} FC{% endif %}</td>
                                 <td>-</td>
                             </tr>
                             {% if caisse.is_principal %}
                                 <tr>
                                     <td><span class="label label-success">Ventes</span></td>
                                     <td>Ventes</td>
-                                    <td>{{ventes}} FC</td>
+                                    <td>{% if ventes_usd %}{% autoescape off %}{{ ventes_usd|dual_amount }}{% endautoescape %}{% else %}{{ventes}} FC{% endif %}</td>
                                     <td>-</td>
                                 </tr>
                             {% endif %}
@@ -43,7 +44,7 @@
                                         {% endwith %}
                                     </td>
                                     <td>{{ i.motif }}</td>
-                                    <td>{{ i.montant }} FC</td>
+                                    <td>{% load caisse_tags %}{% autoescape off %}{{ i|dual_from_mouvement }}{% endautoescape %}</td>
                                     <td>
                                         {% if i.pk %}
                                             {% if caisse_courante.est_ouverte %}
@@ -87,7 +88,7 @@
                             <tr class="bg-success">
                                 <td></td>
                                 <td class="text-right"><strong>Total entrées :</strong></td>
-                                <td class="text-right"><strong>{{ total_entrees }} FC</strong></td>
+                                <td class="text-right"><strong>{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees }} FC{% endif %}</strong></td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -127,7 +128,7 @@
                                         {% endwith %}
                                     </td>
                                     <td>{{ i.motif }}</td>
-                                    <td>{{ i.montant }} FC</td>
+                                    <td>{% load caisse_tags %}{% autoescape off %}{{ i|dual_from_mouvement }}{% endautoescape %}</td>
                                     <td>
                                         {% if i.pk %}
                                             {% if caisse_courante.est_ouverte %}
@@ -162,7 +163,7 @@
                             <tr class="bg-danger">
                                 <td></td>
                                 <td class="text-right"><strong>Total sorties :</strong></td>
-                                <td class="text-right"><strong>{{ total_sorties }} FC</strong></td>
+                                <td class="text-right"><strong>{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties }} FC{% endif %}</strong></td>
                                 <td></td>
                             </tr>
                         </tfoot>

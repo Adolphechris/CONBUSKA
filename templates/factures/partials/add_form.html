@@ -36,6 +36,10 @@
 
 <script>
 (function () {
+    function formatCurrency(value, usdStr) {
+        if (usdStr) return usdStr;
+        try { return value.toLocaleString('fr-CD') + ' FC'; } catch (e) { return value + ' FC'; }
+    }
     function updatePriceIndicator() {
         var select   = document.getElementById('id_article_add');
         var qteInput = document.querySelector('#addForm input[name="qte"]');
@@ -61,21 +65,21 @@
         }
 
         var grossMode = qte >= seuil;
-        if (grossMode) {
+            if (grossMode) {
             indicator.style.display = 'block';
             indicator.style.background = '#EAFAF1';
             indicator.style.border = '1px solid #A9DFBF';
             indicator.style.color = '#1E8449';
-            indicator.innerHTML = '<i class="fa fa-check-circle"></i> Prix gros appliqué&nbsp;: <strong>' + pvg.toLocaleString('fr-CD') + ' FC</strong>';
+            indicator.innerHTML = '<i class="fa fa-check-circle"></i> Prix gros appliqué&nbsp;: <strong>' + formatCurrency(pvg) + '</strong>';
         } else {
             indicator.style.display = 'block';
             indicator.style.background = '#EBF5FB';
             indicator.style.border = '1px solid #AED6F1';
             indicator.style.color = '#1A5276';
             indicator.innerHTML =
-                '<i class="fa fa-tag"></i> Prix unitaire&nbsp;: <strong>' + pv.toLocaleString('fr-CD') + ' FC</strong>' +
+                '<i class="fa fa-tag"></i> Prix unitaire&nbsp;: <strong>' + formatCurrency(pv) + '</strong>' +
                 '<span style="margin-left:10px;font-weight:400;color:#5D6D7E;">' +
-                '(prix gros à partir de ' + seuil + ' unité' + (seuil > 1 ? 's' : '') + '&nbsp;: ' + pvg.toLocaleString('fr-CD') + ' FC)' +
+                '(prix gros à partir de ' + seuil + ' unité' + (seuil > 1 ? 's' : '') + '&nbsp;: ' + formatCurrency(pvg) + ')' +
                 '</span>';
         }
     }

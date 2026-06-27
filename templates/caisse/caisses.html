@@ -6,53 +6,130 @@
 {{block.super}}
 <style>
     .cardbox{
-        padding: 5px 5px 5px 5px;
+        padding: 10px;
     }
-    .cardcontainer{
-        background-color: rgb(202 138 4);
-        padding: 2px;
+    .cardcontainer {
+        border-radius: 12px;
+        padding: 22px 20px;
+        margin-bottom: 25px;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ffffff !important;
     }
-    .cardhead{
+    
+    .cardcontainer::after {
+        content: "";
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* Gradients and shadows for the 4 cash desks */
+    .caisse-card-1 {
+        background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        box-shadow: 0 10px 20px -5px rgba(33, 147, 176, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .caisse-card-1:hover {
+        box-shadow: 0 15px 30px -5px rgba(33, 147, 176, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+    }
+
+    .caisse-card-2 {
+        background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+        box-shadow: 0 10px 20px -5px rgba(248, 87, 166, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .caisse-card-2:hover {
+        box-shadow: 0 15px 30px -5px rgba(248, 87, 166, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+    }
+
+    .caisse-card-3 {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        box-shadow: 0 10px 20px -5px rgba(17, 153, 142, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .caisse-card-3:hover {
+        box-shadow: 0 15px 30px -5px rgba(17, 153, 142, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+    }
+
+    .caisse-card-4 {
+        background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+        box-shadow: 0 10px 20px -5px rgba(245, 175, 25, 0.4), 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .caisse-card-4:hover {
+        box-shadow: 0 15px 30px -5px rgba(245, 175, 25, 0.6), 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+    }
+
+    .cardhead {
         display: flex;
         justify-content: space-between;
-        margin: auto;
-        padding: 10px 10px 15px 20px;
+        margin: 0;
+        padding: 0 0 15px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .cardfoot{
-         display: flex;
-         padding: 10px 10px 15px 20px;
+    .cardniveau {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.85);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
     }
-    .cardniveau{
-        font-size: 12px;
-        color: rgb(249 250 251);
-    }
-    .cardclasse{
-        font-size: 24px;
+    .cardclasse {
+        font-size: 20px;
         font-weight: 800;
         color: white;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        word-break: break-word;
     }
-    .cardicon{
-        position: relative;
-        top: 15px; left: -30px;
+    .cardicon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
     }
-    .iconelem{
-        display: inline-block;
-        background: white;
+    .iconelem {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        background: rgba(255, 255, 255, 0.18) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
         border-radius: 50%;
-        box-shadow: 0 0 2px #888;
-        padding: 0.5em 0.6em;
-        font-size: 28px;
-    }
-    .cardfootelem{
-        padding-right: 15px;
-    }
-    .cardfootelem i{
-        font-size: 14px;
+        font-size: 20px;
         color: white;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .cardfootelem span{
-        font-size: 14px;
-        color: white;
+    
+    .cardcontainer:hover .iconelem {
+        transform: scale(1.15) rotate(8deg);
+        background: rgba(255, 255, 255, 0.35) !important;
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .cardfoot {
+        display: flex;
+        padding: 12px 0 0 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    }
+    .cardfootelem span {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.95);
     }
 </style>
 {% endblock stylesheets %}
@@ -62,7 +139,7 @@
         <div class="">
             <div class="page-title">
                 <div class="title_left">
-                    <h5>Caisses</h5>
+                     <h5>Caisses</h5>
                 </div>
             </div>
              <div class="row">
@@ -76,7 +153,7 @@
                             {% for caisse in liste_caisses %}
                                 <a href="{% url 'historique_caisse' caisse.pk %}">
                                     <div class="col-md-3 col-xs-12 cardbox">
-                                        <div class="cardcontainer">
+                                        <div class="cardcontainer caisse-card-{{ forloop.counter }}">
                                             <div class="cardhead">
                                                 <div>
                                                     <h5 class="cardniveau">CAISSE</h5>
@@ -89,9 +166,9 @@
                                             <div class="cardfoot">
                                                 <div class="cardfootelem">
                                                     {% if caisse.is_principal %}
-                                                        <span>Caisse principale</span>
+                                                         <span>Caisse principale</span>
                                                     {% else %}
-                                                        <span>Caisse secondaire</span>
+                                                         <span>Caisse secondaire</span>
                                                     {% endif %}
                                                 </div>
                                             </div>

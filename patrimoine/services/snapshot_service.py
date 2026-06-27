@@ -65,6 +65,14 @@ class SnapshotService:
             else caisse_courante.solde_initial
         )
 
+        # Calculer le solde de fermeture
+        solde_fermeture = solde_ouverture + total_entrees - total_sorties
+        
+        # Dual currency: calculer la valeur USD
+        from parametres.models import get_taux_usd_cdf
+        taux = get_taux_usd_cdf(date)
+        solde_fermeture_usd = (solde_fermeture / taux) if taux else None
+
         SnapshotJournalier.objects.update_or_create(
             caisse=caisse,
             date=date,
@@ -72,7 +80,8 @@ class SnapshotService:
                 "solde_ouverture": solde_ouverture,
                 "total_entrees": total_entrees,
                 "total_sorties": total_sorties,
-                "solde_fermeture": solde_ouverture + total_entrees - total_sorties,
+                "solde_fermeture": solde_fermeture,
+                "solde_fermeture_usd": solde_fermeture_usd,
             }
         )
 
@@ -84,6 +93,18 @@ class SnapshotService:
         :param date:
         :return:
         """
+        from parametres.models import get_taux_usd_cdf
+        from decimal import Decimal
+        
+        taux = get_taux_usd_cdf(date)
+        taux_dec = Decimal(str(taux)) if taux else None
+        
+        # Calculer les valeurs USD
+        resultat_brut_usd = (Decimal(str(approvisionnement.resultat_total)) / taux_dec) if taux_dec else None
+        cout_achat_usd = (Decimal(str(approvisionnement.cout_achat)) / taux_dec) if taux_dec else None
+        frais_achat_usd = (Decimal(str(approvisionnement.frais_achat_total)) / taux_dec) if taux_dec else None
+        chiffre_affaires_usd = (Decimal(str(approvisionnement.chiffre_affaires)) / taux_dec) if taux_dec else None
+        
         ResultatApprovisionnementSnapshot.objects.update_or_create(
             approvisionnement=approvisionnement,
             date=date,
@@ -94,16 +115,25 @@ class SnapshotService:
                 "cout_achat": approvisionnement.cout_achat,
                 "frais_achat": approvisionnement.frais_achat_total,
                 "chiffre_affaires": approvisionnement.chiffre_affaires,
+                "resultat_brut_usd": resultat_brut_usd,
+                "cout_achat_usd": cout_achat_usd,
+                "frais_achat_usd": frais_achat_usd,
+                "chiffre_affaires_usd": chiffre_affaires_usd,
             }
         )
 
     @staticmethod
     def rebuild_journalier(date):
+        from parametres.models import get_taux_usd_cdf
+        from decimal import Decimal
+        
         agg = ResultatApprovisionnementSnapshot.objects.filter(
             date=date
         ).aggregate(
             resultat_brut=Sum("resultat_brut"),
             chiffre_affaires=Sum("chiffre_affaires"),
+            resultat_brut_usd=Sum("resultat_brut_usd"),
+            chiffre_affaires_usd=Sum("chiffre_affaires_usd"),
         )
 
         ResultatJournalier.objects.update_or_create(
@@ -111,6 +141,8 @@ class SnapshotService:
             defaults={
                 "resultat_brut": agg["resultat_brut"] or 0,
                 "chiffre_affaires": agg["chiffre_affaires"] or 0,
+                "resultat_brut_usd": agg["resultat_brut_usd"],
+                "chiffre_affaires_usd": agg["chiffre_affaires_usd"],
             }
         )
 
@@ -122,6 +154,8 @@ class SnapshotService:
         ).aggregate(
             resultat_brut=Sum("resultat_brut"),
             chiffre_affaires=Sum("chiffre_affaires"),
+            resultat_brut_usd=Sum("resultat_brut_usd"),
+            chiffre_affaires_usd=Sum("chiffre_affaires_usd"),
         )
 
         ResultatMensuel.objects.update_or_create(
@@ -130,6 +164,8 @@ class SnapshotService:
             defaults={
                 "resultat_brut": agg["resultat_brut"] or 0,
                 "chiffre_affaires": agg["chiffre_affaires"] or 0,
+                "resultat_brut_usd": agg["resultat_brut_usd"],
+                "chiffre_affaires_usd": agg["chiffre_affaires_usd"],
             }
         )
 

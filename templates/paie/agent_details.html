@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
+{% load caisse_tags %}
 
 {% block title %}Agent — {{ agent.nom }}{% endblock %}
 
@@ -101,7 +103,7 @@
             {% if agent.date_engagement %}<span class="det-meta-item"><i class="fa fa-calendar"></i>Engagé le {{ agent.date_engagement|date:"d/m/Y" }}</span>{% endif %}
             {% if agent.telephone %}<span class="det-meta-item"><i class="fa fa-phone"></i>{{ agent.telephone }}</span>{% endif %}
             {% if agent.email %}<span class="det-meta-item"><i class="fa fa-envelope"></i>{{ agent.email }}</span>{% endif %}
-            <span class="det-badge"><i class="fa fa-money"></i> {{ agent.salaire|floatformat:0 }} FC/mois</span>
+            <span class="det-badge"><i class="fa fa-money"></i> {% if agent.salaire_usd %}{% autoescape off %}{{ agent.salaire_usd|dual_amount }}{% endautoescape %}{% else %}{{ agent.salaire|floatformat:0 }} FC{% endif %}/mois</span>
           </div>
         </div>
       </div>
@@ -130,7 +132,7 @@
           </div>
           <div>
             <div class="kpi-label">Salaire de base</div>
-            <div class="kpi-value">{{ agent.salaire|floatformat:0 }} FC</div>
+            <div class="kpi-value">{% if agent.salaire_usd %}{% autoescape off %}{{ agent.salaire_usd|dual_amount }}{% endautoescape %}{% else %}{{ agent.salaire|floatformat:0 }} FC{% endif %}</div>
           </div>
         </div>
       </div>
@@ -152,7 +154,7 @@
           </div>
           <div>
             <div class="kpi-label">Total versé (mouvements)</div>
-            <div class="kpi-value">{{ total_paiements|floatformat:0 }} FC</div>
+            <div class="kpi-value">{% if total_paiements_usd %}{% autoescape off %}{{ total_paiements_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_paiements|floatformat:0 }} FC{% endif %}</div>
           </div>
         </div>
       </div>
@@ -259,8 +261,8 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ i.mois|date:"F Y" }}</td>
                     <td class="text-right">{{ i.jp }} j</td>
-                    <td class="text-right">{{ i.salaire_brut|floatformat:0 }} FC</td>
-                    <td class="text-right">{{ i.net_a_payer|floatformat:0 }} FC</td>
+                    <td class="text-right">{% if i.salaire_brut_usd %}{% autoescape off %}{{ i.salaire_brut_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.salaire_brut|floatformat:0 }} FC{% endif %}</td>
+                    <td class="text-right">{% if i.net_a_payer_usd %}{% autoescape off %}{{ i.net_a_payer_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.net_a_payer|floatformat:0 }} FC{% endif %}</td>
                     <td class="text-center">
                       <a href="{% url 'paie_agent_details' i.pk agent.pk %}" class="btn btn-warning btn-xs">
                         <i class="fa fa-eye"></i> Détails
@@ -313,8 +315,8 @@
                       </span>
                     </td>
                     <td style="font-size: 12px; color: #73879C; max-width: 220px;">{{ i.motif|default:"—" }}</td>
-                    <td class="text-right" style="font-family: 'Courier New', monospace; font-weight: 600; white-space: nowrap;">
-                      {{ i.montant|floatformat:0 }} FC
+                      <td class="text-right" style="font-family: 'Courier New', monospace; font-weight: 600; white-space: nowrap;">
+                      {% if i.valeur_usd %}{% autoescape off %}{{ i.valeur_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.montant|floatformat:0 }} FC{% endif %}
                     </td>
                     <td style="font-size: 12px;">{{ i.effectue_par }}</td>
                   </tr>
@@ -326,7 +328,7 @@
           </div>
         </div>
         <div class="det-footer-bar">
-          <span>Total versé : <strong>{{ total_paiements|floatformat:0 }} FC</strong></span>
+          <span>Total versé : <strong>{% if total_paiements_usd %}{% autoescape off %}{{ total_paiements_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_paiements|floatformat:0 }} FC{% endif %}</strong></span>
         </div>
       </div>
     </div>

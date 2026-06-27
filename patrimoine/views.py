@@ -310,9 +310,20 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
         solde = total_entrees - total_sorties
 
         # =========================
+        # DUAL CURRENCY: conversion USD
+        # =========================
+        from decimal import Decimal
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        total_entrees_usd = (Decimal(str(total_entrees)) / taux) if taux else Decimal('0')
+        total_sorties_usd = (Decimal(str(total_sorties)) / taux) if taux else Decimal('0')
+        solde_usd = (Decimal(str(solde)) / taux) if taux else Decimal('0')
+        appro_total_usd = (Decimal(str(appro_total)) / taux) if taux else Decimal('0')
+
+        # =========================
         # RÉPARTITIONS
         # =========================
-        def repartition(type_mvt, total):
+        def repartition(type_mvt, total, total_usd):
             qs = (
                 base_qs.filter(type_mouvement=type_mvt)
                 .values("rubrique__nom")
@@ -322,15 +333,18 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
 
             result = []
             for r in qs:
+                montant = Decimal(str(r["montant"]))
+                montant_usd = (montant / taux) if taux else Decimal('0')
                 pourcentage = (float(r["montant"]) / float(total) * 100) if total else 0
                 result.append({
                     "label": r["rubrique__nom"],
                     "montant": float(r["montant"]),
+                    "montant_usd": montant_usd,
                     "pourcentage": round(pourcentage, 1)
                 })
             return result
 
-        repartition_entrees = repartition("ENTREE", total_entrees)
+        repartition_entrees = repartition("ENTREE", total_entrees, total_entrees_usd)
 
         # Ajouter la ligne Approvisionnement à la répartition des entrées
         if appro_total > 0:
@@ -338,11 +352,12 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
             repartition_entrees.append({
                 "label": "Approvisionnement",
                 "montant": float(appro_total),
+                "montant_usd": appro_total_usd,
                 "pourcentage": pourcentage_appro,
             })
             repartition_entrees.sort(key=lambda x: x["montant"], reverse=True)
 
-        repartition_sorties = repartition("SORTIE", total_sorties)
+        repartition_sorties = repartition("SORTIE", total_sorties, total_sorties_usd)
 
         # =========================
         # CONTEXT
@@ -352,7 +367,10 @@ class StatistiquesFinancieresView(RoleRequiredMixin, TemplateView):
             "fin": fin_str,
             "total_entrees": total_entrees,
             "total_sorties": total_sorties,
+            "total_entrees_usd": total_entrees_usd,
+            "total_sorties_usd": total_sorties_usd,
             "solde": solde,
+            "solde_usd": solde_usd,
             "repartition_entrees": repartition_entrees,
             "repartition_sorties": repartition_sorties,
             "dashboard_section": "statistiques",
@@ -417,6 +435,37 @@ class ResultatsView(RoleRequiredMixin, TemplateView):
         marge_pct = round(float(resultat_brut) / float(chiffre_affaires) * 100, 1) if chiffre_affaires else 0
         rne_pct = round(float(resultat_net_exploitation) / float(resultat_brut) * 100, 1) if resultat_brut else 0
 
+        # --- DUAL CURRENCY: conversion USD des valeurs clés ---
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        resultat_brut_usd = (Decimal(str(resultat_brut)) / taux) if taux else Decimal('0')
+        chiffre_affaires_usd = (Decimal(str(chiffre_affaires)) / taux) if taux else Decimal('0')
+        resultat_net_usd = (Decimal(str(resultat_net)) / taux) if taux else Decimal('0')
+        total_cout_achat_usd = (Decimal(str(total_cout_achat)) / taux) if taux else Decimal('0')
+        resultat_net_exploitation_usd = (Decimal(str(resultat_net_exploitation)) / taux) if taux else Decimal('0')
+
+        # Conversion USD des charges exploitation (détail)
+        charges_exploitation_details_usd = []
+        for item in charges_exploitation_details:
+            total_usd = (Decimal(str(item["total"])) / taux) if taux else Decimal('0')
+            charges_exploitation_details_usd.append({
+                "sous_rubrique__nom": item["sous_rubrique__nom"],
+                "total": item["total"],
+                "total_usd": total_usd,
+            })
+        total_charges_exploitation_usd = (Decimal(str(charges_exploitation_total)) / taux) if taux else Decimal('0')
+
+        # Conversion USD des charges personnelles
+        charges_personnelles_usd = (Decimal(str(charges_personnelles)) / taux) if taux else Decimal('0')
+        charges_personnelles_detail_usd = []
+        for item in charges_personnelles_detail:
+            total_usd = (Decimal(str(item["total"])) / taux) if taux else Decimal('0')
+            charges_personnelles_detail_usd.append({
+                "sous_rubrique__nom": item["sous_rubrique__nom"],
+                "total": item["total"],
+                "total_usd": total_usd,
+            })
+
         sous_rubriques = SousRubriqueCaisse.objects.filter(rubrique__nom="Charges exploitation")
 
         ctx.update({
@@ -432,14 +481,18 @@ class ResultatsView(RoleRequiredMixin, TemplateView):
             "total_cout_achat": total_cout_achat,
             "marge_pct": marge_pct,
 
-            "charges_exploitation": charges_exploitation_details,
+            "charges_exploitation": charges_exploitation_details_usd,
             "total_charges_exploitation": charges_exploitation_total,
+            "total_charges_exploitation_usd": total_charges_exploitation_usd,
             "charges_personnelles": charges_personnelles,
-            "charges_personnelles_detail": charges_personnelles_detail,
+            "charges_personnelles_usd": charges_personnelles_usd,
+            "charges_personnelles_detail": charges_personnelles_detail_usd,
             "rne_pct": rne_pct,
 
             "resultat_net_exploitation": resultat_net_exploitation,
+            "resultat_net_exploitation_usd": resultat_net_exploitation_usd,
             "resultat_net": resultat_net,
+            "resultat_net_usd": resultat_net_usd,
 
             "sous_rubriques": sous_rubriques,
         })
@@ -617,6 +670,13 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
         fr_contreverif = dernier_global.fr_contreverif if dernier_global else Decimal("0")
         ecart = dernier_global.ecart if dernier_global else Decimal("0")
 
+        # Dual currency: conversion USD des valeurs FR
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf(today)))
+        fr_final_usd = (fr_final / taux) if taux else Decimal('0')
+        fr_contreverif_usd = (fr_contreverif / taux) if taux else Decimal('0')
+        ecart_usd = (ecart / taux) if taux else Decimal('0')
+
         # Contre-vérification live (composantes détaillées, instant T)
         contreverif_detail = FondsRoulementService.compute_contreverification_detail()
 
@@ -628,6 +688,9 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
             (c.solde() or Decimal("0")) for c in Creancier.objects.all()
         )
         fonds_propre = fr_final + total_debiteurs - total_creanciers
+        fonds_propre_usd = (fonds_propre / taux) if taux else Decimal('0')
+        total_debiteurs_usd = (total_debiteurs / taux) if taux else Decimal('0')
+        total_creanciers_usd = (total_creanciers / taux) if taux else Decimal('0')
 
         # Données graphique Chart.js (dépend du filtre)
         chart_labels = [s.date.strftime("%d/%m") for s in historique]
@@ -636,12 +699,17 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
         ctx.update({
             "debut": debut_str,
             "fin": fin_str,
+            "taux": taux,
 
             # KPI tiles (instant T)
             "fr_final": fr_final,
+            "fr_final_usd": fr_final_usd,
             "fr_contreverif": fr_contreverif,
+            "fr_contreverif_usd": fr_contreverif_usd,
             "ecart": ecart,
+            "ecart_usd": ecart_usd,
             "fonds_propre": fonds_propre,
+            "fonds_propre_usd": fonds_propre_usd,
 
             # Historique tableau (filtré)
             "historique": historique,
@@ -651,7 +719,9 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
 
             # Fonds Propre détail (instant T)
             "total_debiteurs": total_debiteurs,
+            "total_debiteurs_usd": total_debiteurs_usd,
             "total_creanciers": total_creanciers,
+            "total_creanciers_usd": total_creanciers_usd,
 
             # Graphique (filtré)
             "chart_labels": chart_labels,
@@ -709,6 +779,14 @@ class PatrimoineView(RoleRequiredMixin, TemplateView):
         total_creanciers = sum((c.solde() or Decimal("0")) for c in Creancier.objects.all())
         fonds_propre = solde_global + total_debiteurs - total_creanciers
 
+        # Dual currency: conversion USD
+        from parametres.models import get_taux_usd_cdf
+        taux = Decimal(str(get_taux_usd_cdf()))
+        solde_global_usd = (solde_global / taux) if taux else Decimal('0')
+        fonds_propre_usd = (fonds_propre / taux) if taux else Decimal('0')
+        total_debiteurs_usd = (total_debiteurs / taux) if taux else Decimal('0')
+        total_creanciers_usd = (total_creanciers / taux) if taux else Decimal('0')
+
         ctx.update({
             "mois_label": mois_label,
             "total_entrees": total_entrees,
@@ -720,6 +798,10 @@ class PatrimoineView(RoleRequiredMixin, TemplateView):
             "fonds_propre": fonds_propre,
             "total_debiteurs": total_debiteurs,
             "total_creanciers": total_creanciers,
+            "solde_global_usd": solde_global_usd,
+            "fonds_propre_usd": fonds_propre_usd,
+            "total_debiteurs_usd": total_debiteurs_usd,
+            "total_creanciers_usd": total_creanciers_usd,
         })
         return ctx
 

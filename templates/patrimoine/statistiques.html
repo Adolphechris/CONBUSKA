@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
 {% block title %}Journal des transactions{% endblock %}
 
 {% block stylesheets %}
@@ -279,7 +280,7 @@
                 <div class="tile-stats success-stat">
                     <i class="fa fa-arrow-down icon text-success-gentelela"></i>
                     <h3>Total Entrées</h3>
-                    <div class="count">{{ total_entrees|floatformat:0 }}FC</div>
+                    <div class="count">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
 
@@ -287,7 +288,7 @@
                 <div class="tile-stats danger-stat">
                     <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
                     <h3>Total Sorties</h3>
-                    <div class="count">{{ total_sorties|floatformat:0 }}FC</div>
+                    <div class="count">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
 
@@ -295,7 +296,7 @@
                 <div class="tile-stats info-stat">
                     <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
                     <h3>Solde</h3>
-                    <div class="count" style="color: #26B99A;">{{ solde|floatformat:0 }}FC</div>
+                    <div class="count" style="color: #26B99A;">{% if solde_usd %}{% autoescape off %}{{ solde_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
         </div>
@@ -309,7 +310,7 @@
                         <h2>
                             <i class="fa fa-arrow-circle-up" style="color: #26B99A;"></i>
                             Répartition des Entrées
-                            <span class="badge badge-success" style="color: white;">{{ total_entrees|floatformat:0 }}FC</span>
+                            <span class="badge badge-success" style="color: white;">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees|floatformat:0 }} FC{% endif %}</span>
                         </h2>
                         <div class="clearfix"></div>
                     </div>
@@ -349,7 +350,7 @@
                                     <tr>
                                         <td><strong>TOTAL</strong></td>
                                         <td class="text-right">
-                                            <span class="amount" style="color: #26B99A;">{{ total_entrees }}FC</span>
+                                            <span class="amount" style="color: #26B99A;">{% if total_entrees_usd %}{% autoescape off %}{{ total_entrees_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees }} FC{% endif %}</span>
                                         </td>
                                         <td class="text-center">
                                             <span class="percentage-badge" style="background: #26B99A; color: white;">100%</span>
@@ -369,7 +370,7 @@
                         <h2>
                             <i class="fa fa-arrow-circle-down" style="color: #E74C3C;"></i>
                             Répartition des Sorties
-                            <span class="badge badge-danger" style="color: white;">{{ total_sorties|floatformat:0 }}FC</span>
+                            <span class="badge badge-danger" style="color: white;">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties|floatformat:0 }} FC{% endif %}</span>
                         </h2>
                         <div class="clearfix"></div>
                     </div>
@@ -409,7 +410,7 @@
                                     <tr>
                                         <td><strong>TOTAL</strong></td>
                                         <td class="text-right">
-                                            <span class="amount" style="color: #E74C3C;">{{ total_sorties }}FC</span>
+                                            <span class="amount" style="color: #E74C3C;">{% if total_sorties_usd %}{% autoescape off %}{{ total_sorties_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties }} FC{% endif %}</span>
                                         </td>
                                         <td class="text-center">
                                             <span class="percentage-badge" style="background: #E74C3C; color: white;">100%</span>
@@ -558,6 +559,7 @@
     const labelsComp = labelsFrom(entreesDataParsed, sortiesDataParsed);
 
     // Comparison Bar Chart
+    function formatCurrency(value, usdStr) { try { if (usdStr) return usdStr; return value.toLocaleString('fr-FR') + ' FC'; } catch (e) { return value + ' FC'; } }
     const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
     new Chart(comparisonCtx, {
         type: 'bar',
@@ -588,7 +590,7 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return value + ' FC';
+                            return formatCurrency(value);
                         }
                     }
                 }
@@ -607,7 +609,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.y + ' FC';
+                            return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
                         }
                     }
                 }

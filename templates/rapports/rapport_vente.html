@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
+{% load currency_tags %}
 
 {% block title %}Rapport des Ventes{% endblock %}
 
@@ -178,7 +180,7 @@
                     <tr>
                         <td><i class="fa fa-calendar-o" style="color:#3498DB;margin-right:6px;"></i>{{ vente.date|date:"d/m/Y" }}</td>
                         <td><span style="background:#EBF5FB;color:#2980B9;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600;">{{ vente.nb_factures }}</span></td>
-                        <td class="text-right" style="font-weight:700;color:#26B99A;">{{ vente.total_vendu|floatformat:0 }} FC</td>
+                        <td class="text-right" style="font-weight:700;color:#26B99A;">{% if vente.total_vendu_usd %}{% autoescape off %}{{ vente.total_vendu_usd|dual_amount }}{% endautoescape %}{% else %}{{ vente.total_vendu|floatformat:0 }} FC{% endif %}</td>
                         <td class="text-center">
                             <a href="{% url 'details_rapport_vente' vente.date %}" class="btn btn-warning btn-xs">
                                 <i class="fa fa-eye"></i> Détails
@@ -252,6 +254,7 @@ $(document).ready(function() {
     }
 
     // Chart.js
+    function formatCurrency(value, usdStr) { try { if (usdStr) return usdStr; return value.toLocaleString('fr-FR') + ' FC'; } catch (e) { return value + ' FC'; } }
     var moisLabels = JSON.parse(document.getElementById('rapport-vente-mois-labels').textContent);
     var chartData = JSON.parse(document.getElementById('rapport-vente-chart-data').textContent);
     var ctx = document.getElementById('ventesChart').getContext('2d');
@@ -273,7 +276,7 @@ $(document).ready(function() {
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
-                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR') + ' FC'; } } },
+                     ticks: { callback: function(v){ return formatCurrency(v); } } },
                 x: { grid: { display: false } }
             }
         }

@@ -14,6 +14,9 @@ class SnapshotJournalier(models.Model):
     solde_ouverture = models.DecimalField(max_digits=14, decimal_places=2)
     solde_fermeture = models.DecimalField(max_digits=14, decimal_places=2)
 
+    # Dual currency: valeur USD du solde de fermeture
+    solde_fermeture_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+
     est_cloture = models.BooleanField(default=False)
 
     class Meta:
@@ -46,12 +49,22 @@ class ResultatApprovisionnementSnapshot(models.Model):
     chiffre_affaires = models.DecimalField(max_digits=14, decimal_places=2)
     date_creation = models.DateTimeField(auto_now_add=True)
 
+    # Dual currency: valeurs USD
+    resultat_brut_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    cout_achat_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    frais_achat_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    chiffre_affaires_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+
 
 class ResultatJournalier(models.Model):
     date = models.DateField(unique=True)
     resultat_brut = models.DecimalField(max_digits=14, decimal_places=2)
     chiffre_affaires = models.DecimalField(max_digits=14, decimal_places=2)
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    # Dual currency: valeurs USD
+    resultat_brut_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    chiffre_affaires_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
 
 
 class ResultatMensuel(models.Model):
@@ -60,6 +73,10 @@ class ResultatMensuel(models.Model):
     resultat_brut = models.DecimalField(max_digits=14, decimal_places=2)
     chiffre_affaires = models.DecimalField(max_digits=14, decimal_places=2)
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    # Dual currency: valeurs USD
+    resultat_brut_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    chiffre_affaires_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
 
     class Meta:
         unique_together = ('mois', 'annee')
@@ -73,6 +90,15 @@ class FondsRoulementSnapshot(models.Model):
     fr_final = models.DecimalField(max_digits=16, decimal_places=2)
     fr_contreverif = models.DecimalField(max_digits=16, decimal_places=2)
     ecart = models.DecimalField(max_digits=16, decimal_places=2)
+
+    # Dual currency: valeurs USD historiques (immuables après création)
+    taux_jour = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True,
+                                    help_text="Taux USD/FC du jour")
+    fr_initial_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    ej_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    sj_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    fr_final_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
 

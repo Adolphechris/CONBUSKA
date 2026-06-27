@@ -1,4 +1,6 @@
 import decimal
+from decimal import Decimal
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.urls import reverse
 from django.core.validators import MinValueValidator
@@ -59,6 +61,7 @@ class Facture(models.Model):
                                     on_delete=models.PROTECT)
     actif = models.BooleanField(default=True)
     valide = models.BooleanField(default=False)
+    valeur_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
 
     objects = FactureManager()
 
@@ -67,6 +70,10 @@ class Facture(models.Model):
 
     @property
     def sous_total(self):
+        # Si la facture n'est pas encore sauvegardée (pas de PK), pas de détails en DB
+        if not self.pk:
+            return decimal.Decimal(0)
+        
         result = DetailsFacture.objects.filter(facture=self) \
             .annotate(sub=F("qte") * F("prix")) \
             .aggregate(total=Sum("sub"))["total"]
@@ -83,6 +90,9 @@ class Facture(models.Model):
 
     @property
     def total_articles(self):
+        # Si la facture n'est pas encore sauvegardée (pas de PK), pas de détails en DB
+        if not self.pk:
+            return 0
         return DetailsFacture.objects.filter(facture=self.pk).count()
 
     @classmethod
@@ -93,9 +103,48 @@ class Facture(models.Model):
             return last_num + 1
         return int(timezone.now().strftime("%y") + "0000")
 
+    def clean(self):
+        """Verrouille le taux et la valeur USD une fois la facture validée."""
+        if self.valide:
+            if self.taux is None or self.taux == Decimal('0'):
+                raise ValidationError("Le taux doit être défini pour toute facture validée.")
+
+            if self.devise not in dict(self.DEVISES):
+                raise ValidationError("La devise de la facture doit être USD ou FC.")
+
+            if self.pk:
+                original = Facture.objects.filter(pk=self.pk).first()
+                if original and original.valide:
+                    if self.devise != original.devise:
+                        raise ValidationError("La devise d'une facture validée ne peut pas être modifiée.")
+                    if self.taux != original.taux:
+                        raise ValidationError("Le taux d'une facture validée ne peut pas être modifié.")
+
+            if self.devise == '$':
+                if self.valeur_usd not in (None, self.total):
+                    raise ValidationError("La valeur USD d'une facture en USD doit correspondre au total.")
+            else:
+                expected_usd = self.total / self.taux if self.taux else Decimal('0')
+                if self.valeur_usd is not None and self.valeur_usd != expected_usd:
+                    raise ValidationError(
+                        "La valeur USD enregistrée doit être cohérente avec le total FC et le taux historique."
+                    )
+
+        return super().clean()
+
     def save(self, *args, **kwargs):
         if self.numero is None:
             self.numero = self.get_next_num()
+
+        if self.valide:
+            self.full_clean()
+            tot = self.total
+            if self.devise == '$':
+                valeur = tot
+            else:
+                valeur = tot / self.taux if self.taux else Decimal('0')
+
+            self.valeur_usd = valeur
 
         super(Facture, self).save(*args, **kwargs)
 
@@ -108,6 +157,10 @@ class DetailsFacture(models.Model):
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
     qte = models.IntegerField()
     prix = models.DecimalField(max_digits=12, decimal_places=2)
+    valeur_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True,
+                                     help_text="Valeur USD historique de cette ligne de facture")
+    taux_creation = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True,
+                                        help_text="Taux de change historique au moment de la facture")
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     objects = models.Manager()
@@ -115,6 +168,28 @@ class DetailsFacture(models.Model):
     @property
     def total(self):
         return self.qte * self.prix
+
+    def save(self, *args, **kwargs):
+        from decimal import Decimal
+        from parametres.models import get_taux_usd_cdf
+
+        creating = self.pk is None
+        if creating and self.valeur_usd is None:
+            if self.facture and self.facture.devise:
+                montant_ligne = Decimal(str(self.qte)) * Decimal(str(self.prix))
+                if self.facture.devise == '$':
+                    self.valeur_usd = montant_ligne
+                    self.taux_creation = self.facture.taux or get_taux_usd_cdf(self.facture.date_facture)
+                else:
+                    taux = self.facture.taux or get_taux_usd_cdf(self.facture.date_facture)
+                    self.taux_creation = taux
+                    self.valeur_usd = montant_ligne / taux if taux else Decimal('0')
+        else:
+            original = DetailsFacture.objects.filter(pk=self.pk).first()
+            if original:
+                self.valeur_usd = original.valeur_usd
+                self.taux_creation = original.taux_creation
+        super().save(*args, **kwargs)
 
 
 class FactureClient(models.Model):

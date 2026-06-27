@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Créanciers{% endblock %}
 
@@ -149,7 +150,7 @@
           </div>
           <div>
             <div class="kpi-label">Total dettes</div>
-            <div class="kpi-value">{{ total_solde|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ total_solde_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
@@ -200,10 +201,9 @@
                 {% endif %}
               </ul>
             </div>
-            <div class="ec-card-footer">
-              <div class="ec-solde {% if creancier.solde >= 0 %}positive{% else %}negative{% endif %}">
-                <i class="fa fa-money"></i>
-                {{ creancier.solde|floatformat:0 }} FC
+            <div class="ec-card-footer" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+              <div class="ec-solde {% if creancier.solde_usd >= 0 %}positive{% else %}negative{% endif %}">
+                {{ creancier.solde_usd|dual_amount }}
               </div>
               <div class="ec-actions">
                 <a href="{% url 'creancier_details' creancier.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Fournisseurs{% endblock %}
 
@@ -193,7 +194,7 @@
           </div>
           <div>
             <div class="kpi-label">Total soldes</div>
-            <div class="kpi-value">{{ total_solde|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ total_solde_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
@@ -247,10 +248,9 @@
                 {% endif %}
               </ul>
             </div>
-            <div class="ec-card-footer">
-              <div class="ec-solde {% if fournisseur.solde >= 0 %}positive{% else %}negative{% endif %}">
-                <i class="fa fa-money"></i>
-                {{ fournisseur.solde|floatformat:0 }} FC
+            <div class="ec-card-footer" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+              <div class="ec-solde {% if fournisseur.solde_usd >= 0 %}positive{% else %}negative{% endif %}">
+                {{ fournisseur.solde_usd|dual_amount }}
               </div>
               <div class="ec-actions">
                 <a href="{% url 'fournisseur_details' fournisseur.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>
@@ -294,10 +294,9 @@
                   <span class="ec-sys-badge"><i class="fa fa-cog"></i> Système</span>
                 </div>
               </div>
-              <div class="ec-card-footer">
-                <div class="ec-solde {% if fournisseur.solde >= 0 %}positive{% else %}negative{% endif %}">
-                  <i class="fa fa-money"></i>
-                  {{ fournisseur.solde|floatformat:0 }} FC
+              <div class="ec-card-footer" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+                <div class="ec-solde {% if fournisseur.solde_usd >= 0 %}positive{% else %}negative{% endif %}">
+                  {{ fournisseur.solde_usd|dual_amount }}
                 </div>
                 <div class="ec-actions">
                   <a href="{% url 'fournisseur_details' fournisseur.pk %}" class="ec-btn-view sys"><i class="fa fa-eye"></i> Voir</a>

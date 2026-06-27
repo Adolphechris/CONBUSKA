@@ -1,3 +1,5 @@
+{% load caisse_tags %}
+{% load currency_tags %}
 <table id="tableApprovisionnement" class="table table-striped bulk_action">
     <thead>
         <tr>
@@ -24,11 +26,11 @@
                 <td class="text-center">{{ i.article.designation }}</td>
                 <td class="text-center">{{ i.qte }}</td>
                 <td class="text-center">{{ i.date_peremption }}</td>
-                <td class="text-center">{{ i.prix|floatformat }} {{ approvisionnement.devise }}</td>
-                <td class="text-center">{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}</td>
-                <td class="text-center">{{ i.prix_vente|floatformat }} {{ approvisionnement.devise  }}</td>
-                <td class="text-center">{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise  }}</td>
-                <td class="text-center">{{ i.resultat|floatformat }} {{ approvisionnement.devise  }}</td>
+                <td class="text-center">{% if i.prix_usd %}{% autoescape off %}{{ i.prix_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.prix|floatformat }} {{ approvisionnement.devise }}{% endif %}</td>
+                <td class="text-center">{% if i.frais_achat_usd %}{% autoescape off %}{{ i.frais_achat_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.frais_achat|floatformat }} {{ approvisionnement.devise }}{% endif %}</td>
+                <td class="text-center">{% if i.prix_vente_usd %}{% autoescape off %}{{ i.prix_vente_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.prix_vente|floatformat }} {{ approvisionnement.devise }}{% endif %}</td>
+                <td class="text-center">{% if i.prix_vente_gros_usd %}{% autoescape off %}{{ i.prix_vente_gros_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.prix_vente_gros|floatformat }} {{ approvisionnement.devise }}{% endif %}</td>
+                <td class="text-center">{% if i.resultat_usd %}{% autoescape off %}{{ i.resultat_usd|dual_amount }}{% endautoescape %}{% else %}{{ i.resultat|floatformat }} {{ approvisionnement.devise }}{% endif %}</td>
                 <td class="text-center">
                     <div class="btn-group">
                         <button
@@ -60,11 +62,11 @@
     <tfoot>
         <tr class="total-row">
             <td colspan="6" class="text-right"><strong>Total:</strong></td>
-            <td><strong>{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise  }}</strong></td>
-            <td><strong>{{approvisionnement.frais_achat_total }} {{ approvisionnement.devise  }}</strong></td>
-            <td><strong>{{approvisionnement.chiffre_affaires }} {{ approvisionnement.devise  }}</strong></td>
+            <td><strong>{% if approvisionnement.total_approvisionnement_usd %}{% autoescape off %}{{ approvisionnement.total_approvisionnement_usd|dual_amount }}{% endautoescape %}{% else %}{{approvisionnement.total_approvisionnement }} {{ approvisionnement.devise }}{% endif %}</strong></td>
+            <td><strong>{% if approvisionnement.frais_achat_total_usd %}{% autoescape off %}{{ approvisionnement.frais_achat_total_usd|dual_amount }}{% endautoescape %}{% else %}{{approvisionnement.frais_achat_total }} {{ approvisionnement.devise }}{% endif %}</strong></td>
+            <td><strong>{% if approvisionnement.chiffre_affaires_usd %}{% autoescape off %}{{ approvisionnement.chiffre_affaires_usd|dual_amount }}{% endautoescape %}{% else %}{{approvisionnement.chiffre_affaires }} {{ approvisionnement.devise }}{% endif %}</strong></td>
             <td><strong>-</strong></td>
-            <td><strong>{{approvisionnement.resultat_total }} {{ approvisionnement.devise  }}</strong></td>
+            <td><strong>{% if approvisionnement.resultat_total_usd %}{% autoescape off %}{{ approvisionnement.resultat_total_usd|dual_amount }}{% endautoescape %}{% else %}{{approvisionnement.resultat_total }} {{ approvisionnement.devise }}{% endif %}</strong></td>
             <td></td>
         </tr>
     </tfoot>

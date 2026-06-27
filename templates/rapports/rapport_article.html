@@ -295,6 +295,7 @@ $(document).ready(function() {
     $('#rapport_article').addClass('active');
 
     {% if chart_labels %}
+    function formatCurrency(value, usdStr) { try { if (usdStr) return usdStr; return value.toLocaleString('fr-FR') + ' FC'; } catch (e) { return value + ' FC'; } }
     var PALETTE = ['#F39C12','#3498DB','#26B99A','#9B59B6','#E74C3C','#1ABC9C','#E67E22','#2980B9','#D35400','#8E44AD'];
 
     // Bar chart — valeur en stock
@@ -318,7 +319,7 @@ $(document).ready(function() {
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
-                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR') + ' FC'; } } },
+                     ticks: { callback: function(v){ return formatCurrency(v); } } },
                 x: { grid: { display: false }, ticks: { maxRotation: 35, font: { size: 10 } } }
             }
         }

@@ -1,6 +1,8 @@
 .env
 logs/
 venv/
+.venv/
+.venv_open/
 media/
 media/articles/*
 media/fournisseurs/*
@@ -8,6 +10,10 @@ media/fournisseurs/*
 .git/
 __pycache__/
 **/__pycache__/
+*.pyc
 *~
 .~lock.*
 .pdf
+test_file.txt
+*.sqlite3
+.pytest_cache/

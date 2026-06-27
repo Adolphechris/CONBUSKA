@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Clients{% endblock %}
 
@@ -166,7 +167,7 @@
           </div>
           <div>
             <div class="kpi-label">Total soldes clients</div>
-            <div class="kpi-value">{{ total_solde|floatformat:0 }} FC</div>
+            <div class="kpi-value">{{ total_solde_usd|dual_amount }}</div>
           </div>
         </div>
       </div>
@@ -217,10 +218,9 @@
                 {% endif %}
               </ul>
             </div>
-            <div class="ec-card-footer">
-              <div class="ec-solde {% if client.solde >= 0 %}positive{% else %}negative{% endif %}">
-                <i class="fa fa-money"></i>
-                {{ client.solde|floatformat:0 }} FC
+            <div class="ec-card-footer" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+              <div class="ec-solde {% if client.solde_usd >= 0 %}positive{% else %}negative{% endif %}">
+                {{ client.solde_usd|dual_amount }}
               </div>
               <div class="ec-actions">
                 <a href="{% url 'client_details' client.pk %}" class="ec-btn-view"><i class="fa fa-eye"></i> Voir</a>

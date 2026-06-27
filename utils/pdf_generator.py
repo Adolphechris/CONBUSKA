@@ -526,7 +526,7 @@ class DocumentGenerator(PdfBuilder):
         taux: float = 0,
     ) -> HttpResponse:
         """
-        articles = [{'designation', 'resultat', 'pourcentage'}, ...]
+        articles = [{'designation', 'resultat', 'pourcentage', 'resultat_usd'}, ...]
         """
         page_w = LETTER[0]
         total_global = total_appros
@@ -547,19 +547,20 @@ class DocumentGenerator(PdfBuilder):
         flowables.append(Paragraph('Détail par article', style=_styles['Titre_gauche']))
         flowables.append(Spacer(1, 4))
 
-        headers = ['Article', 'Résultat (FC)', '% du résultat appros']
-        col_widths = [320, 120, 80]
+        headers = ['Article', 'Résultat (FC)', 'Résultat (USD)', '% du résultat appros']
+        col_widths = [240, 100, 100, 80]
         rows = [
             [
                 str(a.get('designation', '')),
                 f"{float(a.get('resultat') or 0):+,.0f}",
+                f"{float(a.get('resultat_usd') or 0):+,.2f} $",
                 f"{float(a.get('pourcentage') or 0):.1f} %",
             ]
             for a in articles
         ]
         flowables += self._data_table(
             headers, rows, col_widths,
-            align_right_cols=[1, 2],
+            align_right_cols=[1, 2, 3],
         )
 
         flowables += [Spacer(1, 6), self._thin_separator(page_w)]
@@ -615,9 +616,9 @@ class DocumentGenerator(PdfBuilder):
         flowables.append(Spacer(1, 10))
 
         # Tableau
-        headers = ['#', 'Article', 'Stock\nactuel', 'Valeur stock\n(FC)', '% stk',
-                   'CA 30j\n(FC)', '% CA', 'Résultat 30j\n(FC)', 'Moy. stock\n30j (FC)']
-        col_widths = [22, 190, 48, 80, 38, 72, 38, 82, 82]
+        headers = ['#', 'Article', 'Stock\nactuel', 'Valeur stock\n(FC)', 'Valeur stock\n(USD)', '% stk',
+                   'CA 30j\n(FC)', 'CA 30j\n(USD)', '% CA', 'Résultat 30j\n(FC)', 'Résultat 30j\n(USD)', 'Moy. stock\n30j (FC)']
+        col_widths = [22, 140, 48, 70, 70, 35, 65, 65, 35, 75, 75, 65]
 
         tbl_rows = [
             [
@@ -625,17 +626,20 @@ class DocumentGenerator(PdfBuilder):
                 str(r.get('designation', '')),
                 str(r.get('stock_actuel', 0)) if 'stock_actuel' in r else '—',
                 f"{float(r.get('valeur_stock') or 0):,.0f}",
+                f"{float(r.get('valeur_stock_usd') or 0):,.2f}",
                 f"{float(r.get('pct_stock') or 0):.1f}%",
                 f"{float(r.get('ca_30j') or 0):,.0f}",
+                f"{float(r.get('ca_30j_usd') or 0):,.2f}",
                 f"{float(r.get('pct_ca') or 0):.1f}%",
                 f"{float(r.get('resultat_30j') or 0):+,.0f}",
+                f"{float(r.get('resultat_30j_usd') or 0):+,.2f}",
                 f"{float(r.get('moy_stock_30j') or 0):,.0f}",
             ]
             for i, r in enumerate(rows)
         ]
         flowables += self._data_table(
             headers, tbl_rows, col_widths,
-            align_right_cols=[2, 3, 4, 5, 6, 7, 8],
+            align_right_cols=[2, 3, 4, 5, 6, 7, 8, 9, 10],
             align_center_cols=[0],
         )
 
@@ -684,20 +688,23 @@ class DocumentGenerator(PdfBuilder):
         flowables.append(Paragraph('Synthèse par caisse', style=_styles['Titre_gauche']))
         flowables.append(Spacer(1, 4))
 
-        synth_headers = ['Caisse', 'Entrées (FC)', 'Sorties (FC)', 'Solde (FC)']
-        synth_col_widths = [200, 120, 120, 100]
+        synth_headers = ['Caisse', 'Entrées (FC)', 'Entrées (USD)', 'Sorties (FC)', 'Sorties (USD)', 'Solde (FC)', 'Solde (USD)']
+        synth_col_widths = [140, 75, 75, 75, 75, 75, 75]
         synth_rows = [
             [
                 str(c.get('nom', '')),
                 f"{float(c.get('entrees') or 0):,.0f}",
+                f"{float(c.get('entrees_usd') or 0):,.2f}",
                 f"{float(c.get('sorties') or 0):,.0f}",
+                f"{float(c.get('sorties_usd') or 0):,.2f}",
                 f"{float(c.get('solde') or 0):,.0f}",
+                f"{float(c.get('solde_usd') or 0):,.2f}",
             ]
             for c in solde_par_caisse
         ]
         flowables += self._data_table(
             synth_headers, synth_rows, synth_col_widths,
-            align_right_cols=[1, 2, 3],
+            align_right_cols=[1, 2, 3, 4, 5, 6],
         )
 
         flowables += [Spacer(1, 6), self._thin_separator(page_w)]

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
 {% block title %}Journal des transactions{% endblock %}
 
 {% block stylesheets %}
@@ -287,7 +288,7 @@
                 <div class="tile-stats success-stat">
                     <i class="fa fa-arrow-down icon text-success-gentelela"></i>
                     <h3>Total Entrées Mensuelles</h3>
-                    <div class="count">{{ total_entrees_mois }}FC</div>
+                    <div class="count">{% if total_entrees_mois_usd %}{% autoescape off %}{{ total_entrees_mois_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_entrees_mois }} FC{% endif %}</div>
                 </div>
             </div>
 
@@ -295,7 +296,7 @@
                 <div class="tile-stats danger-stat">
                     <i class="fa fa-arrow-up icon text-danger-gentelela"></i>
                     <h3>Total Sorties Mensuelles</h3>
-                    <div class="count">{{ total_sorties_mois }}FC</div>
+                    <div class="count">{% if total_sorties_mois_usd %}{% autoescape off %}{{ total_sorties_mois_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_sorties_mois }} FC{% endif %}</div>
                 </div>
             </div>
 
@@ -303,7 +304,7 @@
                 <div class="tile-stats info-stat">
                     <i class="fa fa-balance-scale icon" style="color: #3498DB;"></i>
                     <h3>Solde Mensuel</h3>
-                    <div class="count" style="color: #26B99A;">{{ solde_mois }}FC</div>
+                    <div class="count" style="color: #26B99A;">{% if solde_mois_usd %}{% autoescape off %}{{ solde_mois_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde_mois }} FC{% endif %}</div>
                 </div>
             </div>
         </div>

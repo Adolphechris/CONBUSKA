@@ -22,6 +22,7 @@ class CreanciersView(RoleRequiredMixin, FilterView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         creanciers = self.get_queryset()
+        context['total_solde_usd'] = sum(creancier.solde_usd() for creancier in creanciers)
         context['total_solde'] = sum(creancier.solde() for creancier in creanciers)
         return context
 
@@ -75,6 +76,7 @@ class DebiteursView(RoleRequiredMixin, FilterView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         debiteurs = self.get_queryset()
+        context['total_solde_usd'] = sum(debiteur.solde_usd() for debiteur in debiteurs)
         context['total_solde'] = sum(debiteur.solde() for debiteur in debiteurs)
         return context
 

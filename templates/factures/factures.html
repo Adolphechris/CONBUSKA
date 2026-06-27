@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
+{% load caisse_tags %}
 
 {% block title %} Factures {% endblock title %}
 
@@ -68,7 +70,7 @@
                                                 <td>{{ facture.taux }}</td>
                                                 <td>{{ facture.devise }}</td>
                                                 <td>{{ facture.remise }}</td>
-                                                <td>{{ facture.total }}FC</td>
+                                                <td>{% if facture.total_usd %}{% autoescape off %}{{ facture.total_usd|dual_amount }}{% endautoescape %}{% else %}{{ facture.total }} FC{% endif %}</td>
                                                 <td>{{ facture.livreur }}</td>
                                                 <td>{{ facture.cree_par }}</td>
                                                 <td>

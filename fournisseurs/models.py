@@ -36,27 +36,40 @@ class Fournisseur(models.Model):
     def paiements(self):
         return MouvementCaisseFournisseur.objects.filter(fournisseur=self)
 
-    def total_mouvements(self):
-        if self.is_system:
-            return (
-                    self.mouvements()
-                    .annotate(prix_total_db=F('montant') * F('detail__qte'))
-                    .aggregate(total=Sum('prix_total_db'))
-                    ['total'] or 0
-            )
+    def total_mouvements_usd(self):
+        from decimal import Decimal
+        return self.mouvements().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
 
+    def total_paiements_usd(self):
+        from decimal import Decimal
+        return self.paiements().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def solde_usd(self):
+        return self.total_mouvements_usd() - self.total_paiements_usd()
+
+    def solde_fc(self):
+        return self.total_mouvements() - self.total_paiements()
+
+    def total_mouvements(self):
+        from django.db.models import ExpressionWrapper, F, DecimalField
         return (
-                self.mouvements()
-                .annotate(prix_total_db=F('qte') * F('prix'))
-                .aggregate(total=Sum('prix_total_db'))
-                ['total'] or 0
+            self.mouvements()
+            .aggregate(
+                total=Sum(
+                    ExpressionWrapper(
+                        F('valeur_usd') * F('taux_creation'),
+                        output_field=DecimalField(max_digits=18, decimal_places=4)
+                    )
+                )
+            )['total']
+            or 0
         )
 
     def total_paiements(self):
         return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
     def solde(self):
-        return self.total_mouvements() - self.total_paiements()
+        return self.solde_usd()
 
     @property
     def get_next_code(self):

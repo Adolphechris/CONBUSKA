@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load currency_tags %}
+{% load caisse_tags %}
 
 {% block title %}Rapport des Résultats{% endblock %}
 
@@ -104,7 +106,7 @@
                     <span class="kpi-label">Résultat des Ventes</span>
                     <div class="kpi-icon green"><i class="fa fa-shopping-cart"></i></div>
                 </div>
-                <div class="kpi-value">{{ total_ventes|floatformat:0 }} <small style="font-size:14px;font-weight:500;">FC</small></div>
+                <div class="kpi-value">{% if total_ventes_usd %}{% autoescape off %}{{ total_ventes_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_ventes|floatformat:0 }} FC{% endif %}</div>
                 <div class="kpi-sub">Bénéfice brut sur les factures</div>
             </div>
         </div>
@@ -114,7 +116,7 @@
                     <span class="kpi-label">Résultat des Appros</span>
                     <div class="kpi-icon orange"><i class="fa fa-truck"></i></div>
                 </div>
-                <div class="kpi-value">{{ total_appros|floatformat:0 }} <small style="font-size:14px;font-weight:500;">FC</small></div>
+                <div class="kpi-value">{% if total_appros_usd %}{% autoescape off %}{{ total_appros_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_appros|floatformat:0 }} FC{% endif %}</div>
                 <div class="kpi-sub">Bénéfice théorique sur les appros validés</div>
             </div>
         </div>
@@ -125,7 +127,7 @@
                     <div class="kpi-icon blue"><i class="fa fa-balance-scale"></i></div>
                 </div>
                 <div class="kpi-value" style="{% if total_global >= 0 %}color:#26B99A{% else %}color:#E74C3C{% endif %}">
-                    {{ total_global|floatformat:0 }} <small style="font-size:14px;font-weight:500;">FC</small>
+                    {% if total_global_usd %}{% autoescape off %}{{ total_global_usd|dual_amount }}{% endautoescape %}{% else %}{{ total_global|floatformat:0 }} FC{% endif %}
                 </div>
                 <div class="kpi-sub">Basé uniquement sur les appros validés</div>
             </div>
@@ -170,7 +172,7 @@
                     <tr>
                         <td style="font-weight:500;">{{ article.designation }}</td>
                         <td class="text-right" style="font-weight:700;{% if article.resultat >= 0 %}color:#26B99A;{% else %}color:#E74C3C;{% endif %}">
-                            {% if article.resultat >= 0 %}+{% endif %}{{ article.resultat|floatformat:0 }} FC
+                            {% if article.resultat >= 0 %}+{% endif %}{% if article.resultat_usd %}{% autoescape off %}{{ article.resultat_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.resultat|floatformat:0 }} FC{% endif %}
                         </td>
                         <td>
                             <div class="pct-bar-wrap">
@@ -227,6 +229,7 @@ $(document).ready(function() {
     });
 
     {% if chart_labels %}
+    function formatCurrency(value, usdStr) { try { if (usdStr) return usdStr; return value.toLocaleString('fr-FR') + ' FC'; } catch (e) { return value + ' FC'; } }
     var chartLabels = JSON.parse(document.getElementById('rapport-resultat-labels').textContent);
     var chartData = JSON.parse(document.getElementById('rapport-resultat-data').textContent);
     var ctx = document.getElementById('resultatsChart').getContext('2d');
@@ -248,7 +251,7 @@ $(document).ready(function() {
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
-                     ticks: { callback: function(v){ return v.toLocaleString('fr-FR') + ' FC'; } } },
+                     ticks: { callback: function(v){ return formatCurrency(v); } } },
                 x: { grid: { display: false }, ticks: { maxRotation: 35 } }
             }
         }

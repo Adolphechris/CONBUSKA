@@ -1,3 +1,4 @@
+{% load caisse_tags %}
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
     <h4 class="modal-title"><i class="fa fa-lock"></i> Clôturer la caisse</h4>
@@ -9,7 +10,7 @@
     <div class="row">
         <div class="col-sm-6">
             <p><strong>Solde final:</strong></p>
-            <h3 class="text-success">{{ solde_final }} FC</h3>
+            <h3 class="text-success">{% if solde_final_usd %}{% autoescape off %}{{ solde_final_usd|dual_amount }}{% endautoescape %}{% else %}{{ solde_final }} FC{% endif %}</h3>
         </div>
         <div class="col-sm-6">
             <p><strong>Date de clôture:</strong></p>

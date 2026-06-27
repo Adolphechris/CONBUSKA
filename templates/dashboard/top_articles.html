@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
 
 {% block title %}Articles — Statistiques de vente{% endblock %}
 
@@ -88,7 +89,7 @@
                                 {{ article.total_qte }}
                             </td>
                             <td style="text-align:right;font-weight:600;">
-                                {{ article.total_ca|floatformat:0 }} FC
+                                {% if article.total_ca_usd %}{% autoescape off %}{{ article.total_ca_usd|dual_amount }}{% endautoescape %}{% else %}{{ article.total_ca|floatformat:0 }} FC{% endif %}
                             </td>
                             <td>
                                 <div style="background:#e8e8e8;border-radius:3px;height:8px;overflow:hidden;">

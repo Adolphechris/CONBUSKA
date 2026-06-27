@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
+{% load caisse_tags %}
+{% load currency_tags %}
 {% block title %}{% endblock %}
 
 {% block stylesheets %}
@@ -364,14 +366,14 @@
                 <div class="tile-stats tile-primary">
                     <div class="icon"><i class="fa fa-money"></i></div>
                     <div class="count-label">Fonds de Roulement</div>
-                    <div class="count">{{ fr_final|floatformat:0 }} FC</div>
+                    <div class="count">{% if taux %}{% autoescape off %}{{ fr_final_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fr_final|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="tile-stats tile-blue">
                     <div class="icon"><i class="fa fa-check-circle"></i></div>
                     <div class="count-label">Contre-vérification</div>
-                    <div class="count">{{ fr_contreverif|floatformat:0 }} FC</div>
+                    <div class="count">{% if taux %}{% autoescape off %}{{ fr_contreverif_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fr_contreverif|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 col-xs-12">
@@ -379,7 +381,7 @@
                     <div class="icon"><i class="fa fa-exclamation-triangle"></i></div>
                     <div class="count-label">Écart</div>
                     <div class="count {% if ecart == 0 %}text-success{% else %}text-danger{% endif %}">
-                        {{ ecart|floatformat:0 }} FC
+                        {% if taux %}{% autoescape off %}{{ ecart_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ ecart|floatformat:0 }} FC{% endif %}
                     </div>
                     <span style="font-style: italic; font-size: 11px;">
                         {% if ecart == 0 %}Parfaitement équilibré{% else %}Écart détecté{% endif %}
@@ -390,7 +392,7 @@
                 <div class="tile-stats tile-dark">
                     <div class="icon"><i class="fa fa-university"></i></div>
                     <div class="count-label">Fonds Propre</div>
-                    <div class="count">{{ fonds_propre|floatformat:0 }} FC</div>
+                    <div class="count">{% if taux %}{% autoescape off %}{{ fonds_propre_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fonds_propre|floatformat:0 }} FC{% endif %}</div>
                 </div>
             </div>
         </div>
@@ -406,7 +408,7 @@
                     </div>
                     <div class="x_content">
                         <div style="margin-bottom: 20px;">
-                            <span style="font-size: 32px; font-weight: 300; color: #2A3F54;">{{ fr_final|floatformat:0 }} FC</span>
+                            <span style="font-size: 32px; font-weight: 300; color: #2A3F54;">{% if taux %}{% autoescape off %}{{ fr_final_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fr_final|floatformat:0 }} FC{% endif %}</span>
                         </div>
                         <div class="chart-container">
                             <canvas id="frChart"></canvas>
@@ -453,10 +455,10 @@
                                             <br><small style="color: #73879C;">par {{ snap.valide_par }} · {{ snap.valide_le|date:"d/m H:i" }}</small>
                                             {% endif %}
                                         </td>
-                                        <td class="text-right">{{ snap.fr_initial|floatformat:0 }} FC</td>
-                                        <td class="text-right text-success"><strong>+ {{ snap.ej|floatformat:0 }} FC</strong></td>
-                                        <td class="text-right text-danger"><strong>- {{ snap.sj|floatformat:0 }} FC</strong></td>
-                                        <td class="text-right"><strong style="color: #2A3F54;">{{ snap.fr_final|floatformat:0 }} FC</strong></td>
+                                        <td class="text-right">{% if taux %}{% autoescape off %}{{ snap.fr_initial_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ snap.fr_initial|floatformat:0 }} FC{% endif %}</td>
+                                        <td class="text-right text-success"><strong>+ {% if taux %}{% autoescape off %}{{ snap.ej_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ snap.ej|floatformat:0 }} FC{% endif %}</strong></td>
+                                        <td class="text-right text-danger"><strong>- {% if taux %}{% autoescape off %}{{ snap.sj_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ snap.sj|floatformat:0 }} FC{% endif %}</strong></td>
+                                        <td class="text-right"><strong style="color: #2A3F54;">{% if taux %}{% autoescape off %}{{ snap.fr_final_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ snap.fr_final|floatformat:0 }} FC{% endif %}</strong></td>
                                         <td class="text-center">
                                             {% if snap.valide %}
                                             <span class="label label-success"><i class="fa fa-check"></i> Validé</span>
@@ -515,21 +517,21 @@
                                     <div class="label-text">TVMS</div>
                                     <div class="label-desc">Total Valeur Marchandise Stock</div>
                                 </div>
-                                <div class="value">{{ contreverif.tvms|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ contreverif.tvms_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ contreverif.tvms|floatformat:0 }} FC{% endif %}</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">TSC</div>
                                     <div class="label-desc">Total Soldes des Caisses</div>
                                 </div>
-                                <div class="value">{{ contreverif.tsc|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ contreverif.tsc_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ contreverif.tsc|floatformat:0 }} FC{% endif %}</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">TSCl</div>
                                     <div class="label-desc">Total Soldes Comptes Clients</div>
                                 </div>
-                                <div class="value">{{ contreverif.tscl|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ contreverif.tscl_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ contreverif.tscl|floatformat:0 }} FC{% endif %}</div>
                             </li>
                             <li>
                                 <div>
@@ -537,12 +539,12 @@
                                     <div class="label-desc">Total Soldes Comptes Fournisseurs</div>
                                 </div>
                                 <div class="value {% if contreverif.tscf < 0 %}text-success{% else %}text-danger{% endif %}">
-                                    {{ contreverif.tscf|floatformat:0 }} FC
+                                    {% if taux %}{% autoescape off %}{{ contreverif.tscf_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ contreverif.tscf|floatformat:0 }} FC{% endif %}
                                 </div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds de Roulement (Contre-vérifié)</strong></div>
-                                <div class="value">{{ contreverif.total|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ contreverif.total_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ contreverif.total|floatformat:0 }} FC{% endif %}</div>
                             </li>
                         </ul>
                     </div>
@@ -579,16 +581,16 @@
                                 <div>
                                     <div class="label-text">Fonds de Roulement</div>
                                 </div>
-                                <div class="value">{{ fr_final|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ fr_final_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fr_final|floatformat:0 }} FC{% endif %}</div>
                             </li>
                             <li>
                                 <div>
                                     <div class="label-text">Comptes Débiteurs</div>
                                     <div class="label-desc">Créances reçues</div>
                                 </div>
-                                <div class="value {% if total_debiteurs < 0 %}text-danger{% else %}text-success{% endif %}">
-                                    {{ total_debiteurs|floatformat:0 }} FC
-                                </div>
+                                    <div class="value {% if total_debiteurs < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {% if taux %}{% autoescape off %}{{ total_debiteurs_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ total_debiteurs|floatformat:0 }} FC{% endif %}
+                                    </div>
                             </li>
                             <li>
                                 <div>
@@ -596,12 +598,12 @@
                                     <div class="label-desc">Dettes à payer</div>
                                 </div>
                                 <div class="value {% if total_creanciers < 0 %}text-success{% else %}text-danger{% endif %}">
-                                    {{ total_creanciers|floatformat:0 }} FC
+                                    {% if taux %}{% autoescape off %}{{ total_creanciers_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ total_creanciers|floatformat:0 }} FC{% endif %}
                                 </div>
                             </li>
                             <li class="total">
                                 <div><strong>Fonds Propre (FP)</strong></div>
-                                <div class="value">{{ fonds_propre|floatformat:0 }} FC</div>
+                                <div class="value">{% if taux %}{% autoescape off %}{{ fonds_propre_usd|default:0|dual_amount }}{% endautoescape %}{% else %}{{ fonds_propre|floatformat:0 }} FC{% endif %}</div>
                             </li>
                         </ul>
                     </div>
@@ -617,6 +619,7 @@
     // Chart.js - Historique du Fonds de Roulement
     const frChartLabels = JSON.parse(document.getElementById('patrimoine-fr-labels').textContent);
     const frChartData = JSON.parse(document.getElementById('patrimoine-fr-data').textContent);
+    function formatCurrency(value, usdStr) { try { if (usdStr) return usdStr; return value.toLocaleString('fr-FR') + ' FC'; } catch (e) { return value + ' FC'; } }
     const ctx = document.getElementById('frChart').getContext('2d');
     const frChart = new Chart(ctx, {
         type: 'line',
@@ -652,7 +655,7 @@
                     displayColors: false,
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y.toLocaleString('fr-FR') + ' FC';
+                            return formatCurrency(context.parsed.y);
                         }
                     }
                 }
@@ -662,7 +665,7 @@
                     beginAtZero: false,
                     ticks: {
                         callback: function(value) {
-                            return value.toLocaleString('fr-FR') + ' FC';
+                            return formatCurrency(value);
                         },
                         color: '#73879C'
                     },

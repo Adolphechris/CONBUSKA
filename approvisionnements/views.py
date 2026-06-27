@@ -158,6 +158,27 @@ class ApprovisionnementDetailView(RoleRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["details_approvisionnement"] = self.details_approvisionnement
         context["add_form"] = ArticleApprovisionnementAddForm()
+
+        # Dual currency: passer les valeurs USD de l'approvisionnement
+        appro = self.object
+        context["approvisionnement_valeur_usd"] = getattr(appro, 'valeur_usd', None)
+        context["approvisionnement_taux"] = appro.taux
+
+        details_with_usd = []
+        for detail in self.details_approvisionnement:
+            details_with_usd.append({
+                'pk': detail.pk,
+                'article': detail.article,
+                'fournisseur': detail.fournisseur,
+                'qte': detail.qte,
+                'prix': detail.prix,
+                'prix_total': detail.prix_total,
+                'valeur_usd': detail.valeur_usd,
+                'taux_creation': detail.taux_creation,
+                'date_peremption': detail.date_peremption,
+            })
+        context["details_approvisionnement_usd"] = details_with_usd
+
         return context
 
 

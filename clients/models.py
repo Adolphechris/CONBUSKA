@@ -26,17 +26,43 @@ class Client(models.Model):
     def paiements(self):
         return MouvementCaisseClient.objects.filter(client=self)
 
-    def total_factures(self):
-        total = sum(i.facture.total for i in self.factures())
-        return total
+    def total_factures_usd(self):
+        from decimal import Decimal
+        return self.factures().filter(facture__valide=True).aggregate(
+            total=Sum('facture__valeur_usd')
+        )['total'] or Decimal('0')
 
+    def total_paiements_usd(self):
+        from decimal import Decimal
+        return self.paiements().aggregate(total=Sum('valeur_usd'))['total'] or Decimal('0')
+
+    def solde_usd(self):
+        return self.total_factures_usd() - self.total_paiements_usd()
+
+    def solde_fc(self):
+        return self.total_factures() - self.total_paiements()
+
+    def total_factures(self):
+        from django.db.models import ExpressionWrapper, F, DecimalField
+        return (
+            self.factures()
+            .filter(facture__valide=True)
+            .aggregate(
+                total=Sum(
+                    ExpressionWrapper(
+                        F('facture__valeur_usd') * F('facture__taux'),
+                        output_field=DecimalField(max_digits=18, decimal_places=4)
+                    )
+                )
+            )['total']
+            or 0
+        )
 
     def total_paiements(self):
         return self.paiements().aggregate(total=Sum('mouvement_caisse__montant'))['total'] or 0
 
-
     def solde(self):
-        return self.total_factures() - self.total_paiements()
+        return self.solde_usd()
 
 
     @property
