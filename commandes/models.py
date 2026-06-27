@@ -49,8 +49,7 @@ class Commande(models.Model):
 
 
 class DetailsCommande(models.Model):
-    # TODO(migration) : null=True à supprimer une fois les données nettoyées
-    commande = models.ForeignKey(Commande, on_delete=models.PROTECT, null=True)
+    commande = models.ForeignKey(Commande, on_delete=models.PROTECT)
     article = models.ForeignKey(
         'produits.Article',
         on_delete=models.PROTECT,

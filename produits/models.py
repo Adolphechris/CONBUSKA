@@ -193,7 +193,7 @@ class Stock(models.Model):
                 name="unique_lot_stock"
             ),
             models.CheckConstraint(
-                check=models.Q(qte__gte=0),
+                condition=models.Q(qte__gte=0),
                 name="stock_non_negatif"
             ),
         ]
@@ -230,7 +230,7 @@ class MouvementStock(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(qte__gt=0),
+                condition=models.Q(qte__gt=0),
                 name="qte_positive"
             ),
         ]
