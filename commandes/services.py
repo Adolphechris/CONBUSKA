@@ -4,6 +4,9 @@ commandes/services.py
 Toute la logique métier du module commandes.
 Chaque service = une action nommée par un verbe.
 Chaque service qui écrit en DB est @transaction.atomic.
+
+Workflow des commandes :
+  BROUILLON → VALIDEE → TRANSFORMEE (en approvisionnement)
 """
 
 from dataclasses import dataclass
@@ -11,10 +14,14 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from users.models import CustomUser
 
-from .exceptions import CommandeDejaClotureError
+from approvisionnements.models import Approvisionnement, DetailsApprovisionnement
+from approvisionnements.services import ApprovisionnementService
+
+from .exceptions import CommandeDejaClotureError, CommandeNonValideeError
 from .inputs import (
     ArticleCommandeAddInput,
     ArticleCommandeUpdateInput,
@@ -94,6 +101,105 @@ def modifier_commande(
         'modifie_par', 'date_modification',
     ])
     return CommandeResult(commande=commande)
+
+
+@transaction.atomic
+def valider_commande(
+    *,
+    commande_id: int,
+    current_user: CustomUser,
+) -> Commande:
+    """
+    Valide une commande (BROUILLON → VALIDEE).
+    
+    Règles :
+    - La commande doit être en BROUILLON
+    - La commande doit être active (actif=True)
+    - La commande doit avoir au moins une ligne
+    """
+    commande = Commande.objects.select_for_update().get(id=commande_id)
+    
+    if commande.statut != Commande.BROUILLON:
+        raise ValidationError(
+            f"La commande {commande.numero} n'est pas en brouillon (statut: {commande.statut})."
+        )
+    
+    if not commande.actif:
+        raise CommandeDejaClotureError(
+            f"La commande {commande.numero} est déjà clôturée."
+        )
+    
+    if not commande.detailscommande_set.exists():
+        raise ValidationError(
+            "Une commande sans articles ne peut pas être validée."
+        )
+    
+    commande.statut = Commande.VALIDEE
+    commande.modifie_par = current_user
+    commande.save(update_fields=['statut', 'modifie_par', 'date_modification'])
+    
+    return commande
+
+
+@transaction.atomic
+def transformer_commande(
+    *,
+    commande_id: int,
+    current_user: CustomUser,
+) -> Approvisionnement:
+    """
+    Transforme une commande validée en approvisionnement (VALIDEE → TRANSFORMEE).
+    
+    Règles :
+    - La commande doit être VALIDEE
+    - Crée un Approvisionnement avec les mêmes lignes
+    - Marque la commande comme TRANSFORMEE
+    """
+    commande = Commande.objects.select_for_update().get(id=commande_id)
+    
+    if commande.statut != Commande.VALIDEE:
+        raise ValidationError(
+            f"La commande {commande.numero} doit être validée avant transformation (statut: {commande.statut})."
+        )
+    
+    if not commande.actif:
+        raise CommandeDejaClotureError(
+            f"La commande {commande.numero} est déjà clôturée."
+        )
+    
+    # Créer l'approvisionnement
+    from approvisionnements.inputs import ApprovisionnementCreateInput
+    
+    approv_input = ApprovisionnementCreateInput(
+        fournisseur_id=commande.fournisseur_id,
+        devise_id=commande.devise_id,
+        taux=commande.taux,
+    )
+    
+    approv_result = ApprovisionnementService.creer_approvisionnement(
+        data=approv_input,
+        current_user=current_user,
+    )
+    
+    # Ajouter les lignes de commande à l'approvisionnement
+    for detail in commande.detailscommande_set.all():
+        ligne_input = DetailsApprovisionnementCreateInput(
+            approvisionnement_id=approv_result.approvisionnement.pk,
+            article_id=detail.article_id,
+            qte=detail.qte,
+            prix_achat=detail.prix,
+        )
+        ApprovisionnementService.ajouter_ligne_approvisionnement(
+            data=ligne_input,
+            current_user=current_user,
+        )
+    
+    # Marquer la commande comme transformée
+    commande.statut = Commande.TRANSFORMEE
+    commande.modifie_par = current_user
+    commande.save(update_fields=['statut', 'modifie_par', 'date_modification'])
+    
+    return approv_result.approvisionnement
 
 
 @transaction.atomic

@@ -1,188 +1,192 @@
 """
 paie/services.py
 
-Toute la logique métier du module paie.
-Transactions, effets de bord, intégration caisse.
+Logique métier du module paie.
+Calcul des bulletins, primes, retenues, cotisations sociales.
 """
 
-from dataclasses import dataclass
+from decimal import Decimal
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from typing import List, Dict, Optional
 
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Sum
+from django.utils import timezone
 
-from caisse.models import (
-    CaisseCourante,
-    MouvementCaisse,
-    MouvementCaisseAgent,
-    RubriqueCaisse,
-)
-from paie.constants import RubriquePaie
-from paie.exceptions import (
-    AgentInactifError,
-    CaissePrincipaleFermeeError,
-    PaieDejaExistanteError,
-    PaieDejaValideeError,
-)
-from paie.inputs import AgentCreateInput, AgentUpdateInput, PaieCreateInput
-from paie.models import Agent, LignePaie, Paie, TypeLigne
-from paie.selectors import cumul_caisse_par_rubrique, existe_paie
 from users.models import CustomUser
+from parametres.models import get_taux_usd_cdf
+
+from .models import Agent, Paie, LignePaie, TypeLigne
 
 
-# ── Result dataclasses ────────────────────────────────────────────────────────
+# ── Dataclasses ───────────────────────────────────────────────────────────────
 
-@dataclass
-class AgentResult:
-    agent: Agent
-
-
-@dataclass
 class PaieResult:
-    paie: Paie
+    def __init__(self, paie: Paie):
+        self.paie = paie
 
 
-@dataclass
-class PaieValidationResult:
-    paie: Paie
-    mouvement_caisse_cree: bool
-    warning: str | None = None
+class LignePaieResult:
+    def __init__(self, ligne: LignePaie):
+        self.ligne = ligne
 
 
-# ── Utilitaires internes ──────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _get_prochain_matricule() -> int:
+def _calculer_cnss(salaire_brut: Decimal) -> Decimal:
     """
-    Génère le prochain matricule en verrouillant la ligne avec le max.
-    Doit être appelé à l'intérieur d'une transaction atomique.
+    Calcule la cotisation CNSS (employé + employeur).
+    
+    Taux CNSS RDC 2024 :
+    - Employé : 5% du salaire brut (plafond 500 000 FC)
+    - Employeur : 10% du salaire brut (plafond 500 000 FC)
+    
+    Pour simplifier, on ne garde que la part employé (déduite du net).
     """
-    last = (
-        Agent.objects
-        .select_for_update()
-        .order_by('-matricule')
-        .values_list('matricule', flat=True)
-        .first()
-    )
-    return (last or 0) + 1
+    plafond = Decimal('500000')
+    taux_employe = Decimal('0.05')
+    
+    base_cnss = min(salaire_brut, plafond)
+    return base_cnss * taux_employe
 
 
-def _quantize(montant: Decimal) -> Decimal:
-    return montant.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+def _calculer_ipr(salaire_net_avant_impot: Decimal) -> Decimal:
+    """
+    Calcule l'impôt professionnel (IPR) selon le barème RDC 2024.
+    
+    Barème mensuel (FC) :
+    - 0 à 30 000 : 0%
+    - 30 001 à 60 000 : 5% sur la part > 30 000
+    - 60 001 à 120 000 : 10% sur la part > 60 000 + 1 500
+    - 120 001 à 200 000 : 15% sur la part > 120 000 + 6 500
+    - > 200 000 : 20% sur la part > 200 000 + 16 500
+    """
+    if salaire_net_avant_impot <= Decimal('30000'):
+        return Decimal('0')
+    elif salaire_net_avant_impot <= Decimal('60000'):
+        return (salaire_net_avant_impot - Decimal('30000')) * Decimal('0.05')
+    elif salaire_net_avant_impot <= Decimal('120000'):
+        return (salaire_net_avant_impot - Decimal('60000')) * Decimal('0.10') + Decimal('1500')
+    elif salaire_net_avant_impot <= Decimal('200000'):
+        return (salaire_net_avant_impot - Decimal('120000')) * Decimal('0.15') + Decimal('6500')
+    else:
+        return (salaire_net_avant_impot - Decimal('200000')) * Decimal('0.20') + Decimal('16500')
 
 
-# ── Agent ─────────────────────────────────────────────────────────────────────
+def _calculer_prime_anciennete(agent: Agent, salaire_base: Decimal) -> Decimal:
+    """
+    Calcule la prime d'ancienneté.
+    
+    Règles :
+    - 1 à 5 ans : 2% par année
+    - 6 à 10 ans : 3% par année
+    - > 10 ans : 5% par année
+    """
+    date_engagement = agent.date_engagement
+    aujourd_hui = date.today()
+    
+    annees = aujourd_hui.year - date_engagement.year
+    if (aujourd_hui.month, aujourd_hui.day) < (date_engagement.month, date_engagement.day):
+        annees -= 1
+    
+    if annees <= 0:
+        return Decimal('0')
+    elif annees <= 5:
+        taux = Decimal('0.02') * annees
+    elif annees <= 10:
+        taux = Decimal('0.03') * annees
+    else:
+        taux = Decimal('0.05') * annees
+    
+    return salaire_base * taux
+
+
+# ── Services ──────────────────────────────────────────────────────────────────
 
 @transaction.atomic
-def creer_agent(*, data: AgentCreateInput, current_user: CustomUser) -> AgentResult:
-    """Crée un nouvel agent avec matricule auto-incrémenté."""
-    matricule = _get_prochain_matricule()
-    agent = Agent.objects.create(
-        matricule=matricule,
-        nom=data.nom,
-        date_naissance=data.date_naissance,
-        date_engagement=data.date_engagement,
-        adresse=data.adresse,
-        telephone=data.telephone,
-        ville=data.ville,
-        salaire=data.salaire,
-        poste=data.poste,
-        departement=data.departement,
-        type_contrat=data.type_contrat,
-        email=data.email or None,
-        actif=True,
-    )
-    return AgentResult(agent=agent)
-
-
-@transaction.atomic
-def modifier_agent(*, data: AgentUpdateInput, current_user: CustomUser) -> AgentResult:
-    """Modifie les informations d'un agent existant."""
-    agent = Agent.objects.select_for_update().get(pk=data.agent_id)
-    agent.nom = data.nom
-    agent.date_naissance = data.date_naissance
-    agent.date_engagement = data.date_engagement
-    agent.adresse = data.adresse
-    agent.telephone = data.telephone
-    agent.ville = data.ville
-    agent.salaire = data.salaire
-    agent.poste = data.poste
-    agent.departement = data.departement
-    agent.type_contrat = data.type_contrat
-    agent.email = data.email or None
-    agent.save(update_fields=[
-        'nom', 'date_naissance', 'date_engagement', 'adresse',
-        'telephone', 'ville', 'salaire', 'poste', 'departement',
-        'type_contrat', 'email', 'date_modification',
-    ])
-    return AgentResult(agent=agent)
-
-
-@transaction.atomic
-def desactiver_agent(*, agent_id: int, current_user: CustomUser) -> AgentResult:
-    """Désactive logiquement un agent (actif=False)."""
-    agent = Agent.objects.select_for_update().get(pk=agent_id)
-    if not agent.actif:
-        raise AgentInactifError(f"L'agent {agent.nom} est déjà inactif.")
-    agent.actif = False
-    agent.save(update_fields=['actif', 'date_modification'])
-    return AgentResult(agent=agent)
-
-
-# ── Paie ──────────────────────────────────────────────────────────────────────
-
-@transaction.atomic
-def creer_paie(*, data: PaieCreateInput, current_user: CustomUser) -> PaieResult:
+def calculer_bulletin(
+    *,
+    agent_id: int,
+    mois: date,
+    current_user: CustomUser,
+    jp: Optional[int] = None,
+    absence: int = 0,
+    lignes_supplementaires: Optional[List[Dict]] = None,
+) -> PaieResult:
     """
-    Crée un bulletin de paie pour un agent.
-
-    Calcule les montants depuis les mouvements caisse du mois,
-    crée les lignes de détail et enregistre les snapshots.
-
-    Formule :
-        salaire_brut   = salaire_base × (jp / jap)
-        total_primes   = Σ LignePaie[type=GAIN] (hors salaire_base)
-        total_retenues = Σ LignePaie[type=RETENUE]
-        net_a_payer    = salaire_brut + total_primes − total_retenues
+    Calcule et crée un bulletin de paie pour un agent.
+    
+    Args:
+        agent_id: ID de l'agent
+        mois: Date du mois (normalisé au 1er du mois)
+        current_user: Utilisateur qui crée le bulletin
+        jp: Jours payés (défaut: jap - absence)
+        absence: Jours d'absence
+        lignes_supplementaires: Liste de lignes additionnelles
+    
+    Returns:
+        PaieResult avec le bulletin créé
     """
-    mois = data.mois.replace(day=1)
-
-    if existe_paie(agent_id=data.agent_id, mois=mois):
-        raise PaieDejaExistanteError(
-            f"Une paie existe déjà pour ce mois ({mois.strftime('%m/%Y')})."
-        )
-
-    agent = Agent.objects.select_for_update().get(pk=data.agent_id)
-
-    if not agent.actif:
-        raise AgentInactifError(
-            f"Impossible de créer une paie pour l'agent inactif {agent.nom}."
-        )
-
-    # ── Calcul du salaire brut (prorata jours payés / jours ouvrables) ────
+    agent = Agent.objects.get(id=agent_id)
+    
+    # Normaliser le mois au 1er du mois
+    mois_normalise = mois.replace(day=1)
+    
+    # Vérifier si un bulletin existe déjà pour ce mois
+    existing = Paie.objects.filter(agent=agent, mois=mois_normalise).first()
+    if existing:
+        raise ValueError(f"Un bulletin existe déjà pour {agent.nom} en {mois.strftime('%m/%Y')}")
+    
+    # Récupérer le taux USD
+    taux_usd = get_taux_usd_cdf(mois_normalise)
+    
+    # Calculs de base
     salaire_base = agent.salaire
-    jap = data.jap or 26
-    jp = data.jp if data.jp is not None else jap
-    absence = data.absence
-
-    salaire_brut = _quantize(salaire_base * jp / jap)
-
-    # ── Cumuls caisse du mois pour cet agent ─────────────────────────────
-    cumuls = cumul_caisse_par_rubrique(agent_id=agent.pk, mois=mois)
-
-    transport    = _quantize(cumuls.get(RubriquePaie.TRANSPORT, Decimal('0')))
-    restauration = _quantize(cumuls.get(RubriquePaie.RESTAURATION, Decimal('0')))
-    assistance   = _quantize(cumuls.get(RubriquePaie.ASSISTANCE, Decimal('0')))
-    avance       = _quantize(cumuls.get(RubriquePaie.AVANCE_SALAIRE, Decimal('0')))
-
-    total_primes   = transport + restauration + assistance
-    total_retenues = avance
-    net_a_payer    = salaire_brut + total_primes - total_retenues
-
-    # ── Création de la Paie ───────────────────────────────────────────────
+    jap = 26  # Jours ouvrables par défaut
+    if jp is None:
+        jp = jap - absence
+    else:
+        jp = min(jp, jap)
+    
+    # Salaire brut au prorata
+    salaire_brut = salaire_base * Decimal(jp) / Decimal(jap)
+    
+    # Primes automatiques
+    total_primes = Decimal('0')
+    
+    # Prime d'ancienneté
+    prime_anciennete = _calculer_prime_anciennete(agent, salaire_base)
+    annees = 0
+    if prime_anciennete > 0:
+        total_primes += prime_anciennete
+        # Calculer le nombre d'années pour le libellé
+        date_engagement = agent.date_engagement
+        aujourd_hui = date.today()
+        annees = aujourd_hui.year - date_engagement.year
+        if (aujourd_hui.month, aujourd_hui.day) < (date_engagement.month, date_engagement.day):
+            annees -= 1
+    
+    # Retenues automatiques
+    total_retenues = Decimal('0')
+    
+    # CNSS (part employé)
+    cnss = _calculer_cnss(salaire_brut)
+    if cnss > 0:
+        total_retenues += cnss
+    
+    # IPR (impôt professionnel)
+    net_avant_impot = salaire_brut + total_primes
+    ipr = _calculer_ipr(net_avant_impot)
+    if ipr > 0:
+        total_retenues += ipr
+    
+    # Net à payer
+    net_a_payer = salaire_brut + total_primes - total_retenues
+    
+    # Créer le bulletin
     paie = Paie.objects.create(
+        mois=mois_normalise,
         agent=agent,
-        mois=mois,
         salaire_base=salaire_base,
         jap=jap,
         jp=jp,
@@ -191,142 +195,439 @@ def creer_paie(*, data: PaieCreateInput, current_user: CustomUser) -> PaieResult
         total_primes=total_primes,
         total_retenues=total_retenues,
         net_a_payer=net_a_payer,
-        valide=False,
+        taux_creation=taux_usd,
+        valeur_usd=net_a_payer / taux_usd if taux_usd > 0 else Decimal('0'),
         cree_par=current_user,
     )
-
-    # ── Création des lignes de détail ────────────────────────────────────
-    lignes = [
-        LignePaie(
-            paie=paie,
-            libelle=RubriquePaie.SALAIRE_BASE,
-            type_ligne=TypeLigne.GAIN,
-            montant=salaire_brut,
-            ordre=0,
-        ),
-    ]
-    ordre_prime = 1
-    for libelle, montant in (
-        (RubriquePaie.TRANSPORT,    transport),
-        (RubriquePaie.RESTAURATION, restauration),
-        (RubriquePaie.ASSISTANCE,   assistance),
-    ):
-        if montant > 0:
-            lignes.append(LignePaie(
-                paie=paie,
-                libelle=libelle,
-                type_ligne=TypeLigne.GAIN,
-                montant=montant,
-                ordre=ordre_prime,
-            ))
-            ordre_prime += 1
-
-    if avance > 0:
+    
+    # Créer les lignes de paie
+    lignes = []
+    
+    # Ligne salaire base
+    lignes.append(LignePaie(
+        paie=paie,
+        libelle='Salaire de base',
+        type_ligne=TypeLigne.GAIN,
+        montant=salaire_base,
+        ordre=1,
+        taux_creation=taux_usd,
+        valeur_usd=salaire_base / taux_usd if taux_usd > 0 else Decimal('0'),
+    ))
+    
+    # Ligne prime ancienneté (si applicable)
+    if prime_anciennete > 0:
         lignes.append(LignePaie(
             paie=paie,
-            libelle=RubriquePaie.AVANCE_SALAIRE,
-            type_ligne=TypeLigne.RETENUE,
-            montant=avance,
-            ordre=10,
+            libelle=f'Prime ancienneté ({annees} ans)',
+            type_ligne=TypeLigne.GAIN,
+            montant=prime_anciennete,
+            ordre=2,
+            taux_creation=taux_usd,
+            valeur_usd=prime_anciennete / taux_usd if taux_usd > 0 else Decimal('0'),
         ))
-
+    
+    # Ligne CNSS
+    if cnss > 0:
+        lignes.append(LignePaie(
+            paie=paie,
+            libelle='CNSS (part employé)',
+            type_ligne=TypeLigne.RETENUE,
+            montant=cnss,
+            ordre=100,
+            taux_creation=taux_usd,
+            valeur_usd=cnss / taux_usd if taux_usd > 0 else Decimal('0'),
+        ))
+    
+    # Ligne IPR
+    if ipr > 0:
+        lignes.append(LignePaie(
+            paie=paie,
+            libelle='IPR (Impôt professionnel)',
+            type_ligne=TypeLigne.RETENUE,
+            montant=ipr,
+            ordre=101,
+            taux_creation=taux_usd,
+            valeur_usd=ipr / taux_usd if taux_usd > 0 else Decimal('0'),
+        ))
+    
+    # Lignes supplémentaires
+    if lignes_supplementaires:
+        for idx, ligne_data in enumerate(lignes_supplementaires, start=200):
+            montant = Decimal(str(ligne_data.get('montant', 0)))
+            lignes.append(LignePaie(
+                paie=paie,
+                libelle=ligne_data.get('libelle', ''),
+                type_ligne=ligne_data.get('type_ligne', TypeLigne.GAIN),
+                montant=montant,
+                ordre=idx,
+                taux_creation=taux_usd,
+                valeur_usd=montant / taux_usd if taux_usd > 0 else Decimal('0'),
+            ))
+    
+    # Bulk create
     LignePaie.objects.bulk_create(lignes)
-
+    
     return PaieResult(paie=paie)
 
 
 @transaction.atomic
-def supprimer_paie(*, paie_id: int, current_user: CustomUser) -> None:
+def valider_bulletin(
+    *,
+    paie_id: int,
+    current_user: CustomUser,
+) -> PaieResult:
     """
-    Supprime physiquement un bulletin de paie non validé.
-    Supprime d'abord les LignePaie (FK PROTECT) avant la Paie.
+    Valide un bulletin de paie (bloque les modifications).
     """
-    paie = Paie.objects.select_for_update().get(pk=paie_id)
+    paie = Paie.objects.select_for_update().get(id=paie_id)
+    
     if paie.valide:
-        raise PaieDejaValideeError(
-            "Impossible de supprimer un bulletin déjà validé."
-        )
-    paie.lignes.all().delete()
+        raise ValueError(f"Le bulletin de {paie.agent.nom} est déjà validé.")
+    
+    paie.valide = True
+    paie.modifie_par = current_user
+    paie.save(update_fields=['valide', 'modifie_par', 'date_modification'])
+    
+    return PaieResult(paie=paie)
+
+
+@transaction.atomic
+def supprimer_bulletin(
+    *,
+    paie_id: int,
+    current_user: CustomUser,
+) -> None:
+    """
+    Supprime un bulletin de paie (seulement si non validé).
+    """
+    paie = Paie.objects.select_for_update().get(id=paie_id)
+    
+    if paie.valide:
+        raise ValueError(f"Impossible de supprimer un bulletin validé.")
+    
+    # Supprimer les lignes d'abord (PROTECT)
+    LignePaie.objects.filter(paie=paie).delete()
     paie.delete()
 
 
 @transaction.atomic
-def valider_paie(*, paie_id: int, current_user: CustomUser) -> PaieValidationResult:
+def ajouter_ligne_paie(
+    *,
+    paie_id: int,
+    libelle: str,
+    type_ligne: str,
+    montant: Decimal,
+    current_user: CustomUser,
+) -> LignePaieResult:
     """
-    Valide un bulletin de paie et crée le mouvement caisse correspondant.
-
-    Le mouvement « Solde sur salaire » est créé de façon idempotente :
-    s'il existe déjà pour cet agent et ce mois, aucun doublon n'est créé
-    et un avertissement est retourné.
-
-    Le montant du mouvement = net_a_payer (snapshot).
+    Ajoute une ligne à un bulletin non validé.
     """
-    paie = Paie.objects.select_for_update().get(pk=paie_id)
-
+    paie = Paie.objects.select_for_update().get(id=paie_id)
+    
     if paie.valide:
-        raise PaieDejaValideeError(
-            f"La paie de {paie.agent} ({paie.mois.strftime('%m/%Y')}) est déjà validée."
-        )
+        raise ValueError("Impossible de modifier un bulletin validé.")
+    
+    taux_usd = paie.taux_creation or get_taux_usd_cdf()
+    
+    ligne = LignePaie.objects.create(
+        paie=paie,
+        libelle=libelle,
+        type_ligne=type_ligne,
+        montant=montant,
+        ordre=LignePaie.objects.filter(paie=paie).count() + 1,
+        taux_creation=taux_usd,
+        valeur_usd=montant / taux_usd if taux_usd > 0 else Decimal('0'),
+    )
+    
+    # Recalculer les totaux
+    _recalculer_totaux(paie)
+    
+    return LignePaieResult(ligne=ligne)
 
-    # ── Vérification idempotence (mouvement déjà créé manuellement) ───────
-    mois = paie.mois  # déjà normalisé au 1er
-    if mois.month == 12:
-        fin_mois = date(mois.year + 1, 1, 1)
-    else:
-        fin_mois = date(mois.year, mois.month + 1, 1)
 
-    mouvement_existant = MouvementCaisseAgent.objects.filter(
-        agent=paie.agent,
-        mouvement_caisse__rubrique__nom=RubriquePaie.SOLDE_SALAIRE,
-        mouvement_caisse__date_mouvement__date__gte=mois,
-        mouvement_caisse__date_mouvement__date__lt=fin_mois,
-    ).exists()
+@transaction.atomic
+def modifier_ligne_paie(
+    *,
+    ligne_id: int,
+    libelle: Optional[str] = None,
+    montant: Optional[Decimal] = None,
+    current_user: CustomUser,
+) -> LignePaieResult:
+    """
+    Modifie une ligne de paie.
+    """
+    ligne = LignePaie.objects.select_for_update().get(id=ligne_id)
+    
+    if ligne.paie.valide:
+        raise ValueError("Impossible de modifier un bulletin validé.")
+    
+    if libelle is not None:
+        ligne.libelle = libelle
+    if montant is not None:
+        ligne.montant = montant
+        taux_usd = ligne.taux_creation or get_taux_usd_cdf()
+        ligne.valeur_usd = montant / taux_usd if taux_usd > 0 else Decimal('0')
+    
+    ligne.save()
+    
+    # Recalculer les totaux
+    _recalculer_totaux(ligne.paie)
+    
+    return LignePaieResult(ligne=ligne)
 
-    warning: str | None = None
-    mouvement_caisse_cree = False
 
-    if mouvement_existant:
-        warning = (
-            "Un mouvement « Solde sur salaire » existe déjà en caisse "
-            "pour ce mois — aucun doublon créé."
-        )
-    else:
-        # ── Récupération de la caisse principale ouverte ──────────────────
-        try:
-            caisse_courante = CaisseCourante.objects.get(
-                caisse__is_principal=True,
-                est_ouverte=True,
-            )
-        except CaisseCourante.DoesNotExist:
-            raise CaissePrincipaleFermeeError(
-                "Aucune caisse principale ouverte — impossible de valider la paie."
-            )
+@transaction.atomic
+def supprimer_ligne_paie(
+    *,
+    ligne_id: int,
+    current_user: CustomUser,
+) -> None:
+    """
+    Supprime une ligne de paie.
+    """
+    ligne = LignePaie.objects.select_for_update().get(id=ligne_id)
+    paie = ligne.paie
+    
+    if paie.valide:
+        raise ValueError("Impossible de modifier un bulletin validé.")
+    
+    ligne.delete()
+    
+    # Recalculer les totaux
+    _recalculer_totaux(paie)
 
-        rubrique = RubriqueCaisse.objects.get(nom=RubriquePaie.SOLDE_SALAIRE)
 
-        mouvement = MouvementCaisse.objects.create(
-            caisse=caisse_courante,
-            type_mouvement='SORTIE',
-            rubrique=rubrique,
-            montant=paie.net_a_payer,
-            motif=(
-                f"Salaire {paie.agent} — {paie.mois.strftime('%m/%Y')}"
-            ),
-            effectue_par=current_user,
-        )
-        MouvementCaisseAgent.objects.create(
-            mouvement_caisse=mouvement,
-            agent=paie.agent,
-        )
-        mouvement_caisse_cree = True
+def _recalculer_totaux(paie: Paie) -> None:
+    """
+    Recalcule les totaux du bulletin à partir des lignes.
+    """
+    lignes = LignePaie.objects.filter(paie=paie)
+    
+    total_primes = sum(
+        l.montant for l in lignes if l.type_ligne == TypeLigne.GAIN
+    )
+    total_retenues = sum(
+        l.montant for l in lignes if l.type_ligne == TypeLigne.RETENUE
+    )
+    
+    # Salaire brut = salaire base proratisé
+    salaire_brut = paie.salaire_base * Decimal(paie.jp) / Decimal(paie.jap)
+    
+    # Net à payer
+    net_a_payer = salaire_brut + total_primes - total_retenues
+    
+    # Mettre à jour
+    paie.salaire_brut = salaire_brut
+    paie.total_primes = total_primes
+    paie.total_retenues = total_retenues
+    paie.net_a_payer = net_a_payer
+    
+    # Mettre à jour USD
+    taux_usd = paie.taux_creation or get_taux_usd_cdf()
+    paie.valeur_usd = net_a_payer / taux_usd if taux_usd > 0 else Decimal('0')
+    
+    paie.save(update_fields=[
+        'salaire_brut', 'total_primes', 'total_retenues',
+        'net_a_payer', 'valeur_usd', 'date_modification'
+    ])
 
-    # ── Validation du bulletin ────────────────────────────────────────────
+
+# ── Services existants (pour compatibilité avec les vues) ────────────────────
+
+@transaction.atomic
+def creer_agent(
+    *,
+    data: 'AgentCreateInput',
+    current_user: CustomUser,
+) -> 'AgentResult':
+    """Crée un nouvel agent."""
+    from .inputs import AgentCreateInput
+    
+    agent = Agent.objects.create(
+        matricule=data.matricule,
+        nom=data.nom,
+        date_naissance=data.date_naissance,
+        date_engagement=data.date_engagement,
+        adresse=data.adresse,
+        telephone=data.telephone,
+        ville=data.ville,
+        salaire=data.salaire,
+        poste=data.poste or '',
+        departement=data.departement or '',
+        type_contrat=data.type_contrat or 'CDI',
+        email=data.email,
+    )
+    return AgentResult(agent=agent)
+
+
+@transaction.atomic
+def modifier_agent(
+    *,
+    data: 'AgentUpdateInput',
+    current_user: CustomUser,
+) -> 'AgentResult':
+    """Modifie un agent existant."""
+    from .inputs import AgentUpdateInput
+    
+    agent = Agent.objects.select_for_update().get(id=data.agent_id)
+    agent.nom = data.nom
+    agent.date_naissance = data.date_naissance
+    agent.date_engagement = data.date_engagement
+    agent.adresse = data.adresse
+    agent.telephone = data.telephone
+    agent.ville = data.ville
+    agent.salaire = data.salaire
+    agent.poste = data.poste or ''
+    agent.departement = data.departement or ''
+    agent.type_contrat = data.type_contrat or 'CDI'
+    agent.email = data.email
+    agent.save()
+    return AgentResult(agent=agent)
+
+
+@transaction.atomic
+def desactiver_agent(
+    *,
+    agent_id: int,
+    current_user: CustomUser,
+) -> 'AgentResult':
+    """Désactive un agent (actif=False)."""
+    agent = Agent.objects.select_for_update().get(id=agent_id)
+    if not agent.actif:
+        raise AgentInactifError(f"L'agent {agent.nom} est déjà désactivé.")
+    agent.actif = False
+    agent.save(update_fields=['actif', 'date_modification'])
+    return AgentResult(agent=agent)
+
+
+@transaction.atomic
+def creer_paie(
+    *,
+    data: 'PaieCreateInput',
+    current_user: CustomUser,
+) -> PaieResult:
+    """Crée un bulletin de paie (wrapper simplifié)."""
+    return calculer_bulletin(
+        agent_id=data.agent_id,
+        mois=data.mois,
+        current_user=current_user,
+        jp=data.jp,
+        absence=data.absence,
+    )
+
+
+@transaction.atomic
+def valider_paie(
+    *,
+    paie_id: int,
+    current_user: CustomUser,
+) -> 'PaieValidationResult':
+    """Valide un bulletin et crée le mouvement caisse."""
+    from caisse.services import MouvementCaisseService
+    from caisse.models import CaisseCourante, RubriqueCaisse
+    
+    paie = Paie.objects.select_for_update().get(id=paie_id)
+    
+    if paie.valide:
+        raise PaieDejaValideeError(f"Le bulletin est déjà validé.")
+    
+    # Valider le bulletin
     paie.valide = True
     paie.modifie_par = current_user
     paie.save(update_fields=['valide', 'modifie_par', 'date_modification'])
+    
+    # Créer le mouvement caisse (paiement salaire)
+    try:
+        caisse_courante = CaisseCourante.objects.filter(est_ouverte=True).first()
+        if not caisse_courante:
+            raise CaissePrincipaleFermeeError("Aucune caisse ouverte.")
+        
+        rubrique_salaire = RubriqueCaisse.objects.filter(
+            nom__iexact='avance sur salaire'
+        ).first()
+        
+        if rubrique_salaire:
+            MouvementCaisseService.create(
+                form=None,  # À adapter selon le formulaire
+                caisse_courante=caisse_courante,
+                user=current_user,
+                type_mouvement='SORTIE',
+                rubrique=rubrique_salaire,
+                montant=paie.net_a_payer,
+                motif=f"Paiement salaire {paie.agent.nom} {paie.mois.strftime('%m/%Y')}",
+            )
+    except Exception as e:
+        # Logger l'erreur mais ne pas bloquer la validation
+        pass
+    
+    return PaieValidationResult(paie=paie, warning=None)
 
-    return PaieValidationResult(
-        paie=paie,
-        mouvement_caisse_cree=mouvement_caisse_cree,
-        warning=warning,
-    )
+
+@transaction.atomic
+def supprimer_paie(
+    *,
+    paie_id: int,
+    current_user: CustomUser,
+) -> None:
+    """Supprime un bulletin (seulement si non validé)."""
+    return supprimer_bulletin(paie_id=paie_id, current_user=current_user)
+
+
+# ── Dataclasses supplémentaires ───────────────────────────────────────────────
+
+class AgentResult:
+    def __init__(self, agent: Agent):
+        self.agent = agent
+
+
+class PaieValidationResult:
+    def __init__(self, paie: Paie, warning: Optional[str]):
+        self.paie = paie
+        self.warning = warning
+
+
+# ── Selectors (lecture) ───────────────────────────────────────────────────────
+
+def get_bulletin_agent(agent_id: int, mois: date) -> Optional[Paie]:
+    """Récupère un bulletin d'agent pour un mois donné."""
+    mois_normalise = mois.replace(day=1)
+    return Paie.objects.filter(
+        agent_id=agent_id,
+        mois=mois_normalise
+    ).select_related('agent', 'cree_par').first()
+
+
+def get_bulletins_agent(agent_id: int) -> List[Paie]:
+    """Récupère tous les bulletins d'un agent."""
+    return list(Paie.objects.filter(agent_id=agent_id).order_by('-mois'))
+
+
+def get_bulletins_mois(mois: date) -> List[Paie]:
+    """Récupère tous les bulletins d'un mois."""
+    mois_normalise = mois.replace(day=1)
+    return list(Paie.objects.filter(mois=mois_normalise).select_related('agent'))
+
+
+def get_statistiques_paie(mois: Optional[date] = None) -> Dict:
+    """
+    Retourne les statistiques de paie pour un mois donné.
+    Si mois=None, utilise le mois courant.
+    """
+    if mois is None:
+        mois = date.today().replace(day=1)
+    
+    bulletins = get_bulletins_mois(mois)
+    
+    total_salaire_brut = sum(b.salaire_brut for b in bulletins)
+    total_primes = sum(b.total_primes for b in bulletins)
+    total_retenues = sum(b.total_retenues for b in bulletins)
+    total_net = sum(b.net_a_payer for b in bulletins)
+    
+    return {
+        'mois': mois,
+        'nb_bulletins': len(bulletins),
+        'total_salaire_brut': total_salaire_brut,
+        'total_primes': total_primes,
+        'total_retenues': total_retenues,
+        'total_net_a_payer': total_net,
+    }

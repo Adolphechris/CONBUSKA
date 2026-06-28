@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DEBUG = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -100,3 +101,29 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
+# ── Firebase Configuration ─────────────────────────────────────────
+# Ces paramètres sont requis pour la synchronisation avec Firestore
+# et Firebase Storage (boutique en ligne)
+
+FIREBASE_CREDENTIALS = os.getenv('FIREBASE_CREDENTIALS', '')
+FIREBASE_STORAGE_BUCKET = os.getenv('FIREBASE_STORAGE_BUCKET', '')
+FIREBASE_PROJECT_ID = os.getenv('FIREBASE_PROJECT_ID', '')
+
+# Validation: au moins les credentials doivent être définis en production
+if not DEBUG and not FIREBASE_CREDENTIALS:
+    import warnings
+    warnings.warn(
+        "FIREBASE_CREDENTIALS n'est pas configuré. "
+        "La synchronisation Firestore ne fonctionnera pas."
+    )
+
+# ── CORS Configuration ─────────────────────────────────────────────
+# TODO: Décommenter quand django-cors-headers sera installé (Sprint boutique)
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+#     "http://localhost:3002",
+#     "http://10.158.25.167:3000",
+# ]
+# CORS_ALLOW_CREDENTIALS = True

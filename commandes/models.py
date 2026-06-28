@@ -3,6 +3,16 @@ from django.urls import reverse
 
 
 class Commande(models.Model):
+    BROUILLON = 'BROUILLON'
+    VALIDEE = 'VALIDEE'
+    TRANSFORMEE = 'TRANSFORMEE'
+    
+    STATUT_CHOICES = [
+        (BROUILLON, 'Brouillon'),
+        (VALIDEE, 'Validée'),
+        (TRANSFORMEE, 'Transformée'),
+    ]
+    
     numero = models.IntegerField(unique=True, blank=False)
     date_commande = models.DateField()
     fournisseur = models.ForeignKey(
@@ -18,6 +28,12 @@ class Commande(models.Model):
         verbose_name='Devise',
     )
     taux = models.DecimalField(default=0, max_digits=12, decimal_places=4)
+    statut = models.CharField(
+        max_length=20,
+        choices=STATUT_CHOICES,
+        default=BROUILLON,
+        verbose_name='Statut'
+    )
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     cree_par = models.ForeignKey(

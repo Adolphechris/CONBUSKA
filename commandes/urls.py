@@ -9,8 +9,10 @@ from .views import (
     CommandeLineCreateView,
     CommandeLineUpdateView,
     CommandeSaveView,
+    CommandeTransformerView,
     CommandeUpdateFormView,
     CommandeUpdateView,
+    CommandeValiderView,
     CommandesView,
     ProformaPdfView,
 )
@@ -28,6 +30,9 @@ urlpatterns = [
     path('commande_update_form/<int:pk>/', CommandeUpdateFormView.as_view(), name='get_commande_update_form'),
     path('commande/<int:commande_pk>/delete_article/<int:pk>',
          ArticleCommandeDeleteView.as_view(), name='delete_article_commande'),
+    # Workflow
+    path('commande/<int:pk>/valider', CommandeValiderView.as_view(), name='commande_valider'),
+    path('commande/<int:pk>/transformer', CommandeTransformerView.as_view(), name='commande_transformer'),
     # PDF
     path('commande/<int:pk>/bon-commande', BonCommandePdfView.as_view(), name='bon_commande_pdf'),
     path('commande/<int:pk>/proforma', ProformaPdfView.as_view(), name='proforma_pdf'),

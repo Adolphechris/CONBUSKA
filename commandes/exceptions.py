@@ -22,3 +22,9 @@ class CommandeArticleDuplicatError(CommandeError):
     En pratique, les doublons sont fusionnés silencieusement — cette
     exception sert de filet de sécurité.
     """
+
+
+class CommandeNonValideeError(CommandeError):
+    """
+    Levée quand on tente de transformer une commande qui n'est pas validée.
+    """

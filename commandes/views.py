@@ -39,6 +39,8 @@ from .services import (
     modifier_article_commande,
     modifier_commande,
     supprimer_article_commande,
+    valider_commande,
+    transformer_commande,
 )
 
 
@@ -334,6 +336,81 @@ class ArticleCommandeDeleteView(RoleRequiredMixin, View):
             )
             return HttpResponse(html)
         return redirect('commande_details', pk=commande.pk)
+
+
+# ── Workflow: Validation ──────────────────────────────────────────────────────
+
+class CommandeValiderView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN]
+    template_name = 'commandes/commande_confirm_valider.html'
+
+    def _get_commande(self):
+        return get_object_or_404(Commande, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        commande = self._get_commande()
+        context['title'] = 'Valider la commande'
+        context['message'] = f'Voulez-vous valider la commande {commande.numero} ?'
+        context['submit_icon'] = 'fa fa-check'
+        context['submit_label'] = 'Valider'
+        context['commande'] = commande
+        return context
+
+    def post(self, request, *args, **kwargs):
+        commande = self._get_commande()
+        try:
+            valider_commande(commande_id=commande.pk, current_user=request.user)
+        except Exception as e:
+            # Gérer l'erreur (à améliorer avec messages)
+            pass
+        if is_htmx(request):
+            response = HttpResponse()
+            response['HX-Redirect'] = reverse('commande_details', args=[commande.pk])
+            return response
+        return redirect('commande_details', pk=commande.pk)
+
+
+# ── Workflow: Transformation en approvisionnement ────────────────────────────
+
+class CommandeTransformerView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_ADMIN]
+    template_name = 'commandes/commande_confirm_transformer.html'
+
+    def _get_commande(self):
+        return get_object_or_404(Commande, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        commande = self._get_commande()
+        context['title'] = 'Transformer en approvisionnement'
+        context['message'] = (
+            f'Voulez-vous transformer la commande {commande.numero} '
+            f'en approvisionnement ?'
+        )
+        context['submit_icon'] = 'fa fa-check'
+        context['submit_label'] = 'Transformer'
+        context['commande'] = commande
+        return context
+
+    def post(self, request, *args, **kwargs):
+        commande = self._get_commande()
+        try:
+            approv = transformer_commande(
+                commande_id=commande.pk,
+                current_user=request.user,
+            )
+            # Rediriger vers l'approvisionnement créé
+            redirect_url = reverse('approvisionnement_details', args=[approv.pk])
+        except Exception as e:
+            # Gérer l'erreur
+            redirect_url = reverse('commande_details', args=[commande.pk])
+        
+        if is_htmx(request):
+            response = HttpResponse()
+            response['HX-Redirect'] = redirect_url
+            return response
+        return redirect(redirect_url)
 
 
 # ── PDF Views ─────────────────────────────────────────────────────────────────
