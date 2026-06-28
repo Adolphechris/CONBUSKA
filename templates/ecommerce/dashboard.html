@@ -1,0 +1,182 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Boutique en ligne{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-title" style="margin-bottom:20px;">
+        <div class="title_left">
+            <h3><i class="fa fa-shopping-bag"></i> Boutique en ligne
+                <small>Vue d'ensemble</small>
+            </h3>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row top_tiles" style="margin-bottom:20px;">
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;">
+                <div class="count">{{ total_articles }}</div>
+                <span>Total articles</span>
+            </div>
+        </div>
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;border-left:5px solid #26B99A;">
+                <div class="count" style="color:#26B99A;">{{ publies }}</div>
+                <span>Articles publiés</span>
+            </div>
+        </div>
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;border-left:5px solid #E0E0E0;">
+                <div class="count" style="color:#73879C;">{{ non_publies }}</div>
+                <span>Non publiés</span>
+            </div>
+        </div>
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;border-left:5px solid #F0AD4E;">
+                <div class="count" style="color:#F0AD4E;">{{ sync_en_attente }}</div>
+                <span>Sync en attente</span>
+            </div>
+        </div>
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;border-left:5px solid #d9534f;">
+                <div class="count" style="color:#d9534f;">{{ sync_echouees }}</div>
+                <span>Sync échouées</span>
+            </div>
+        </div>
+        <div class="animated-flip col-lg-2 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile-stats" style="background:#fff;border:1px solid #eaeaea;border-left:5px solid #3498DB;">
+                <div class="count" style="color:#3498DB;">{{ total_images }}</div>
+                <span>Images</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Actions -->
+        <div class="col-md-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2><i class="fa fa-bolt"></i> Actions rapides</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <a href="{% url 'ecommerce_articles' %}" class="btn btn-primary btn-sm" style="margin-right:6px;">
+                        <i class="fa fa-list"></i> Gérer les articles
+                    </a>
+                    <form method="post" action="{% url 'ecommerce_sync_force' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm" style="margin-right:6px;"
+                                onclick="return confirm('Forcer la synchronisation de tous les articles publiés vers Firestore ?');">
+                            <i class="fa fa-refresh"></i> Forcer la synchronisation
+                        </button>
+                    </form>
+                    <a href="{% url 'ecommerce_sync_logs' %}" class="btn btn-info btn-sm" style="margin-right:6px;">
+                        <i class="fa fa-file-text-o"></i> Logs de sync
+                    </a>
+                    <a href="{% url 'ecommerce_sync_queue' %}" class="btn btn-default btn-sm">
+                        <i class="fa fa-tasks"></i> File d'attente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Articles publiés récents -->
+        <div class="col-md-7">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2><i class="fa fa-check-circle"></i> Articles publiés récents</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div class="table-responsive">
+                        <table class="table table-striped jambo_table">
+                            <thead>
+                                <tr class="headings">
+                                    <th>Code</th>
+                                    <th>Désignation</th>
+                                    <th>Catégorie</th>
+                                    <th class="text-center">Publié le</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles_publies %}
+                                <tr>
+                                    <td><span class="label label-default">{{ article.code }}</span></td>
+                                    <td>{{ article.designation }}</td>
+                                    <td>{{ article.categorie|default:"—" }}</td>
+                                    <td class="text-center text-muted" style="font-size:12px;">
+                                        {{ article.derniere_sync_firestore|date:"d/m/Y H:i"|default:"—" }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted" style="padding:30px;">
+                                        <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                        Aucun article publié pour le moment
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs récents -->
+        <div class="col-md-5">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2><i class="fa fa-history"></i> Activité récente</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <table class="table table-striped">
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td style="width:30px;">
+                                    {% if log.success %}
+                                        <i class="fa fa-check-circle" style="color:#26B99A;"></i>
+                                    {% else %}
+                                        <i class="fa fa-exclamation-circle" style="color:#d9534f;"></i>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size:12px;">
+                                    <strong>{{ log.article_code }}{{ log.commande_id|default:"" }}</strong>
+                                    <br><span class="text-muted">{{ log.message|truncatechars:60 }}</span>
+                                    <br><span class="text-muted" style="font-size:11px;">{{ log.timestamp|timesince }} ago</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td class="text-center text-muted" style="padding:30px;">
+                                    <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                    Aucune activité
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('#ecommerce').addClass('current-page');
+    $('#ecommerce').parent().addClass('active');
+});
+</script>
+{% endblock %}

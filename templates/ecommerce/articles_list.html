@@ -1,0 +1,164 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Articles — Boutique en ligne{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-title" style="margin-bottom:20px;">
+        <div class="title_left">
+            <h3><i class="fa fa-shopping-bag"></i> Gestion des publications
+                <small>{{ articles|length }} article{{ articles|length|pluralize }}</small>
+            </h3>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="x_panel">
+        <div class="x_title">
+            <h2><i class="fa fa-filter"></i> Filtres</h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+            <form method="get" class="form-inline" style="gap:10px;display:flex;flex-wrap:wrap;align-items:flex-end;">
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">Recherche</label>
+                    <input type="text" name="q" value="{{ q }}" class="form-control input-sm"
+                           placeholder="Code ou désignation...">
+                </div>
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">Statut</label>
+                    <select name="filtre" class="form-control input-sm">
+                        <option value="tous" {% if filtre == 'tous' %}selected{% endif %}>Tous</option>
+                        <option value="publies" {% if filtre == 'publies' %}selected{% endif %}>Publiés</option>
+                        <option value="non_publies" {% if filtre == 'non_publies' %}selected{% endif %}>Non publiés</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa fa-search"></i> Filtrer
+                    </button>
+                    <a href="{% url 'ecommerce_articles' %}" class="btn btn-default btn-sm" style="margin-left:6px;">
+                        <i class="fa fa-times"></i> Réinitialiser
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="x_panel">
+        <div class="x_content">
+            <div class="table-responsive">
+                <table id="tableArticles" class="table table-striped table-bordered jambo_table">
+                    <thead>
+                        <tr class="headings">
+                            <th>Code</th>
+                            <th>Désignation</th>
+                            <th>Catégorie</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center">Dernière sync</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                        <tr>
+                            <td><span class="label label-default">{{ article.code }}</span></td>
+                            <td>{{ article.designation }}</td>
+                            <td>{{ article.categorie|default:"—" }}</td>
+                            <td class="text-center">{{ article.stock|default:0 }}</td>
+                            <td class="text-center">
+                                {% if article.est_publie %}
+                                    <span class="label label-success">
+                                        <i class="fa fa-globe"></i> En ligne
+                                    </span>
+                                {% else %}
+                                    <span class="label label-default">
+                                        <i class="fa fa-circle-o"></i> Hors ligne
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-muted" style="font-size:12px;">
+                                {{ article.derniere_sync_firestore|date:"d/m/Y H:i"|default:"—" }}
+                            </td>
+                            <td class="text-center">
+                                <form method="post" action="{% url 'ecommerce_toggle' article.pk %}?next={{ request.path }}?{{ request.GET.urlencode }}"
+                                      style="display:inline;">
+                                    {% csrf_token %}
+                                    {% if article.est_publie %}
+                                        <button type="submit" class="btn btn-danger btn-xs"
+                                                onclick="return confirm('Dépublier « {{ article.designation }} » de la boutique en ligne ?');">
+                                            <i class="fa fa-eye-slash"></i> Dépublier
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-success btn-xs"
+                                                onclick="return confirm('Publier « {{ article.designation }} » sur la boutique en ligne ?');">
+                                            <i class="fa fa-globe"></i> Publier
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted" style="padding:30px;">
+                                <i class="fa fa-inbox fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                Aucun article pour ces critères
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="text-center" style="margin-top:15px;">
+                <ul class="pagination pagination-sm">
+                    {% if page_obj.has_previous %}
+                        <li><a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre %}filtre={{ filtre }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&laquo;</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="active"><span>{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre %}filtre={{ filtre }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li><a href="?{% if q %}q={{ q }}&{% endif %}{% if filtre %}filtre={{ filtre }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('#ecommerce').addClass('current-page');
+    $('#ecommerce').parent().addClass('active');
+    $('#tableArticles').DataTable({
+        "pageLength": 50,
+        "order": [[ 0, "desc" ]],
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/fr.json"
+        }
+    });
+});
+</script>
+{% endblock %}

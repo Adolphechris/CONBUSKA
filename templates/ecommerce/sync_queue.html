@@ -1,0 +1,145 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}File d'attente de synchronisation{% endblock %}
+
+{% block content %}
+<div class="right_col" role="main">
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-title" style="margin-bottom:20px;">
+        <div class="title_left">
+            <h3><i class="fa fa-tasks"></i> File d'attente de synchronisation
+                <small>{{ queue|length }} élément{{ queue|length|pluralize }}</small>
+            </h3>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="x_panel">
+        <div class="x_title">
+            <h2><i class="fa fa-filter"></i> Filtres</h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+            <form method="get" class="form-inline" style="gap:10px;display:flex;flex-wrap:wrap;align-items:flex-end;">
+                <div class="form-group" style="margin-right:10px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:#73879C;margin-bottom:4px;">Statut</label>
+                    <select name="filtre" class="form-control input-sm" onchange="this.form.submit()">
+                        <option value="tous" {% if filtre == 'tous' %}selected{% endif %}>Tous</option>
+                        <option value="pending" {% if filtre == 'pending' %}selected{% endif %}>En attente</option>
+                        <option value="processing" {% if filtre == 'processing' %}selected{% endif %}>En cours</option>
+                        <option value="failed" {% if filtre == 'failed' %}selected{% endif %}>Échoués</option>
+                        <option value="completed" {% if filtre == 'completed' %}selected{% endif %}>Terminés</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa fa-search"></i> Filtrer
+                    </button>
+                    <a href="{% url 'ecommerce_sync_queue' %}" class="btn btn-default btn-sm" style="margin-left:6px;">
+                        <i class="fa fa-times"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="x_panel">
+        <div class="x_content">
+            <div class="table-responsive">
+                <table id="tableQueue" class="table table-striped table-bordered jambo_table">
+                    <thead>
+                        <tr class="headings">
+                            <th>Article</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center">Tentatives</th>
+                            <th>Créé le</th>
+                            <th>Traité le</th>
+                            <th>Erreur</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in queue %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.article.designation }}</strong>
+                                <br><span class="text-muted" style="font-size:11px;">{{ item.article.code }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if item.statut == 'pending' %}
+                                    <span class="label label-warning"><i class="fa fa-clock-o"></i> En attente</span>
+                                {% elif item.statut == 'processing' %}
+                                    <span class="label label-info"><i class="fa fa-spinner fa-spin"></i> En cours</span>
+                                {% elif item.statut == 'completed' %}
+                                    <span class="label label-success"><i class="fa fa-check"></i> Terminé</span>
+                                {% elif item.statut == 'failed' %}
+                                    <span class="label label-danger"><i class="fa fa-times"></i> Échoué</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-{% if item.tentatives > 2 %}danger{% else %}default{% endif %}">
+                                    {{ item.tentatives }}
+                                </span>
+                            </td>
+                            <td style="font-size:12px;color:#73879C;">
+                                {{ item.date_creation|date:"d/m/Y H:i" }}
+                            </td>
+                            <td style="font-size:12px;color:#73879C;">
+                                {{ item.date_traitement|date:"d/m/Y H:i"|default:"—" }}
+                            </td>
+                            <td style="font-size:12px;max-width:300px;" class="text-danger">
+                                {{ item.erreur|truncatechars:60 }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted" style="padding:30px;">
+                                <i class="fa fa-check-circle fa-2x" style="display:block;margin-bottom:10px;opacity:.4;"></i>
+                                File d'attente vide — tout est synchronisé
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="text-center" style="margin-top:15px;">
+                <ul class="pagination pagination-sm">
+                    {% if page_obj.has_previous %}
+                        <li><a href="?filtre={{ filtre }}&page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&laquo;</span></li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="active"><span>{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?filtre={{ filtre }}&page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li><a href="?filtre={{ filtre }}&page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% else %}
+                        <li class="disabled"><span>&raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('#ecommerce').addClass('current-page');
+    $('#ecommerce').parent().addClass('active');
+});
+</script>
+{% endblock %}

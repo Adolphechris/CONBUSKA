@@ -44,6 +44,8 @@ urlpatterns = [
     path('users/', include('users_management.urls')),
     path('parametres/', include('parametres.urls')),
     path('logs/', include('activity_logs.urls')),
+    path('ecommerce/', include('ecommerce.urls')),
+    path('api/', include('api.urls')),
     path("select2/", include("django_select2.urls")),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='jsi18n'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
