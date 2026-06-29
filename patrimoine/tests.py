@@ -194,13 +194,13 @@ class FondsRoulementSignedBalancesTestCase(TestCase):
         ):
             total = FondsRoulementService._compute_tvms()
 
-        self.assertEqual(total, Decimal("84300.00"))
+        self.assertEqual(total[0], Decimal("84300.00"))
 
     def test_compute_tscl_conserve_les_soldes_clients_negatifs(self):
         clients = [
-            SimpleNamespace(solde=lambda: Decimal("100.00")),
-            SimpleNamespace(solde=lambda: Decimal("-40.00")),
-            SimpleNamespace(solde=lambda: Decimal("0.00")),
+            SimpleNamespace(solde_fc=lambda: Decimal("100.00")),
+            SimpleNamespace(solde_fc=lambda: Decimal("-40.00")),
+            SimpleNamespace(solde_fc=lambda: Decimal("0.00")),
         ]
 
         with patch("clients.models.Client.objects.all", return_value=clients):
@@ -210,9 +210,9 @@ class FondsRoulementSignedBalancesTestCase(TestCase):
 
     def test_compute_tscf_conserve_les_soldes_fournisseurs_negatifs(self):
         fournisseurs = [
-            SimpleNamespace(solde=lambda: Decimal("200.00")),
-            SimpleNamespace(solde=lambda: Decimal("-70.00")),
-            SimpleNamespace(solde=lambda: None),
+            SimpleNamespace(solde_fc=lambda: Decimal("200.00")),
+            SimpleNamespace(solde_fc=lambda: Decimal("-70.00")),
+            SimpleNamespace(solde_fc=lambda: None),
         ]
 
         with patch(
@@ -408,10 +408,10 @@ class SuiviCapitauxSignedDisplayTestCase(TestCase):
             },
         ), patch(
             "creanciers.models.Debiteur.objects.all",
-            return_value=[SimpleNamespace(solde=lambda: Decimal("-25.00"))],
+            return_value=[SimpleNamespace(solde_fc=lambda: Decimal("-25.00"))],
         ), patch(
             "creanciers.models.Creancier.objects.all",
-            return_value=[SimpleNamespace(solde=lambda: Decimal("-40.00"))],
+            return_value=[SimpleNamespace(solde_fc=lambda: Decimal("-40.00"))],
         ):
             context = view.get_context_data()
 

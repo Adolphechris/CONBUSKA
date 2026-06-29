@@ -17,7 +17,7 @@ from django.test import TestCase, TransactionTestCase
 from django.contrib.auth import get_user_model
 
 from ecommerce.sync.import_commandes import ImportCommandesService
-from produits.models import Article, Magasin, Stock
+from produits.models import Article, Magasin, Stock, Categorie, Unite
 from clients.models import Client
 from factures.models import Facture, FactureClient
 
@@ -32,7 +32,10 @@ class TestVerificationArticles(TestCase):
             designation="Article Test",
             prix_vente=1000,
             devise="FC",
-            seuil=5
+            seuil=5,
+            seuil_gros=10,
+            categorie=Categorie.objects.create(nom="Test", description=""),
+            unite=Unite.objects.create(nom="Unite Test", description="")
         )
     
     def test_article_existant_ok(self):
@@ -95,7 +98,10 @@ class TestVerificationStocks(TestCase):
             designation="Article Test",
             prix_vente=1000,
             devise="FC",
-            seuil=5
+            seuil=5,
+            seuil_gros=10,
+            categorie=Categorie.objects.create(nom="Test", description=""),
+            unite=Unite.objects.create(nom="Unite Test", description="")
         )
         
         # Créer un lot de stock
@@ -269,7 +275,10 @@ class TestImportIntegration(TransactionTestCase):
             designation="Article Test",
             prix_vente=1000,
             devise="FC",
-            seuil=5
+            seuil=5,
+            seuil_gros=10,
+            categorie=Categorie.objects.create(nom="Test", description=""),
+            unite=Unite.objects.create(nom="Unite Test", description="")
         )
         
         Stock.objects.create(
