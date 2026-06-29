@@ -180,11 +180,69 @@ class Stock(models.Model):
     date_peremption = models.DateField(blank=False, null=False)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
+    
+    # ── Coûts du lot (PAS DE MOYENNE) ─────────────────────────────
+    prix_achat = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        help_text="Prix d'achat net (PAN) - Prix unitaire payé au fournisseur"
+    )
+    frais_approche = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        help_text="Frais d'approche (FA) - Transport, douane, assurance, etc."
+    )
+    prix_vente_detail = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        help_text="Prix de vente détail (PVD) - Prix unitaire en détail"
+    )
+    prix_vente_gros = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        help_text="Prix de vente gros (PVG) - Prix unitaire en gros"
+    )
 
     objects = models.Manager()
 
     def __str__(self):
         return str(self.article)
+
+    @property
+    def cout_total(self):
+        """
+        Coût total du lot = PAN + FA
+        PAS DE MOYENNE : chaque lot garde son propre coût
+        """
+        return self.prix_achat + self.frais_approche
+
+    @property
+    def marge_brute_detail(self):
+        """Marge brute en détail = PVD - coût_total"""
+        return self.prix_vente_detail - self.cout_total
+
+    @property
+    def marge_brute_gros(self):
+        """Marge brute en gros = PVG - coût_total"""
+        return self.prix_vente_gros - self.cout_total
+
+    @property
+    def taux_marge_detail(self):
+        """Taux de marge en détail (%)"""
+        if self.cout_total > 0:
+            return (self.marge_brute_detail / self.cout_total) * 100
+        return 0
+
+    @property
+    def taux_marge_gros(self):
+        """Taux de marge en gros (%)"""
+        if self.cout_total > 0:
+            return (self.marge_brute_gros / self.cout_total) * 100
+        return 0
 
     class Meta:
         constraints = [
