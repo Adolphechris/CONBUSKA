@@ -146,6 +146,10 @@ class Facture(models.Model):
         """
         from produits.services.stock_service import StockService
         
+        # Vérifier que la facture a un PK (évite erreur pendant création factory)
+        if not self.pk:
+            return
+        
         for ligne in self.facture_details.all():
             article = ligne.article
             qte = ligne.qte
