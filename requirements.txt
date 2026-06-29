@@ -1,6 +1,7 @@
+# Core Django (préparation migration v2.0)
 asgiref==3.8.1
 python-decouple==3.8
-Django==5.2.1
+Django==5.2.1  # Migration vers 6.0.x prévue
 django-appconf==1.1.0
 django-filter==25.1
 django-htmx==1.23.0
@@ -18,6 +19,9 @@ python-dateutil==2.9.0.post0
 # Firebase
 firebase-admin==6.7.0
 pytz==2025.1
+
+# API REST (pour v2.0)
+djangorestframework==3.15.2  # Ajouté pour API REST
 
 # Tests
 pytest==9.0.2

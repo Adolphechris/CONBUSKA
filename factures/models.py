@@ -120,6 +120,9 @@ class Facture(models.Model):
                     if self.taux != original.taux:
                         raise ValidationError("Le taux d'une facture validée ne peut pas être modifié.")
 
+            # Validation du stock par lots
+            self._valider_stock_lots()
+
             if self.devise == '$':
                 if self.valeur_usd not in (None, self.total):
                     raise ValidationError("La valeur USD d'une facture en USD doit correspondre au total.")
@@ -131,6 +134,77 @@ class Facture(models.Model):
                     )
 
         return super().clean()
+
+    def _valider_stock_lots(self):
+        """
+        Valide et consomme le stock par lots lors de la validation de facture.
+        
+        RÈGLES:
+        - Si lot est renseigné → vérifier stock suffisant sur CE lot
+        - Si lot est NULL → FIFO automatique sur date_peremption
+        - 1 ligne = N MouvementStock (traçabilité complète)
+        """
+        from produits.services.stock_service import StockService
+        
+        for ligne in self.facture_details.all():
+            article = ligne.article
+            qte = ligne.qte
+            
+            if ligne.lot:
+                # Cas 1: Lot explicite → vérifier CE lot uniquement
+                from produits.models import Stock
+                try:
+                    stock_lot = Stock.objects.get(
+                        magasin__is_principal=True,
+                        article=article,
+                        date_peremption=ligne.lot.date_peremption
+                    )
+                except Stock.DoesNotExist:
+                    raise ValidationError(
+                        f"Lot introuvable pour '{article}' (péremption {ligne.lot.date_peremption})."
+                    )
+                
+                if stock_lot.qte < qte:
+                    raise ValidationError(
+                        f"Stock insuffisant pour '{article}' (lot {ligne.lot.date_peremption}) : "
+                        f"disponible {stock_lot.qte}, demandé {qte}."
+                    )
+                
+                # Débiter le lot
+                StockService.sortir_stock_lot(
+                    magasin=stock_lot.magasin,
+                    article=article,
+                    date_peremption=ligne.lot.date_peremption,
+                    qte=qte,
+                    source=self
+                )
+            else:
+                # Cas 2: Pas de lot → FIFO automatique
+                from parametres.models import Magasin
+                magasin_principal = Magasin.objects.filter(is_principal=True).first()
+                if not magasin_principal:
+                    raise ValidationError("Aucun magasin principal configuré.")
+                
+                mouvements = StockService.sortir_stock_fifo(
+                    magasin=magasin_principal,
+                    article=article,
+                    qte=qte,
+                    source=self
+                )
+                
+                # Lier le premier mouvement à la ligne (pour traçabilité)
+                if mouvements:
+                    from produits.models import Stock
+                    try:
+                        lot_stock = Stock.objects.get(
+                            magasin=magasin_principal,
+                            article=article,
+                            date_peremption=mouvements[0].date_peremption
+                        )
+                        ligne.lot = lot_stock
+                        ligne.save(update_fields=['lot'])
+                    except Stock.DoesNotExist:
+                        pass
 
     def save(self, *args, **kwargs):
         if self.numero is None:
@@ -155,6 +229,8 @@ class Facture(models.Model):
 class DetailsFacture(models.Model):
     facture = models.ForeignKey(Facture, related_name='facture_details', on_delete=models.PROTECT, null=True)
     article = models.ForeignKey('produits.Article', on_delete=models.PROTECT, null=True)
+    lot = models.ForeignKey('produits.Stock', on_delete=models.PROTECT, null=True, blank=True,
+                            help_text="Lot spécifique vendu (pour gestion des péremptions)")
     qte = models.IntegerField()
     prix = models.DecimalField(max_digits=12, decimal_places=2)
     valeur_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True,
