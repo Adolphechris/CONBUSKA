@@ -17,7 +17,10 @@ class CaisseForm(forms.ModelForm):
             'type_mouvement': forms.Select(attrs={'class': 'form-control js-simple-select'}),
             'rubrique': forms.Select(attrs={'class': 'form-control'}),
             'montant': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Montant'}),
-            'motif': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Motif'}),
+            'motif': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Motif *'}),
+        }
+        labels = {
+            'motif': 'Motif *',
         }
 
 
@@ -26,6 +29,8 @@ class CaisseForm(forms.ModelForm):
         self.caisse_pk = kwargs.pop('caisse_pk', None)
         super().__init__(*args, **kwargs)
         self.fields['rubrique'].queryset = RubriqueCaisse.objects.filter(visible=True)
+        # Motif obligatoire pour toute opération
+        self.fields['motif'].required = True
         # In edit mode the server pre-renders the correct dependent field, so we
         # must NOT fire 'load' (it would overwrite the pre-filled content with the
         # first item in the list). Only listen to explicit user changes.

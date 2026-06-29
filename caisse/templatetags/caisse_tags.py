@@ -1,7 +1,14 @@
 from django import template
 from django.utils.safestring import mark_safe
+from decimal import Decimal
 
 register = template.Library()
+
+@register.filter(name='dual_amount')
+def dual_amount(usd_value, rate=None):
+    """Proxy vers currency_tags.dual_amount pour disponibilité globale."""
+    from parametres.templatetags.currency_tags import dual_amount as _dual_amount
+    return _dual_amount(usd_value, rate)
 
 @register.filter(name='dual_from_mouvement')
 def dual_from_mouvement(mouvement):

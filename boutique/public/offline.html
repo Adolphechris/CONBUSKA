@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conbuska - Hors ligne</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #333;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+    
+    p {
+      color: #666;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .status {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .status p {
+      color: #856404;
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .features {
+      text-align: left;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .features h3 {
+      color: #495057;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    
+    .features ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .features li {
+      padding: 8px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .features li:before {
+      content: "✓ ";
+      color: #28a745;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .retry-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .retry-button:hover {
+      transform: translateY(-2px);
+    }
+    
+    .footer {
+      margin-top: 30px;
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    
+    <h1>Vous êtes hors ligne</h1>
+    
+    <p>
+      Conbuska ne peut pas se connecter à Internet. 
+      Certaines fonctionnalités sont limitées, mais vous pouvez toujours :
+    </p>
+    
+    <div class="features">
+      <h3>Fonctionnalités disponibles hors ligne :</h3>
+      <ul>
+        <li>Consulter les données en cache</li>
+        <li>Naviguer dans les pages visitées</li>
+        <li>Préparer des commandes (synchronisées plus tard)</li>
+        <li>Consulter les rapports générés</li>
+      </ul>
+    </div>
+    
+    <div class="status">
+      <p>💡 <strong>Conseil :</strong> Vos actions seront automatiquement synchronisées dès que la connexion sera rétablie.</p>
+    </div>
+    
+    <button class="retry-button" onclick="window.location.reload()">
+      🔄 Réessayer la connexion
+    </button>
+    
+    <div class="footer">
+      Conbuska ERP v1.0 - Mode hors ligne
+    </div>
+  </div>
+  
+  <script>
+    // Détecter le retour en ligne
+    window.addEventListener('online', () => {
+      console.log('Connection restored');
+      window.location.reload();
+    });
+    
+    // Afficher le statut de connexion
+    window.addEventListener('load', () => {
+      if (navigator.onLine) {
+        console.log('Online');
+        window.location.reload();
+      } else {
+        console.log('Offline');
+      }
+    });
+  </script>
+</body>
+</html>

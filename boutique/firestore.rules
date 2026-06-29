@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Articles publics: lecture seule pour tous (sans authentification)
+    // Seul le backend Python peut écrire (via service account)
+    match /articles_publics/{article} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Commandes en ligne: écriture publique (sans auth) avec validation
+    // Permet aux clients de passer des commandes sans créer de compte
+    match /commandes_en_ligne/{commande} {
+      // Personne ne peut lire les commandes (seul l'admin via Firebase Console)
+      allow read: if false;
+      
+      // Création autorisée avec validation stricte
+      allow create: if request.auth == null 
+                    // Validation du client
+                    && request.resource.data.client is map
+                    && request.resource.data.client.nom is string
+                    && request.resource.data.client.nom.size() >= 2
+                    && request.resource.data.client.nom.size() <= 100
+                    && request.resource.data.client.email is string
+                    && request.resource.data.client.email.matches('^[^@]+@[^@]+\\.[^@]+$')
+                    && request.resource.data.client.email.size() <= 100
+                    // Téléphone optionnel mais valide si présent
+                    && (request.resource.data.client.telephone == null 
+                        || request.resource.data.client.telephone is string
+                        || request.resource.data.client.telephone is int)
+                    // Adresse optionnelle
+                    && (request.resource.data.client.adresse == null 
+                        || request.resource.data.client.adresse is string
+                        || request.resource.data.client.adresse.size() <= 500)
+                    // Validation des lignes de commande
+                    && request.resource.data.lignes is list
+                    && request.resource.data.lignes.size() >= 1
+                    && request.resource.data.lignes.size() <= 50
+                    && request.resource.data.lignes.all(ligne,
+                      ligne.code_article is string
+                      && ligne.quantite is int
+                      && ligne.quantite >= 1
+                      && ligne.quantite <= 1000
+                      && ligne.prix_unitaire is number
+                      && ligne.prix_unitaire >= 0
+                      && ligne.nom_article is string)
+                    // Validation du total
+                    && request.resource.data.total is number
+                    && request.resource.data.total >= 0
+                    // Validation du statut
+                    && request.resource.data.statut == 'nouveau'
+                    // Validation de la date
+                    && request.resource.data.date_commande is timestamp;
+      
+      // Pas de modification ni suppression autorisée
+      allow update, delete: if false;
+    }
+    
+    // Collection pour les logs d'activité (optionnel)
+    match /activity_logs/{log} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import transaction
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
@@ -41,6 +42,7 @@ class MouvementCaisseService:
         "avance sur salaire",
         "restauration",
         "assistance sociale",
+        "salaires",
     }
     CHARGE_PARENT_RUBRIQUES = {"charges exploitation", "charges personnelles"}
 
@@ -50,6 +52,22 @@ class MouvementCaisseService:
     def _assert_caisse_ouverte(caisse_courante: CaisseCourante):
         if not caisse_courante.est_ouverte:
             raise ValidationError("La caisse est clôturée")
+
+    @staticmethod
+    def _assert_solde_suffisant(caisse_courante: CaisseCourante, montant_sortie: Decimal):
+        """Règle bloquante : les sorties ne peuvent pas excéder les entrées."""
+        from django.db.models import Sum
+        total_entrees = (
+            MouvementCaisse.objects
+            .filter(caisse=caisse_courante, type_mouvement="ENTREE")
+            .aggregate(total=Sum("montant"))["total"] or Decimal("0")
+        )
+        solde_disponible = caisse_courante.solde_initial + total_entrees
+        if montant_sortie > solde_disponible:
+            raise ValidationError(
+                f"Sortie impossible : le montant ({montant_sortie} CDF) excède "
+                f"le solde disponible ({solde_disponible} CDF)."
+            )
 
     @staticmethod
     def _is_transfert(mouvement: MouvementCaisse) -> bool:
@@ -86,17 +104,34 @@ class MouvementCaisseService:
             miroir.delete()
 
     @staticmethod
-    def _rebuild_impacts(*, impacts):
+    def _rebuild_impacts(*, impacts, skip_rebuild=False):
+        """Rebuild les snapshots et fonds de roulement.
+        
+        Args:
+            impacts: Liste de tuples (caisse_courante, date)
+            skip_rebuild: Si True, ne fait rien (pour les tests)
+        """
+        if skip_rebuild:
+            return
+
         unique_impacts = {
             (caisse_courante.pk, date): caisse_courante
             for caisse_courante, date in impacts
             if caisse_courante is not None and date is not None
         }
 
+        # Batch par date pour éviter les rebuilds multiples
+        dates_by_caisse = {}
         for (caisse_pk, date), caisse_courante in unique_impacts.items():
-            SnapshotService.rebuild_day(caisse_courante=caisse_courante, date=date)
+            if date not in dates_by_caisse:
+                dates_by_caisse[date] = []
+            dates_by_caisse[date].append(caisse_courante)
 
-        for _, date in unique_impacts.keys():
+        for date, caisses in dates_by_caisse.items():
+            for caisse_courante in caisses:
+                SnapshotService.rebuild_day(caisse_courante=caisse_courante, date=date)
+
+        for date in dates_by_caisse.keys():
             FondsRoulementService.rebuild(date)
 
     # ---------- API PUBLIQUE ----------
@@ -116,11 +151,17 @@ class MouvementCaisseService:
             agent_id: Optional[int] = None,
             sous_rubrique_id: Optional[int] = None,
             caisse_destination_id: Optional[int] = None,
+            skip_rebuild: bool = False,
     ) -> MouvementCaisse:
         cls._assert_caisse_ouverte(caisse_courante)
 
         if not form.is_valid():
             raise ValueError("Form invalide")
+
+        # Règle bloquante : les sorties ne peuvent excéder les entrées
+        if form.cleaned_data.get("type_mouvement") == "SORTIE":
+            montant = form.cleaned_data.get("montant", Decimal("0"))
+            cls._assert_solde_suffisant(caisse_courante, montant)
 
         mouvement = form.save(commit=False)
         mouvement.caisse = caisse_courante
@@ -146,7 +187,8 @@ class MouvementCaisseService:
             impacts=[
                 (caisse_courante, mouvement.date_mouvement.date()),
                 *extra_impacts,
-            ]
+            ],
+            skip_rebuild=skip_rebuild,
         )
 
         return mouvement
@@ -165,6 +207,7 @@ class MouvementCaisseService:
             agent_id: Optional[int] = None,
             sous_rubrique_id: Optional[int] = None,
             caisse_destination_id: Optional[int] = None,
+            skip_rebuild: bool = False,
     ) -> MouvementCaisse:
         if not form.is_valid():
             raise ValueError("Form invalide")
@@ -172,6 +215,11 @@ class MouvementCaisseService:
         mouvement = form.instance
         cls._assert_not_mirror(mouvement)
         cls._assert_caisse_ouverte(mouvement.caisse)
+
+        # Règle bloquante : les sorties ne peuvent excéder les entrées
+        nouveau_montant = form.cleaned_data.get("montant", Decimal("0"))
+        if mouvement.type_mouvement == "SORTIE" and nouveau_montant != mouvement.montant:
+            cls._assert_solde_suffisant(mouvement.caisse, nouveau_montant)
 
         miroir_avant = cls._get_transfert_miroir(mouvement)
         old_date = mouvement.date_mouvement.date()
@@ -203,13 +251,13 @@ class MouvementCaisseService:
                 *extra_impacts,
             ]
         )
-        cls._rebuild_impacts(impacts=impacts)
+        cls._rebuild_impacts(impacts=impacts, skip_rebuild=skip_rebuild)
 
         return mouvement
 
     @classmethod
     @transaction.atomic
-    def delete(cls, *, mouvement: MouvementCaisse):
+    def delete(cls, *, mouvement: MouvementCaisse, skip_rebuild: bool = False):
         cls._assert_not_mirror(mouvement)
         cls._assert_caisse_ouverte(mouvement.caisse)
 
@@ -221,7 +269,7 @@ class MouvementCaisseService:
             impacts.append((miroir.caisse, miroir.date_mouvement.date()))
 
         mouvement.delete()
-        cls._rebuild_impacts(impacts=impacts)
+        cls._rebuild_impacts(impacts=impacts, skip_rebuild=skip_rebuild)
 
     # ---------- CALCULS FINANCIERS ----------
 
