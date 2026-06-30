@@ -54,7 +54,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
         """Recherche d'articles"""
         q = request.query_params.get('q', '')
         if q:
-            articles = self.get_queryset().filter(nom__icontains=q)
+            articles = self.get_queryset().filter(designation__icontains=q)
         else:
             articles = self.get_queryset()
         serializer = self.get_serializer(articles, many=True)

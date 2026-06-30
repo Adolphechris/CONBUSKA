@@ -90,20 +90,17 @@ class MouvementCaisseServiceTestCase(TestCase):
             self._valid_form_data(self.caisse.pk),
             caisse_pk=caisse_courante.pk,
         )
-
         mouvement = MouvementCaisseService.create(
             form=form,
             caisse_courante=caisse_courante,
             user=self.user,
             skip_rebuild=True,
         )
-
         self.assertIsNotNone(mouvement.pk)
         self.assertEqual(mouvement.caisse, caisse_courante)
         self.assertEqual(mouvement.type_mouvement, "ENTREE")
         self.assertEqual(mouvement.montant, Decimal("50.00"))
         self.assertEqual(mouvement.motif, "Test mouvement")
-        # Les rebuilds sont skippés dans les tests pour la performance
         mock_snapshot.rebuild_day.assert_not_called()
         mock_fonds.rebuild.assert_not_called()
 
@@ -114,7 +111,6 @@ class MouvementCaisseServiceTestCase(TestCase):
             self._valid_form_data(self.caisse.pk),
             caisse_pk=caisse_courante.pk,
         )
-
         with self.assertRaises(ValidationError) as ctx:
             MouvementCaisseService.create(
                 form=form,
@@ -122,7 +118,6 @@ class MouvementCaisseServiceTestCase(TestCase):
                 user=self.user,
                 skip_rebuild=True,
             )
-
         self.assertIn("clôturée", str(ctx.exception))
         mock_snapshot.rebuild_day.assert_not_called()
         self.assertEqual(MouvementCaisse.objects.count(), 0)
@@ -140,7 +135,6 @@ class MouvementCaisseServiceTestCase(TestCase):
         )
         caisse_courante.est_ouverte = False
         caisse_courante.save()
-
         form = CaisseForm(
             {
                 "type_mouvement": "ENTREE",
@@ -151,13 +145,11 @@ class MouvementCaisseServiceTestCase(TestCase):
             instance=mouvement,
             caisse_pk=caisse_courante.pk,
         )
-
         with self.assertRaises(ValidationError) as ctx:
             MouvementCaisseService.update(
                 form=form,
                 user=self.user,
             )
-
         self.assertIn("clôturée", str(ctx.exception))
         mouvement.refresh_from_db()
         self.assertEqual(mouvement.montant, Decimal("100.00"))
@@ -176,10 +168,8 @@ class MouvementCaisseServiceTestCase(TestCase):
         )
         caisse_courante.est_ouverte = False
         caisse_courante.save()
-
         with self.assertRaises(ValidationError) as ctx:
             MouvementCaisseService.delete(mouvement=mouvement)
-
         self.assertIn("clôturée", str(ctx.exception))
         self.assertTrue(MouvementCaisse.objects.filter(pk=mouvement.pk).exists())
         mock_snapshot.rebuild_day.assert_not_called()
@@ -195,9 +185,7 @@ class MouvementCaisseServiceTestCase(TestCase):
             motif="Supprimé",
             effectue_par=self.user,
         )
-
         MouvementCaisseService.delete(mouvement=mouvement)
-
         self.assertFalse(MouvementCaisse.objects.filter(pk=mouvement.pk).exists())
         mock_snapshot.rebuild_day.assert_called()
 
@@ -208,7 +196,6 @@ class MouvementCaisseServiceTestCase(TestCase):
             self._transfer_form_data(),
             caisse_pk=caisse_source.pk,
         )
-
         mouvement = MouvementCaisseService.create(
             skip_rebuild=True,
             form=form,
@@ -216,14 +203,12 @@ class MouvementCaisseServiceTestCase(TestCase):
             user=self.user,
             caisse_destination_id=self.caisse_destination.pk,
         )
-
         miroir = MouvementCaisse.objects.get(mouvement_transfert_source=mouvement)
         self.assertEqual(mouvement.caisse_destination, self.caisse_destination)
         self.assertEqual(miroir.caisse, caisse_destination)
         self.assertEqual(miroir.type_mouvement, "ENTREE")
         self.assertEqual(miroir.montant, Decimal("75.00"))
         self.assertEqual(MouvementCaisse.objects.filter(mouvement_transfert_source=mouvement).count(), 1)
-        # Les rebuilds sont skippés dans les tests pour la performance
         mock_snapshot.rebuild_day.assert_not_called()
         mock_fonds.rebuild.assert_not_called()
 
@@ -234,7 +219,6 @@ class MouvementCaisseServiceTestCase(TestCase):
             caisse=self.caisse_destination_bis,
             est_ouverte=True,
         )
-
         create_form = CaisseForm(
             self._transfer_form_data(),
             caisse_pk=caisse_source.pk,
@@ -247,7 +231,6 @@ class MouvementCaisseServiceTestCase(TestCase):
             caisse_destination_id=self.caisse_destination.pk,
         )
         miroir_initial = MouvementCaisse.objects.get(mouvement_transfert_source=mouvement)
-
         update_form = CaisseForm(
             self._transfer_form_data(montant="120.00", motif="Transfert modifié"),
             instance=mouvement,
@@ -259,7 +242,6 @@ class MouvementCaisseServiceTestCase(TestCase):
             user=self.user,
             caisse_destination_id=self.caisse_destination_bis.pk,
         )
-
         miroir_initial.refresh_from_db()
         self.assertEqual(miroir_initial.pk, MouvementCaisse.objects.get(mouvement_transfert_source=mouvement).pk)
         self.assertEqual(miroir_initial.caisse, caisse_destination_2)
@@ -282,9 +264,7 @@ class MouvementCaisseServiceTestCase(TestCase):
             caisse_destination_id=self.caisse_destination.pk,
         )
         miroir_pk = MouvementCaisse.objects.get(mouvement_transfert_source=mouvement).pk
-
         MouvementCaisseService.delete(mouvement=mouvement)
-
         self.assertFalse(MouvementCaisse.objects.filter(pk=mouvement.pk).exists())
         self.assertFalse(MouvementCaisse.objects.filter(pk=miroir_pk).exists())
 
@@ -303,10 +283,8 @@ class MouvementCaisseServiceTestCase(TestCase):
             caisse_destination_id=self.caisse_destination.pk,
         )
         miroir = MouvementCaisse.objects.get(mouvement_transfert_source=mouvement)
-
         with self.assertRaises(ValidationError) as ctx:
             MouvementCaisseService.delete(mouvement=miroir)
-
         self.assertIn("miroir", str(ctx.exception))
 
 
@@ -329,7 +307,7 @@ class CaisseClotureIntegrationTestCase(TestCase):
         self.caisse_courante = CaisseCourante.objects.create(
             caisse=self.caisse,
             solde_initial=Decimal("1000.00"),
-            est_ouverte=False,  # Caisse fermée
+            est_ouverte=False,
         )
 
     def test_post_add_mouvement_caisse_fermee_retourne_400(self):
@@ -339,7 +317,6 @@ class CaisseClotureIntegrationTestCase(TestCase):
         csrf_token = self.client.cookies.get("csrftoken", "")
         csrf_token = csrf_token.value if csrf_token else ""
         count_before = MouvementCaisse.objects.count()
-
         response = self.client.post(
             f"/caisse/{self.caisse_courante.pk}",
             data={
@@ -352,7 +329,6 @@ class CaisseClotureIntegrationTestCase(TestCase):
             },
             HTTP_HX_REQUEST="true",
         )
-
         self.assertEqual(response.status_code, 400)
         self.assertEqual(MouvementCaisse.objects.count(), count_before)
         self.assertIn("clôturée", response.content.decode())
@@ -367,10 +343,8 @@ class OuvertureCaisseViewTestCase(TestCase):
             solde_final=None,
             est_ouverte=False,
         )
-
         view = OuvertureCaisseView()
         view.get_caisse = lambda: caisse
-
         self.assertEqual(view.solde_initial(), Decimal("0"))
 
 
@@ -411,26 +385,19 @@ class RubriqueChampViewTestCase(TestCase):
         )
 
     @patch("caisse.views.assert_caisse_write_access")
-    def test_rubrique_transport_reste_sur_le_champ_agent(
-        self,
-        mock_assert_access,
-    ):
+    def test_rubrique_transport_reste_sur_le_champ_agent(self, mock_assert_access):
         rubrique_transport = RubriqueCaisse.objects.create(
             nom="Transport",
             description="Rubrique transport",
             visible=True,
-            classification_metier=(
-                RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION
-            ),
+            classification_metier=RubriqueCaisse.ClassificationMetier.CHARGE_EXPLOITATION,
         )
         request = self.factory.get(
             "/caisse/rubrique-champ/",
             {"rubrique": rubrique_transport.pk},
         )
         request.user = self.user
-
         response = rubrique_champ_view(request, caisse_pk=self.caisse_courante.pk)
-
         self.assertEqual(response.status_code, 200)
         self.assertIn('name="agent"', response.content.decode())
 
@@ -451,7 +418,7 @@ class GetTotalVentesCaisseTestCase(TestCase):
             is_principal=False,
         )
 
-    def _create_caisse_courante(self, *, caisse: Caisse, date_ouverture):
+    def _create_caisse_courante(self, *, caisse, date_ouverture):
         caisse_courante = CaisseCourante.objects.create(
             caisse=caisse,
             ouvert_par=self.user,
@@ -466,90 +433,45 @@ class GetTotalVentesCaisseTestCase(TestCase):
 
     def test_get_total_ventes_caisse_exclut_facture_client(self):
         date_ouverture = timezone.now().replace(
-            hour=8,
-            minute=0,
-            second=0,
-            microsecond=0,
+            hour=8, minute=0, second=0, microsecond=0,
         )
         caisse_courante = self._create_caisse_courante(
-            caisse=self.principal,
-            date_ouverture=date_ouverture,
+            caisse=self.principal, date_ouverture=date_ouverture,
         )
         date_vente = date_ouverture.date()
-
         facture_comptoir = FactureFactory(
-            cree_par=self.user,
-            date_facture=date_vente,
-            client_comptoir="Client comptoir",
-            valide=True,
+            cree_par=self.user, date_facture=date_vente,
+            client_comptoir="Client comptoir", valide=True,
         )
-        DetailsFactureFactory(
-            facture=facture_comptoir,
-            qte=2,
-            prix=Decimal("100.00"),
-        )
-
+        DetailsFactureFactory(facture=facture_comptoir, qte=2, prix=Decimal("100.00"))
         facture_client = FactureFactory(
-            cree_par=self.user,
-            date_facture=date_vente,
-            valide=True,
+            cree_par=self.user, date_facture=date_vente, valide=True,
         )
-        DetailsFactureFactory(
-            facture=facture_client,
-            qte=3,
-            prix=Decimal("100.00"),
-        )
-        FactureClientFactory(
-            facture=facture_client,
-            client=ClientFactory(),
-        )
-
+        DetailsFactureFactory(facture=facture_client, qte=3, prix=Decimal("100.00"))
+        FactureClientFactory(facture=facture_client, client=ClientFactory())
         facture_non_validee = FactureFactory(
-            cree_par=self.user,
-            date_facture=date_vente,
-            client_comptoir="Brouillon",
-            valide=False,
+            cree_par=self.user, date_facture=date_vente,
+            client_comptoir="Brouillon", valide=False,
         )
-        DetailsFactureFactory(
-            facture=facture_non_validee,
-            qte=5,
-            prix=Decimal("100.00"),
-        )
-
+        DetailsFactureFactory(facture=facture_non_validee, qte=5, prix=Decimal("100.00"))
         facture_autre_jour = FactureFactory(
             cree_par=self.user,
             date_facture=date_vente - datetime.timedelta(days=1),
-            client_comptoir="Autre jour",
-            valide=True,
+            client_comptoir="Autre jour", valide=True,
         )
-        DetailsFactureFactory(
-            facture=facture_autre_jour,
-            qte=7,
-            prix=Decimal("100.00"),
-        )
-
+        DetailsFactureFactory(facture=facture_autre_jour, qte=7, prix=Decimal("100.00"))
         total = get_total_ventes_caisse(caisse_courante=caisse_courante)
-
         self.assertEqual(total, Decimal("200.00"))
 
     def test_get_total_ventes_caisse_retourne_zero_hors_caisse_principale(self):
         caisse_courante = self._create_caisse_courante(
-            caisse=self.secondaire,
-            date_ouverture=timezone.now(),
+            caisse=self.secondaire, date_ouverture=timezone.now(),
         )
-
         facture = FactureFactory(
             cree_par=self.user,
             date_facture=caisse_courante.date_ouverture.date(),
-            client_comptoir="Client comptoir",
-            valide=True,
+            client_comptoir="Client comptoir", valide=True,
         )
-        DetailsFactureFactory(
-            facture=facture,
-            qte=2,
-            prix=Decimal("100.00"),
-        )
-
+        DetailsFactureFactory(facture=facture, qte=2, prix=Decimal("100.00"))
         total = get_total_ventes_caisse(caisse_courante=caisse_courante)
-
         self.assertEqual(total, Decimal("0"))

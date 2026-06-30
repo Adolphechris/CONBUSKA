@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DEBUG = True
@@ -166,7 +167,6 @@ REST_FRAMEWORK = {
 }
 
 # ── SimpleJWT Configuration ─────────────────────────────────────────
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
