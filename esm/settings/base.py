@@ -32,11 +32,18 @@ INSTALLED_APPS = [
     'django.forms',
     'django_filters',
     'django_htmx',
+    # API REST
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'drf_spectacular',
+    'api',
     'django_select2',
     'simple_history',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -119,11 +126,63 @@ if not DEBUG and not FIREBASE_CREDENTIALS:
     )
 
 # ── CORS Configuration ─────────────────────────────────────────────
-# TODO: Décommenter quand django-cors-headers sera installé (Sprint boutique)
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://localhost:3001",
-#     "http://localhost:3002",
-#     "http://10.158.25.167:3000",
-# ]
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://10.158.25.167:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# ── REST Framework Configuration ────────────────────────────────────
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour',
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+}
+
+# ── SimpleJWT Configuration ─────────────────────────────────────────
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
+# ── drf-spectacular (Swagger) Configuration ─────────────────────────
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ESM - API REST',
+    'DESCRIPTION': 'API REST pour la boutique ESM (Espace de Services et de Management)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+    },
+}
