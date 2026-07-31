@@ -1,0 +1,29 @@
+Upgrading build.gradle
+Upgrading gradle.properties
+[!] Your app isn't using AndroidX.
+    To avoid potential build failures, you can quickly migrate your app by following the steps on https://docs.flutter.dev/release/breaking-changes/androidx-migration .
+Running Gradle task 'assembleRelease'...                        
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/home/adolphe/snap/flutter/common/flutter/packages/flutter_tools/gradle/build.gradle.kts' line: 7
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'org.gradle.kotlin.kotlin-dsl', version: '2.3.3']
+> Failed to apply plugin class 'org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper'.
+   > ⛔ Gradle Version Incompatible with Kotlin Gradle Plugin
+     Kotlin Gradle Plugin <-> Gradle compatibility issue:
+     The applied Kotlin Gradle is not compatible with the used Gradle version (Gradle 7.5).
+     Solution: Please update the Gradle version to at least Gradle 7.6.3.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 1m 33s
+Running Gradle task 'assembleRelease'...                           94,0s
+Gradle task assembleRelease failed with exit code 1

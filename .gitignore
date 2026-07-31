@@ -17,3 +17,38 @@ __pycache__/
 test_file.txt
 *.sqlite3
 .pytest_cache/
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+
+# Android build artifacts
+**/.gradle/
+**/.cxx/
+**/local.properties
+**/GeneratedPluginRegistrant.java
+**/*.iml
+
+# iOS / macOS build artifacts
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Runner/GeneratedPluginRegistrant.h
+**/ios/Runner/GeneratedPluginRegistrant.m
+**/ios/Pods/
+**/macos/Flutter/ephemeral/
+
+# Linux / Windows Flutter ephemeral
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# Binary / generated files
+**/*.jar
+**/gradlew
+**/gradlew.bat
+**/flutter_export_environment.sh
+**/flutter_lldb_helper.py
+**/flutter_lldbinit
+**/flutter_native_integration.env
