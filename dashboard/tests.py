@@ -94,7 +94,7 @@ class DashboardSoldeCaissesTestCase(TestCase):
             client=ClientFactory(),
         )
 
-        total, detail = DashboardAdminView.get_solde_caisses()
+        total, total_usd, detail = DashboardAdminView.get_solde_caisses()
 
         self.assertEqual(total, Decimal("1230.00"))
         self.assertEqual(len(detail), 1)
@@ -119,7 +119,7 @@ class DashboardSoldeCaissesTestCase(TestCase):
             prix=Decimal("100.00"),
         )
 
-        total, detail = DashboardAdminView.get_solde_caisses()
+        total, total_usd, detail = DashboardAdminView.get_solde_caisses()
 
         self.assertEqual(total, Decimal("1000.00"))
         self.assertEqual(detail[0]["ventes"], Decimal("0"))

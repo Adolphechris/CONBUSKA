@@ -1,3 +1,4 @@
+import datetime
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.db.models import Sum, F, IntegerField, Case, When
@@ -249,22 +250,18 @@ class FactureService:
 
         magasin = Magasin.objects.get(is_principal=True)
 
-        # 1 OUT net par article (FIFO) — verrou optimiste posé ici
-        for detail in facture.facture_details.select_related("article").all():
-            if detail.qte <= 0:
-                continue
-            StockService.sortir_stock_fifo(
-                magasin=magasin,
-                article=detail.article,
-                qte=detail.qte,
-                source=facture,
-            )
+        # Stock est géré par Facture.save() → full_clean() → _valider_stock_lots()
+        # (évite double consommation)
 
         update_fields = ["valide", "actif", "modifie_par", "valeur_usd"]
         facture.valide = True
         facture.actif = False
         facture.modifie_par = user
         if date_facture is not None:
+            if isinstance(date_facture, str):
+                date_facture = datetime.datetime.fromisoformat(
+                    date_facture.replace('Z', '+00:00')
+                ).date()
             facture.date_facture = date_facture
             update_fields.append("date_facture")
         facture.save(update_fields=update_fields)

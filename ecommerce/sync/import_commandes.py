@@ -23,6 +23,10 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from decimal import Decimal
 
+import firebase_admin
+from firebase_admin import firestore
+
+from django.db.models import Max
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -332,7 +336,7 @@ class ImportCommandesService:
                 # Générer un code unique
                 dernier_code = Client.objects.aggregate(
                     max_code=Max('code')
-                )['max_code'] or 2999
+                )['max_code'] or 3000
                 nouveau_code = dernier_code + 1
                 
                 client = Client.objects.create(
@@ -379,7 +383,7 @@ class ImportCommandesService:
                 # Créer la facture en mode DRAFT
                 facture = Facture.objects.create(
                     client_comptoir=client.nom,
-                    devise="CDF",  # Devise principale Conbuska
+                    devise="FC",  # Devise principale Conbuska (max_length=2)
                     taux=taux_usd,
                     cree_par=user_systemique,
                     valide=False  # DRAFT
@@ -557,6 +561,3 @@ class ImportCommandesService:
         }
 
 
-# Import firestore pour Increment
-import firebase_admin
-from firebase_admin import firestore

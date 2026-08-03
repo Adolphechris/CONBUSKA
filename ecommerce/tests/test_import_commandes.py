@@ -148,6 +148,7 @@ class TestVerificationStocks(TestCase):
     
     def test_aucun_magasin_principal(self):
         """Pas de magasin principal → erreur."""
+        Stock.objects.all().delete()
         Magasin.objects.filter(is_principal=True).delete()
         
         lignes = [{'code_article': '1001', 'quantite': 1, 'nom_article': 'Test'}]
@@ -226,6 +227,17 @@ class TestCreationClient(TestCase):
 class TestImportStats(TestCase):
     """Tests pour les statistiques d'import."""
     
+    def setUp(self):
+        """Reset des statistiques globales entre les tests."""
+        import ecommerce.sync.import_commandes as mod
+        mod._import_stats.clear()
+        mod._import_stats.update({
+            'dernier_import': None,
+            'commandes_importees': 0,
+            'commandes_en_erreur': 0,
+            'dernieres_erreurs': [],
+        })
+    
     def test_get_import_stats_vide(self):
         """Stats vides au début."""
         stats = ImportCommandesService.get_import_stats()
@@ -288,14 +300,12 @@ class TestImportIntegration(TransactionTestCase):
             date_peremption="2026-12-31"
         )
     
-    @patch('ecommerce.sync.import_commandes.FirestoreSyncService')
-    def test_import_commande_valide(self, mock_firestore):
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._mettre_a_jour_succes')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._synchroniser_stocks_articles')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._recuperer_commandes_nouveau')
+    def test_import_commande_valide(self, mock_recup, mock_sync_stocks, mock_update_succes):
         """Test import d'une commande valide."""
-        # Mock Firestore
         mock_db = MagicMock()
-        mock_firestore._get_firestore_client.return_value = mock_db
-        
-        # Simuler une commande Firestore
         mock_doc = MagicMock()
         mock_doc.id = 'CMD001'
         mock_doc.to_dict.return_value = {
@@ -316,8 +326,7 @@ class TestImportIntegration(TransactionTestCase):
             ],
             'total': 2000
         }
-        
-        mock_db.collection.return_value.where.return_value.stream.return_value = [mock_doc]
+        mock_recup.return_value = {'CMD001': mock_doc.to_dict.return_value}
         
         # Exécuter l'import
         resultat = ImportCommandesService.importer_commandes(limit=1)
@@ -334,15 +343,12 @@ class TestImportIntegration(TransactionTestCase):
         stock = Stock.objects.get(article=self.article)
         self.assertEqual(stock.qte, 98)  # 100 - 2
     
-    @patch('ecommerce.sync.import_commandes.FirestoreSyncService')
-    def test_import_article_inexistant(self, mock_firestore):
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._mettre_a_jour_succes')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._synchroniser_stocks_articles')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._recuperer_commandes_nouveau')
+    def test_import_article_inexistant(self, mock_recup, mock_sync_stocks, mock_update_succes):
         """Test import avec article inexistant."""
-        mock_db = MagicMock()
-        mock_firestore._get_firestore_client.return_value = mock_db
-        
-        mock_doc = MagicMock()
-        mock_doc.id = 'CMD001'
-        mock_doc.to_dict.return_value = {
+        mock_doc_data = {
             'date_commande': '2026-06-27T20:00:00Z',
             'client': {
                 'nom': 'Client Test',
@@ -360,8 +366,7 @@ class TestImportIntegration(TransactionTestCase):
             ],
             'total': 1000
         }
-        
-        mock_db.collection.return_value.where.return_value.stream.return_value = [mock_doc]
+        mock_recup.return_value = {'CMD001': mock_doc_data}
         
         resultat = ImportCommandesService.importer_commandes(limit=1)
         
@@ -374,15 +379,12 @@ class TestImportIntegration(TransactionTestCase):
         factures = Facture.objects.filter(valide=True)
         self.assertEqual(factures.count(), 0)
     
-    @patch('ecommerce.sync.import_commandes.FirestoreSyncService')
-    def test_import_stock_insuffisant(self, mock_firestore):
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._mettre_a_jour_succes')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._synchroniser_stocks_articles')
+    @patch('ecommerce.sync.import_commandes.ImportCommandesService._recuperer_commandes_nouveau')
+    def test_import_stock_insuffisant(self, mock_recup, mock_sync_stocks, mock_update_succes):
         """Test import avec stock insuffisant."""
-        mock_db = MagicMock()
-        mock_firestore._get_firestore_client.return_value = mock_db
-        
-        mock_doc = MagicMock()
-        mock_doc.id = 'CMD001'
-        mock_doc.to_dict.return_value = {
+        mock_doc_data = {
             'date_commande': '2026-06-27T20:00:00Z',
             'client': {
                 'nom': 'Client Test',
@@ -400,8 +402,7 @@ class TestImportIntegration(TransactionTestCase):
             ],
             'total': 200000
         }
-        
-        mock_db.collection.return_value.where.return_value.stream.return_value = [mock_doc]
+        mock_recup.return_value = {'CMD001': mock_doc_data}
         
         resultat = ImportCommandesService.importer_commandes(limit=1)
         

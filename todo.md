@@ -6,25 +6,32 @@
 - Finaliser la paie: ✅
 - Finaliser les rapports: ✅
 - Correction bug TemplateSyntaxError rapport_resultat.html ✅
+- Tests unitaires: ✅ (344/344 tests passent)
+- CI/CD GitHub Actions: ✅
+- Endpoint /health/: ✅
+- Configuration production: ✅ (.env.production.example, Sentry)
+- Scripts déploiement backend: ✅ (deploy_backend.sh, systemd, nginx, backup_v1.sh)
+- Configuration frontend Vercel: ✅ (vercel.json)
+- Règles Firestore: ✅ (déjà configurées)
 
-# 🏗️ Phase A — Fondations Dual Currency ✅
-- A1: valeur_usd + taux sur MouvementCaisse ✅
-- A2: solde_initial_usd/solde_final_usd sur CaisseCourante ✅
-- A3: valeur_usd + taux_creation sur DetailsFacture ✅
-- A4+A5: valeur_usd + taux sur MouvementCaisseAgent/Charges ✅
-- A6: solde() retourne USD par défaut (Client, Fournisseur, Creancier, Debiteur) ✅
+# Plan de déploiement vers production — EN COURS
+- Phase 0: Infra & CI ✅
+- Phase 1: Correction bugs ✅ (paie, ecommerce, factures, conbuska_ai, API)
+- Phase 2: Tests ✅ (344/344)
+- Phase 3: CI/CD ✅
+- Phase 4: Config production ✅
+- Phase 5: Déploiement backend — À exécuter sur le serveur VPS
+- Phase 6: Déploiement frontend — À connecter vers Vercel
+- Phase 7: Validation & monitoring — À finaliser en production
 
-# 🔧 Phase E — Taux de change ✅
-- E1: modifie_par sur TauxEchange ✅
-- Migrations générées et appliquées ✅
-
-# 🎨 Phase B — Affichage Dual Currency ✅
-- B1: Dashboard (KPIs financiers) ✅
-- B2: Fiche produit ✅
-- B3: Factures ✅
-- B4: Approvisionnements ✅
-- B5: Rapports ✅
-- B6: Paie ✅
+# État actuel
+- Branche: release/production-v1
+- Tests: 344/344 passent
+- Backend: prêt pour déploiement (scripts + services systemd + nginx config)
+- Frontend: vercel.json + firebase.json prêts
+- Firestore: règles déjà en place
+- Monitoring: Sentry configuré (à activer avec SENTRY_DSN)
+- Sauvegarde: script backup_v1.sh prêt (cron quotidien 2h00)
 
 # 📋 Phases terminées
 - Phase C: Paie (valeur_usd + état récapitulatif) ✅
@@ -32,4 +39,4 @@
 - Audit approfondi Patrimoine + corrections P1-P5 ✅
 - Correction bug rapport_resultat.html (double accolades) ✅
 
-# 🚀 Projet ESM — CHANTIER CLOS
+# 🚀 Projet ESM — PRÊT POUR DÉPLOIEMENT PRODUCTION

@@ -407,8 +407,8 @@ class FirestoreSyncService:
         last_error = None
         for attempt in range(MAX_RETRIES):
             try:
-                func()
-                return
+                result = func()
+                return result
             except Exception as e:
                 last_error = e
                 if attempt < MAX_RETRIES - 1:

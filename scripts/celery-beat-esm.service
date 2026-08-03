@@ -1,0 +1,17 @@
+[Unit]
+Description=Celery Beat Scheduler for ESM Django
+After=network.target celery-esm.service
+Requires=celery-esm.service
+
+[Service]
+User=esm
+Group=esm
+WorkingDirectory=/var/www/esm
+EnvironmentFile=/var/www/esm/.env.production
+ExecStart=/var/www/esm/venv/bin/celery -A esm beat -l info
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

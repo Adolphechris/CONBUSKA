@@ -86,3 +86,12 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@esm.app')
 # ── Static & Media ──────────────────────────────────────────────────
 STATIC_ROOT = config('STATIC_ROOT', default='/var/www/esm/static')
 MEDIA_ROOT = config('MEDIA_ROOT', default='/var/www/esm/media')
+
+# ── Sentry ──────────────────────────────────────────────────────────
+if config('SENTRY_DSN', default=''):
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=config('SENTRY_DSN'),
+        traces_sample_rate=config('SENTRY_TRACES_SAMPLE_RATE', default=0.1, cast=float),
+        send_default_pii=False,
+    )

@@ -408,10 +408,10 @@ class SuiviCapitauxSignedDisplayTestCase(TestCase):
             },
         ), patch(
             "creanciers.models.Debiteur.objects.all",
-            return_value=[SimpleNamespace(solde_fc=lambda: Decimal("-25.00"))],
+            return_value=[SimpleNamespace(solde=lambda: Decimal("-25.00"))],
         ), patch(
             "creanciers.models.Creancier.objects.all",
-            return_value=[SimpleNamespace(solde_fc=lambda: Decimal("-40.00"))],
+            return_value=[SimpleNamespace(solde=lambda: Decimal("-40.00"))],
         ):
             context = view.get_context_data()
 

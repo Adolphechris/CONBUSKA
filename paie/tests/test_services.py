@@ -216,12 +216,14 @@ class TestCreerPaie:
         rubrique_avance = RubriqueCaisseFactory(nom="Avance sur salaire")
 
         mv_transport = MouvementCaisseFactory(
-            caisse=caisse, rubrique=rubrique_transport, montant=Decimal('200.00')
+            caisse=caisse, rubrique=rubrique_transport, montant=Decimal('200.00'),
+            type_mouvement='ENTREE',
         )
         MouvementCaisseAgentFactory(mouvement_caisse=mv_transport, agent=agent)
 
         mv_avance = MouvementCaisseFactory(
-            caisse=caisse, rubrique=rubrique_avance, montant=Decimal('500.00')
+            caisse=caisse, rubrique=rubrique_avance, montant=Decimal('500.00'),
+            type_mouvement='SORTIE',
         )
         MouvementCaisseAgentFactory(mouvement_caisse=mv_avance, agent=agent)
 

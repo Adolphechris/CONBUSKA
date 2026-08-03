@@ -25,6 +25,7 @@ class AgentCreateInput:
     departement: str = ""
     type_contrat: str = TypeContrat.CDI
     email: str | None = None
+    matricule: str | None = None
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,17 @@
+[Unit]
+Description=Celery Service for ESM Django
+After=network.target redis-server.service
+Requires=redis-server.service
+
+[Service]
+User=esm
+Group=esm
+WorkingDirectory=/var/www/esm
+EnvironmentFile=/var/www/esm/.env.production
+ExecStart=/var/www/esm/venv/bin/celery -A esm worker -l info
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

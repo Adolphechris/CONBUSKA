@@ -1,0 +1,26 @@
+[Unit]
+Description=Gunicorn daemon for ESM Django API
+After=network.target
+
+[Service]
+User=esm
+Group=esm
+WorkingDirectory=/var/www/esm
+EnvironmentFile=/var/www/esm/.env.production
+ExecStart=/var/www/esm/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/gunicorn-esm.sock \
+    --access-logfile /var/log/esm/gunicorn-access.log \
+    --error-logfile /var/log/esm/gunicorn-error.log \
+    esm.wsgi:application \
+    --chdir /var/www/esm
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=5
+Type=notify
+NotifyAccess=on
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
