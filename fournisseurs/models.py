@@ -1,6 +1,6 @@
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Max
 from approvisionnements.models import DetailsApprovisionnement, TypeFrais, FraisApprovisionnement
 from caisse.models import MouvementCaisseFournisseur
 
@@ -51,7 +51,7 @@ class Fournisseur(models.Model):
         return self.total_mouvements() - self.total_paiements()
 
     def total_mouvements(self):
-        from django.db.models import ExpressionWrapper, F, DecimalField
+        from django.db.models import ExpressionWrapper, DecimalField
         return (
             self.mouvements()
             .aggregate(
@@ -73,12 +73,9 @@ class Fournisseur(models.Model):
 
     @property
     def get_next_code(self):
-        last_code = Fournisseur.objects.all().order_by('-code')[:1]
-        try:
-            code = [i.code + 1 for i in last_code][0]
-        except IndexError:
-            code = 2000
-        return code
+        with transaction.atomic():
+            last_code = Fournisseur.objects.select_for_update().aggregate(mcode=Max("code"))["mcode"]
+        return (last_code + 1) if last_code else 2000
 
     def save(self, *args, **kwargs):
         if self.code is None:

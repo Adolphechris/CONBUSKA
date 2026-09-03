@@ -667,14 +667,14 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
         # KPI : dernier snapshot GLOBAL (instant T, indépendant du filtre)
         dernier_global = FondsRoulementSnapshot.objects.order_by("-date").first()
         fr_final = dernier_global.fr_final if dernier_global else Decimal("0")
-        fr_contreverif = dernier_global.fr_contreverif if dernier_global else Decimal("0")
+        fr_calcule = dernier_global.fr_calcule if dernier_global else Decimal("0")
         ecart = dernier_global.ecart if dernier_global else Decimal("0")
 
         # Dual currency: conversion USD des valeurs FR
         from parametres.models import get_taux_usd_cdf
         taux = Decimal(str(get_taux_usd_cdf(today)))
         fr_final_usd = (fr_final / taux) if taux else Decimal('0')
-        fr_contreverif_usd = (fr_contreverif / taux) if taux else Decimal('0')
+        fr_calcule_usd = (fr_calcule / taux) if taux else Decimal('0')
         ecart_usd = (ecart / taux) if taux else Decimal('0')
 
         # Contre-vérification live (composantes détaillées, instant T)
@@ -704,8 +704,8 @@ class SuiviCapitauxView(RoleRequiredMixin, TemplateView):
             # KPI tiles (instant T)
             "fr_final": fr_final,
             "fr_final_usd": fr_final_usd,
-            "fr_contreverif": fr_contreverif,
-            "fr_contreverif_usd": fr_contreverif_usd,
+            "fr_contreverif": fr_calcule,
+            "fr_contreverif_usd": fr_calcule_usd,
             "ecart": ecart,
             "ecart_usd": ecart_usd,
             "fonds_propre": fonds_propre,

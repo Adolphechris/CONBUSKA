@@ -91,7 +91,7 @@ class PatrimoinePDFService:
                 _fmt(s.ej, s.ej_usd, taux),
                 _fmt(s.sj, s.sj_usd, taux),
                 _fmt(s.fr_final, s.fr_final_usd, taux),
-                _fmt(s.fr_contreverif, None, None),  # Contre-vérif FC uniquement (historique)
+                _fmt(s.fr_calcule, None, None),  # Contre-vérif FC uniquement (historique)
                 _fmt(s.ecart, None, None),  # Écart FC uniquement
             ]
             for s in snapshots

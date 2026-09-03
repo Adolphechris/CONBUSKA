@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from produits.models import Article, Categorie
-from parametres.models import TauxEchange
+from parametres.models import get_taux_usd_cdf
 
 
 class CategorieSerializer(serializers.ModelSerializer):
@@ -14,7 +14,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     nom = serializers.CharField(source='designation', read_only=True)
     prix_fc = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
-    stock_dispo = serializers.IntegerField(read_only=True, default=0)
+    stock_dispo = serializers.SerializerMethodField()
     valeur_usd = serializers.SerializerMethodField()
 
     class Meta:
@@ -26,9 +26,12 @@ class ArticleSerializer(serializers.ModelSerializer):
             'est_publie', 'stock_dispo', 'devise', 'slug',
         ]
 
+    def get_stock_dispo(self, obj):
+        return obj.stock
+
     def get_prix_fc(self, obj):
         try:
-            taux = TauxEchange.get_taux_usd_cdf()
+            taux = get_taux_usd_cdf()
             if obj.devise == '$' and taux:
                 return round(float(obj.prix_vente) * float(taux), 2)
             return float(obj.prix_vente)
@@ -39,7 +42,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         try:
             if obj.devise == '$':
                 return float(obj.prix_vente)
-            taux = TauxEchange.get_taux_usd_cdf()
+            taux = get_taux_usd_cdf()
             if taux:
                 return round(float(obj.prix_vente) / float(taux), 2)
             return float(obj.prix_vente)
@@ -59,7 +62,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
     nom = serializers.CharField(source='designation', read_only=True)
     prix_fc = serializers.SerializerMethodField()
     valeur_usd = serializers.SerializerMethodField()
-    stock_dispo = serializers.IntegerField(read_only=True, default=0)
+    stock_dispo = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -70,9 +73,12 @@ class ArticleListSerializer(serializers.ModelSerializer):
             'image_url', 'est_publie', 'stock_dispo',
         ]
 
+    def get_stock_dispo(self, obj):
+        return obj.stock
+
     def get_prix_fc(self, obj):
         try:
-            taux = TauxEchange.get_taux_usd_cdf()
+            taux = get_taux_usd_cdf()
             if obj.devise == '$' and taux:
                 return round(float(obj.prix_vente) * float(taux), 2)
             return float(obj.prix_vente)
@@ -83,7 +89,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
         try:
             if obj.devise == '$':
                 return float(obj.prix_vente)
-            taux = TauxEchange.get_taux_usd_cdf()
+            taux = get_taux_usd_cdf()
             if taux:
                 return round(float(obj.prix_vente) / float(taux), 2)
             return float(obj.prix_vente)

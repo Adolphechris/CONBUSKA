@@ -227,8 +227,8 @@ class FondsRoulementService:
         ej = FondsRoulementService.compute_ej(date)
         sj = FondsRoulementService.compute_sj(date)
         fr_final = fr_initial + ej - sj
-        fr_contreverif = FondsRoulementService.compute_contreverification()
-        ecart = fr_final - fr_contreverif
+        fr_calcule = FondsRoulementService.compute_contreverification()
+        ecart = fr_final - fr_calcule
 
         # Dual currency: calculer les valeurs USD
         taux = FondsRoulementService._get_taux()
@@ -245,7 +245,7 @@ class FondsRoulementService:
                 "ej": ej,
                 "sj": sj,
                 "fr_final": fr_final,
-                "fr_contreverif": fr_contreverif,
+                "fr_calcule": fr_calcule,
                 "ecart": ecart,
                 "taux_jour": taux_jour,
                 "fr_initial_usd": fr_initial_usd,

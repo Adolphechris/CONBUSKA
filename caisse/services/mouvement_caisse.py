@@ -56,13 +56,17 @@ class MouvementCaisseService:
     @staticmethod
     def _assert_solde_suffisant(caisse_courante: CaisseCourante, montant_sortie: Decimal):
         """Règle bloquante : les sorties ne peuvent pas excéder les entrées."""
-        from django.db.models import Sum
         total_entrees = (
             MouvementCaisse.objects
             .filter(caisse=caisse_courante, type_mouvement="ENTREE")
             .aggregate(total=Sum("montant"))["total"] or Decimal("0")
         )
-        solde_disponible = caisse_courante.solde_initial + total_entrees
+        total_sorties = (
+            MouvementCaisse.objects
+            .filter(caisse=caisse_courante, type_mouvement="SORTIE")
+            .aggregate(total=Sum("montant"))["total"] or Decimal("0")
+        )
+        solde_disponible = caisse_courante.solde_initial + total_entrees - total_sorties
         if montant_sortie > solde_disponible:
             raise ValidationError(
                 f"Sortie impossible : le montant ({montant_sortie} CDF) excède "

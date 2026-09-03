@@ -34,6 +34,10 @@ class SnapshotMensuel(models.Model):
 
     est_cloture = models.BooleanField(default=False)
 
+    # Dual currency: valeurs USD
+    taux_mensuel = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    solde_fin_mois_usd = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+
     class Meta:
         unique_together = ('annee', 'mois', 'caisse')
 
@@ -88,7 +92,7 @@ class FondsRoulementSnapshot(models.Model):
     ej = models.DecimalField(max_digits=16, decimal_places=2)
     sj = models.DecimalField(max_digits=16, decimal_places=2)
     fr_final = models.DecimalField(max_digits=16, decimal_places=2)
-    fr_contreverif = models.DecimalField(max_digits=16, decimal_places=2)
+    fr_calcule = models.DecimalField(max_digits=16, decimal_places=2, help_text="FR recalculé pour vérification")
     ecart = models.DecimalField(max_digits=16, decimal_places=2)
 
     # Dual currency: valeurs USD historiques (immuables après création)

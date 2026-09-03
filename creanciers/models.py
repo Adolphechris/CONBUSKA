@@ -59,7 +59,7 @@ class Creancier(models.Model):
     @classmethod
     def get_next_code(cls):
         with transaction.atomic():
-            last = cls.objects.select_for_update().aggregate(Max("code"))["code__max"]
+            last = cls.objects.select_for_update().aggregate(mcode=Max("code"))["mcode"]
             return (last + 1) if last else 4000
 
     def save(self, *args, **kwargs):
@@ -126,7 +126,7 @@ class Debiteur(models.Model):
     @classmethod
     def get_next_code(cls):
         with transaction.atomic():
-            last = cls.objects.select_for_update().aggregate(Max("code"))["code__max"]
+            last = cls.objects.select_for_update().aggregate(mcode=Max("code"))["mcode"]
             return (last + 1) if last else 5000
 
     def save(self, *args, **kwargs):

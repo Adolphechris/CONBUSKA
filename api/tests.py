@@ -1,10 +1,14 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from produits.models import Categorie, Article
+from produits.models import Categorie, Article, Stock, Magasin
 from parametres.models import TauxEchange
 from django.db.models.signals import post_save, pre_delete
 from produits.models import Article as ArticleModel, Stock
+
+
+def _setup_stock(article, magasin, qte):
+    Stock.objects.create(magasin=magasin, article=article, qte=qte, date_peremption="2025-12-31")
 
 
 class ApiTests(TestCase):
@@ -55,6 +59,15 @@ class ApiTests(TestCase):
             emplacement="A1",
             est_publie=True,
         )
+        TauxEchange.objects.create(
+            devise_source='USD', devise_cible='CDF',
+            taux=2500, effective_date="2024-01-01",
+        )
+        # Stock magasin principal
+        try:
+            self.magasin = Magasin.objects.get(is_principal=True)
+        except Magasin.DoesNotExist:
+            self.magasin = Magasin.objects.create(nom="Principal", is_principal=True)
 
     def test_list_categories(self):
         """GET /api/categories/"""
@@ -72,7 +85,19 @@ class ApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["nom"], "Article Test")
 
-    def test_nouveautes(self):
+    def test_detail_article_stock_dispo(self):
+        """GET /api/articles/{id}/ — stock_dispo lit obj.stock"""
+        _setup_stock(self.article, self.magasin, 15)
+        response = self.client.get(f"/api/articles/{self.article.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["stock_dispo"], 15)
+
+    def test_list_articles_with_stock(self):
+        """GET /api/articles/ — ArticleListSerializer renvoie stock_dispo"""
+        _setup_stock(self.article, self.magasin, 7)
+        response = self.client.get("/api/articles/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
         """GET /api/articles/nouveautes/"""
         response = self.client.get("/api/articles/nouveautes/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -110,16 +110,20 @@ class Article(models.Model):
 
     @property
     def stock(self):
+        if hasattr(self, '_stock_cache'):
+            return self._stock_cache
         default_magasin = Magasin.objects.only("id").filter(is_principal=True).first()
 
         if not default_magasin:
+            self._stock_cache = 0
             return 0
 
-        return (
+        self._stock_cache = (
             Stock.objects
             .filter(article=self, magasin=default_magasin)
             .aggregate(total=Sum("qte"))["total"] or 0
         )
+        return self._stock_cache
 
     def _get_taux(self):
         from parametres.models import get_taux_usd_cdf

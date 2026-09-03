@@ -386,7 +386,7 @@ class SuiviCapitauxSignedDisplayTestCase(TestCase):
         dernier_global_qs = Mock()
         dernier_global_qs.order_by.return_value.first.return_value = SimpleNamespace(
             fr_final=Decimal("1000.00"),
-            fr_contreverif=Decimal("950.00"),
+            fr_calcule=Decimal("950.00"),
             ecart=Decimal("50.00"),
         )
 

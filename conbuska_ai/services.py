@@ -8,8 +8,14 @@ Intégration Google Gemini + RAG métier.
 from typing import Dict, List, Optional, Any
 from django.conf import settings
 from django.utils import timezone
-import google.generativeai as genai
 from datetime import datetime, timedelta
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+    import logging
+    logging.getLogger(__name__).warning("google.generativeai non installé — mode IA désactivé")
 
 
 class ConbuskaAIService:
@@ -26,7 +32,7 @@ class ConbuskaAIService:
     def __init__(self):
         """Initialise le service avec l'API Gemini."""
         api_key = getattr(settings, 'GEMINI_API_KEY', None)
-        if api_key:
+        if api_key and genai is not None:
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel('gemini-pro')
         else:
@@ -110,7 +116,6 @@ Règles :
         Analyse les ventes et génère des recommandations.
         """
         from factures.models import Facture
-        from datetime import timedelta
         
         date_debut = timezone.now() - timedelta(days=periode_jours)
         
@@ -119,14 +124,24 @@ Règles :
             actif=True
         )
         
-        total_ventes = sum(f.montant_total for f in factures)
+        total_ventes = sum(f.total for f in factures)
         nb_factures = factures.count()
         
         # Top clients
-        from django.db.models import Sum
-        top_clients = factures.values('client__nom').annotate(
-            total=Sum('montant_total')
-        ).order_by('-total')[:5]
+        from factures.models import FactureClient
+        top_clients = []
+        for fc in FactureClient.objects.filter(
+            facture__in=factures
+        ).select_related('client').prefetch_related('facture__facture_details'):
+            total_client = sum(
+                (l.qte * l.prix) for l in fc.facture.facture_details.all()
+            )
+            top_clients.append({
+                'client__nom': fc.client.nom,
+                'total': float(total_client),
+            })
+        top_clients.sort(key=lambda x: x['total'], reverse=True)
+        top_clients = top_clients[:5]
         
         return {
             'periode': f"{periode_jours} derniers jours",
@@ -145,21 +160,21 @@ Règles :
         articles = Article.objects.filter(actif=True)
         
         # Articles en stock bas
-        stock_bas = articles.filter(quantite_stock__lte=10)
+        stock_bas = [a for a in articles if a.stock <= 10]
         
         # Articles en rupture
-        rupture = articles.filter(quantite_stock=0)
+        rupture = [a for a in articles if a.stock == 0]
         
         # Valeur totale du stock
-        valeur_stock = sum(a.quantite_stock * a.prix_achat for a in articles)
+        valeur_stock = sum(a.stock * float(a.prix_achat) for a in articles)
         
         return {
             'total_articles': articles.count(),
-            'articles_stock_bas': stock_bas.count(),
-            'articles_rupture': rupture.count(),
+            'articles_stock_bas': len(stock_bas),
+            'articles_rupture': len(rupture),
             'valeur_stock': float(valeur_stock),
             'alertes': [
-                f"{a.designation}: stock critique ({a.quantite_stock})"
+                f"{a.designation}: stock critique ({a.stock})"
                 for a in stock_bas[:10]
             ]
         }
@@ -177,7 +192,11 @@ Règles :
         
         total_salaire_brut = sum(b.salaire_brut for b in bulletins)
         total_net = sum(b.net_a_payer for b in bulletins)
-        total_cnss = sum(b.total_retenues for b in bulletins if 'CNSS' in str(b.lignes))
+        sum(
+            l.montant for b in bulletins
+            for l in b.lignes.all()
+            if 'CNSS' in l.libelle
+        )
         
         return {
             'mois': mois.strftime('%m/%Y'),
@@ -200,9 +219,10 @@ Règles :
 - Panier moyen : {analyse['moyenne_par_facture']:,.0f} FC
 
 Top 5 clients :
-"""
-            for i, client in enumerate(analyse['top_clients'], 1):
-                return f"{i}. {client['client__nom']}: {client['total']:,.0f} FC"
+""" + "\n".join(
+            f"{i}. {c['client__nom']}: {c['total']:,.0f} FC"
+            for i, c in enumerate(analyse['top_clients'], 1)
+        )
         
         elif type_rapport == 'stock':
             analyse = self.analyser_stock()
@@ -214,9 +234,9 @@ Top 5 clients :
 - Valeur du stock : {analyse['valeur_stock']:,.0f} FC
 
 Alertes :
-"""
-            for alerte in analyse['alertes']:
-                return f"- {alerte}"
+""" + "\n".join(
+            f"- {alerte}" for alerte in analyse['alertes']
+        )
         
         elif type_rapport == 'paie':
             analyse = self.analyser_paie()

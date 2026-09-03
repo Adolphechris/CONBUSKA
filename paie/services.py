@@ -10,7 +10,6 @@ from datetime import date
 from typing import List, Dict, Optional
 
 from django.db import transaction
-from django.db.models import Sum
 from django.utils import timezone
 
 from users.models import CustomUser
@@ -89,7 +88,7 @@ def _calculer_prime_anciennete(agent: Agent, salaire_base: Decimal) -> Decimal:
     - > 10 ans : 5% par année
     """
     date_engagement = agent.date_engagement
-    aujourd_hui = date.today()
+    aujourd_hui = timezone.now().date()
     
     annees = aujourd_hui.year - date_engagement.year
     if (aujourd_hui.month, aujourd_hui.day) < (date_engagement.month, date_engagement.day):
@@ -174,7 +173,7 @@ def calculer_bulletin(
     total_retenues = Decimal('0')
     
     # Récupérer les mouvements caisse liés à l'agent pour ce mois
-    from caisse.models import MouvementCaisseAgent, MouvementCaisse
+    from caisse.models import MouvementCaisseAgent
     mouvements_agent = MouvementCaisseAgent.objects.filter(
         agent=agent
     ).select_related('mouvement_caisse').prefetch_related('mouvement_caisse__rubrique')
@@ -202,8 +201,8 @@ def calculer_bulletin(
     cnss = Decimal('0')
     ipr = Decimal('0')
     
-    # Net à payer
-    net_a_payer = salaire_brut + total_primes - total_retenues
+    # Net à payer — plancher à 0 pour éviter solde négatif
+    net_a_payer = max(Decimal('0'), salaire_brut + total_primes - total_retenues)
     
     # Créer le bulletin
     paie = Paie.objects.create(
@@ -346,7 +345,7 @@ def supprimer_bulletin(
     paie = Paie.objects.select_for_update().get(id=paie_id)
     
     if paie.valide:
-        raise PaieDejaValideeError(f"Impossible de supprimer un bulletin validé.")
+        raise PaieDejaValideeError("Impossible de supprimer un bulletin validé.")
     
     # Supprimer les lignes d'abord (PROTECT)
     LignePaie.objects.filter(paie=paie).delete()
@@ -484,7 +483,6 @@ def creer_agent(
     current_user: CustomUser,
 ) -> 'AgentResult':
     """Crée un nouvel agent."""
-    from .inputs import AgentCreateInput
     
     agent = Agent.objects.create(
         matricule=data.matricule or _generer_matricule(),
@@ -510,7 +508,6 @@ def modifier_agent(
     current_user: CustomUser,
 ) -> 'AgentResult':
     """Modifie un agent existant."""
-    from .inputs import AgentUpdateInput
     
     agent = Agent.objects.select_for_update().get(id=data.agent_id)
     agent.nom = data.nom
@@ -566,14 +563,12 @@ def valider_paie(
     current_user: CustomUser,
 ) -> 'PaieValidationResult':
     """Valide un bulletin et crée le mouvement caisse."""
-    from caisse.services import MouvementCaisseService
     from caisse.models import CaisseCourante, RubriqueCaisse, MouvementCaisseAgent, MouvementCaisse
-    from .exceptions import CaissePrincipaleFermeeError
     
     paie = Paie.objects.select_for_update().get(id=paie_id)
     
     if paie.valide:
-        raise PaieDejaValideeError(f"Le bulletin est déjà validé.")
+        raise PaieDejaValideeError("Le bulletin est déjà validé.")
     
     # Valider le bulletin
     paie.valide = True
@@ -700,7 +695,7 @@ def get_statistiques_paie(mois: Optional[date] = None) -> Dict:
     Si mois=None, utilise le mois courant.
     """
     if mois is None:
-        mois = date.today().replace(day=1)
+        mois = timezone.now().date().replace(day=1)
     
     bulletins = get_bulletins_mois(mois)
     
