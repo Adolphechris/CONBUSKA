@@ -1,0 +1,38 @@
+# Fichiers et répertoires ignorés pour la construction de l'image Docker
+
+.git
+.gitignore
+.dockerignore
+.venv
+venv
+.venv_open
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.ruff_cache
+
+# Application Web Nuxt
+boutique/node_modules
+boutique/.output
+boutique/.nuxt
+boutique/.dist
+
+# Application Mobile Flutter
+conbusca_mobile/.dart_tool
+conbusca_mobile/build
+conbusca_mobile_final/.dart_tool
+conbusca_mobile_final/build
+
+# Médias locaux & bases sqlite de dev
+*.sqlite3
+media/*
+!media/.gitkeep
+logs/*
+
+# Fichiers d'environnement & logs de debug
+.env
+firebase-debug.log

@@ -16,9 +16,15 @@ reportlab==4.4.10
 num2words==0.5.14
 python-dateutil==2.9.0.post0
 
-# Firebase
+# Google Cloud Platform & Firebase
 firebase-admin==6.7.0
+google-cloud-storage==3.1.0
+django-storages==1.14.5
 pytz==2025.1
+
+# Server & WSGI/ASGI pour Google Cloud Run
+gunicorn==23.0.0
+uvicorn==0.34.0
 
 # API REST (pour v2.0)
 djangorestframework==3.15.2  # Ajouté pour API REST
